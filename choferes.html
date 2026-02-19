@@ -13,6 +13,8 @@
         .modal-full { display: none; position: fixed; inset: 0; background: white; z-index: 100; overflow-y: auto; }
         .modal-full.active { display: block; }
         .tab-btn.active { border-bottom: 4px solid #1e5bb9; color: #1e5bb9; }
+        .card-chofer { background: white; border-radius: 1.5rem; padding: 1rem; margin-bottom: 0.75rem; border-bottom: 4px solid #e2e8f0; transition: 0.2s; }
+        .card-chofer:active { transform: scale(0.98); }
     </style>
 </head>
 <body class="pb-20">
@@ -20,87 +22,53 @@
     <header class="bg-[#1e5bb9] text-white p-4 shadow-md flex justify-between items-center sticky top-0 z-50">
         <a href="panel.html" class="text-xl"><i class="fas fa-arrow-left"></i></a>
         <h1 class="font-black italic uppercase tracking-tighter">Gestión de Choferes</h1>
-        <button onclick="abrirNuevoChofer()" class="text-xl"><i class="fas fa-user-plus"></i></button>
+        <button onclick="window.location.href='nuevo-chofer.html'" class="text-xl px-2">
+            <i class="fas fa-user-plus"></i>
+        </button>
     </header>
 
     <main class="p-4 max-w-4xl mx-auto" id="listaChoferes">
-        </main>
+        <div class="text-center py-20 text-slate-400 font-bold italic">Cargando choferes...</div>
+    </main>
 
     <div id="modalVer" class="modal-full">
         <header class="bg-slate-800 text-white p-4 flex justify-between items-center">
             <button onclick="cerrarModal()" class="text-xl"><i class="fas fa-times"></i></button>
-            <h2 id="det_nombre_titulo" class="font-black uppercase italic">Detalles</h2>
+            <h2 id="det_nombre_titulo" class="font-black uppercase italic">Detalles del Chófer</h2>
             <div class="w-6"></div>
         </header>
 
         <div class="p-4 space-y-6">
             <div class="text-center">
-                <img id="det_foto" src="https://via.placeholder.com/300" class="w-48 h-48 mx-auto rounded-3xl object-cover shadow-xl border-4 border-blue-100">
-                <h3 id="det_nombre_full" class="text-2xl font-black mt-4 uppercase">...</h3>
+                <img id="det_foto" src="https://via.placeholder.com/300" class="w-48 h-48 mx-auto rounded-[2.5rem] object-cover shadow-2xl border-4 border-blue-50">
+                <h3 id="det_nombre_full" class="text-2xl font-black mt-4 uppercase text-slate-800">...</h3>
                 
                 <div class="flex justify-center gap-4 mt-2">
-                    <label class="flex items-center gap-1 text-[10px] font-black uppercase">
-                        <input type="checkbox" id="det_sin_credito"> Trabajar sin créditos
+                    <label class="flex items-center gap-2 text-[10px] font-black uppercase text-slate-500">
+                        <input type="checkbox" id="det_sin_credito" class="w-4 h-4"> Trabajar sin créditos
                     </label>
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-2 text-center">
-                <div class="bg-slate-100 p-3 rounded-2xl"><p class="text-[10px] font-bold text-slate-500 uppercase">Fondo Actual</p><p id="det_fondo" class="text-lg font-black text-blue-700">$0</p></div>
-                <div class="bg-slate-100 p-3 rounded-2xl"><p class="text-[10px] font-bold text-slate-500 uppercase">Viajes Hoy</p><p id="det_hoy" class="text-lg font-black">0</p></div>
-                <div class="bg-slate-100 p-3 rounded-2xl"><p class="text-[10px] font-bold text-slate-500 uppercase">Viajes Mes</p><p id="det_mes" class="text-lg font-black">0</p></div>
-                <div class="bg-slate-100 p-3 rounded-2xl"><p class="text-[10px] font-bold text-slate-500 uppercase">Viajes Total</p><p id="det_total" class="text-lg font-black">0</p></div>
+            <div class="grid grid-cols-2 gap-3 text-center">
+                <div class="bg-blue-50 p-4 rounded-3xl"><p class="text-[10px] font-black text-blue-400 uppercase">Fondo Actual</p><p id="det_fondo" class="text-xl font-black text-blue-700">$0</p></div>
+                <div class="bg-slate-50 p-4 rounded-3xl"><p class="text-[10px] font-black text-slate-400 uppercase">Viajes Hoy</p><p id="det_hoy" class="text-xl font-black text-slate-700">0</p></div>
             </div>
 
-            <div class="grid grid-cols-3 gap-2">
-                <button class="bg-blue-100 text-blue-700 p-3 rounded-xl font-black text-[10px] uppercase"><i class="fas fa-filter"></i> Filtrar</button>
-                <button id="btn_wa" class="bg-green-100 text-green-700 p-3 rounded-xl font-black text-[10px] uppercase"><i class="fab fa-whatsapp"></i> WhatsApp</button>
-                <button id="btn_elim" class="bg-red-100 text-red-700 p-3 rounded-xl font-black text-[10px] uppercase"><i class="fas fa-trash"></i> Eliminar</button>
+            <div class="flex border-b gap-6 overflow-x-auto scrollbar-hide px-2">
+                <button onclick="showTab('info')" class="tab-btn active pb-2 font-black text-[11px] uppercase flex-shrink-0 tracking-widest">Información</button>
+                <button onclick="showTab('auto')" class="tab-btn pb-2 font-black text-[11px] uppercase flex-shrink-0 tracking-widest">Vehículo</button>
+                <button onclick="showTab('fondo')" class="tab-btn pb-2 font-black text-[11px] uppercase flex-shrink-0 tracking-widest">Historial Fondo</button>
             </div>
 
-            <div class="flex border-b overflow-x-auto gap-4 scrollbar-hide">
-                <button onclick="showTab('info')" class="tab-btn active p-2 font-black text-xs uppercase flex-shrink-0">Información</button>
-                <button onclick="showTab('auto')" class="tab-btn p-2 font-black text-xs uppercase flex-shrink-0">Auto</button>
-                <button onclick="showTab('fondo')" class="tab-btn p-2 font-black text-xs uppercase flex-shrink-0">Fondo</button>
-            </div>
-
-            <div id="tab_info" class="tab-content space-y-4 py-4">
-                <input type="text" id="edit_nombre" placeholder="Nombre" class="w-full p-3 border rounded-xl">
-                <input type="tel" id="edit_tel" placeholder="Teléfono" class="w-full p-3 border rounded-xl">
-            </div>
-
-            <div id="tab_auto" class="tab-content hidden space-y-4 py-4">
-                <img id="auto_foto" src="https://via.placeholder.com/300x150" class="w-full rounded-2xl">
-                <input type="text" id="auto_marca" placeholder="Marca/Modelo" class="w-full p-3 border rounded-xl">
-                <div class="flex gap-4">
-                    <label class="text-xs font-bold"><input type="checkbox" id="auto_aire"> Aire</label>
-                    <label class="text-xs font-bold"><input type="checkbox" id="auto_lic"> Lic. Operativa</label>
+            <div id="tab_info" class="tab-content space-y-4">
+                <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
+                    <p class="text-[10px] font-black text-slate-400 uppercase mb-1 ml-1">Teléfono</p>
+                    <p id="edit_tel" class="font-bold text-slate-700">...</p>
                 </div>
             </div>
 
-            <div id="tab_fondo" class="tab-content hidden space-y-4 py-4">
-                <div class="flex gap-2">
-                    <button onclick="abrirOperacion('agregar')" class="flex-1 bg-green-600 text-white p-2 rounded-lg font-black text-[10px] uppercase">Agregar</button>
-                    <button onclick="abrirOperacion('retirar')" class="flex-1 bg-red-600 text-white p-2 rounded-lg font-black text-[10px] uppercase">Retirar</button>
-                    <button onclick="rectificar()" class="flex-1 bg-slate-700 text-white p-2 rounded-lg font-black text-[10px] uppercase">Rectificar</button>
-                </div>
-
-                <div id="formFondo" class="hidden p-4 bg-slate-100 rounded-2xl space-y-3">
-                    <select id="f_metodo" class="w-full p-2 rounded-lg"><option>Efectivo</option><option>Transferencia</option></select>
-                    <input type="number" id="f_cantidad" placeholder="Cantidad" class="w-full p-2 rounded-lg border">
-                    <button onclick="procesarFondo()" class="w-full bg-blue-600 text-white p-2 rounded-lg font-black uppercase">Procesar</button>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-[10px] font-bold">
-                        <thead class="bg-slate-200 uppercase">
-                            <tr><th class="p-1">Usuario</th><th class="p-1">Metodo</th><th class="p-1">Saldo</th><th class="p-1">Fondo</th><th class="p-1">Activo</th><th class="p-1">Fecha</th></tr>
-                        </thead>
-                        <tbody id="tablaFondos" class="text-center"></tbody>
-                    </table>
-                </div>
             </div>
-        </div>
     </div>
 
     <script>
@@ -108,101 +76,55 @@
         const CLAVE_API = 'sb_publishable_rCrNB27M4ypZk7j0a10p_Q_3iNO7qRO';
         const supabaseClient = supabase.createClient(URL_PROYECTO, CLAVE_API);
 
-        let choferCargado = null;
-
         window.onload = cargarChoferes;
 
         async function cargarChoferes() {
-            const { data } = await supabaseClient.from('choferes').select('*');
+            const { data, error } = await supabaseClient.from('choferes').select('*').order('nombre');
             const lista = document.getElementById('listaChoferes');
+            
+            if (error) {
+                lista.innerHTML = `<div class="p-4 bg-red-100 text-red-600 rounded-xl text-sm font-bold">Error: ${error.message}</div>`;
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                lista.innerHTML = `
+                    <div class="text-center py-20">
+                        <p class="text-slate-400 font-bold italic">No hay choferes registrados.</p>
+                        <button onclick="window.location.href='nuevo-chofer.html'" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded-full font-black uppercase text-xs">Agregar el Primero</button>
+                    </div>`;
+                return;
+            }
+
             lista.innerHTML = data.map(c => `
-                <div class="bg-white p-4 rounded-3xl shadow-sm mb-3 flex justify-between items-center border-b-4 border-slate-200">
+                <div class="card-chofer flex justify-between items-center" onclick="verChofer('${c.id}')">
                     <div>
-                        <p class="text-lg font-black text-slate-800 uppercase">${c.nombre}</p>
-                        <p class="text-[10px] font-bold text-slate-500 uppercase">${c.telefono} • Lic: ${c.lic_operativa ? 'SI' : 'NO'}</p>
-                        <p class="text-sm font-black text-blue-600">FONDO: $${c.fondo_actual}</p>
+                        <p class="text-sm font-black text-slate-800 uppercase tracking-tighter">${c.nombre}</p>
+                        <p class="text-[9px] font-bold text-slate-400 uppercase">${c.telefono} • LIC: ${c.lic_operativa ? 'SI' : 'NO'}</p>
+                        <p class="text-xs font-black text-blue-600 mt-1">FONDO: $${c.fondo_actual}</p>
                     </div>
-                    <button onclick="menuChofer('${c.id}')" class="text-slate-400 p-2"><i class="fas fa-ellipsis-v"></i></button>
+                    <i class="fas fa-chevron-right text-slate-300 text-xs"></i>
                 </div>
             `).join('');
         }
 
         async function verChofer(id) {
             const { data } = await supabaseClient.from('choferes').select('*').eq('id', id).single();
-            choferCargado = data;
+            if(!data) return;
+            
             document.getElementById('det_nombre_titulo').innerText = data.nombre;
             document.getElementById('det_nombre_full').innerText = data.nombre;
             document.getElementById('det_fondo').innerText = `$${data.fondo_actual}`;
-            document.getElementById('auto_lic').checked = data.lic_operativa;
+            document.getElementById('edit_tel').innerText = data.telefono;
             document.getElementById('modalVer').classList.add('active');
-            cargarMovimientos(data.id);
-        }
-
-        async function cargarMovimientos(choferId) {
-            const { data } = await supabaseClient.from('movimientos_fondo').select('*').eq('chofer_id', choferId).order('created_at', {ascending: false});
-            const tabla = document.getElementById('tablaFondos');
-            tabla.innerHTML = data.map(m => `
-                <tr class="border-b">
-                    <td class="p-2">${m.usuario}</td>
-                    <td>${m.metodo}</td>
-                    <td class="text-blue-600">$${m.saldo}</td>
-                    <td>$${m.fondo_anterior}</td>
-                    <td class="font-black">$${m.activo}</td>
-                    <td>${new Date(m.created_at).toLocaleDateString()}</td>
-                </tr>
-            `).join('');
-        }
-
-        let operacionActual = '';
-        function abrirOperacion(tipo) {
-            operacionActual = tipo;
-            document.getElementById('formFondo').classList.remove('hidden');
-        }
-
-        async function procesarFondo() {
-            const cant = parseFloat(document.getElementById('f_cantidad').value);
-            const metodo = document.getElementById('f_metodo').value;
-            const fondoAnt = choferCargado.fondo_actual;
-            const nuevoSaldo = operacionActual === 'agregar' ? cant : -cant;
-            const nuevoActivo = fondoAnt + nuevoSaldo;
-
-            const { error } = await supabaseClient.from('movimientos_fondo').insert({
-                chofer_id: choferCargado.id,
-                usuario: localStorage.getItem('userName'),
-                metodo: metodo,
-                saldo: nuevoSaldo,
-                fondo_anterior: fondoAnt,
-                activo: nuevoActivo
-            });
-
-            if(!error) {
-                await supabaseClient.from('choferes').update({ fondo_actual: nuevoActivo }).eq('id', choferCargado.id);
-                alert("Operación exitosa");
-                verChofer(choferCargado.id);
-                document.getElementById('formFondo').classList.add('hidden');
-            }
-        }
-
-        function showTab(tab) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('tab_' + tab).classList.remove('hidden');
-            event.currentTarget.classList.add('active');
         }
 
         function cerrarModal() { document.getElementById('modalVer').classList.remove('active'); }
-
-        function menuChofer(id) {
-            const op = confirm("¿Qué desea hacer?\nAceptar para VER DETALLES\nCancelar para ELIMINAR");
-            if(op) verChofer(id);
-            else eliminarChofer(id);
-        }
-
-        async function eliminarChofer(id) {
-            if(confirm("¿Seguro que quieres borrar este chofer?")) {
-                await supabaseClient.from('choferes').delete().eq('id', id);
-                cargarChoferes();
-            }
+        function showTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab_' + tab)?.classList.remove('hidden');
+            event.currentTarget.classList.add('active');
         }
     </script>
 </body>
