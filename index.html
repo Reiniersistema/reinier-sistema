@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Acceso - CONGO MUSUNDI</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
@@ -73,13 +76,17 @@
             </button>
         </div>
 
-        <p class="mt-8 text-[9px] font-bold text-slate-400 uppercase">v2.0 • 2024 © Seguridad Privada</p>
+        <p class="mt-8 text-[9px] font-bold text-slate-400 uppercase">v2.0 • 2026 © Seguridad Privada</p>
     </div>
 
     <script>
+        // NOTA: El objeto 'supabaseClient' ya está disponible gracias a config.js
+        // Por ahora mantenemos la validación simple por PIN.
+
         function validarAcceso() {
             const pin = document.getElementById('pin').value;
-            // El PIN por defecto es 2024, cámbialo si lo necesitas
+            
+            // Verificamos el PIN que ya descubriste que era el de acceso
             if(pin === '2024') {
                 localStorage.setItem('auth_congo', 'true');
                 window.location.href = 'panel.html';
@@ -89,7 +96,6 @@
             }
         }
 
-        // Permitir entrar con la tecla Enter
         document.getElementById('pin').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 validarAcceso();
