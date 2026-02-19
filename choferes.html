@@ -10,90 +10,132 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .card-chofer { background: white; border-radius: 1.5rem; padding: 1rem; margin-bottom: 0.8rem; border-bottom: 4px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
         .modal-full { display: none; position: fixed; inset: 0; background: white; z-index: 100; overflow-y: auto; }
         .modal-full.active { display: block; }
-        .tab-btn.active { border-bottom: 4px solid #1e5bb9; color: #1e5bb9; }
-        .card-chofer { background: white; border-radius: 1.5rem; padding: 1.2rem; margin-bottom: 0.75rem; border-bottom: 4px solid #e2e8f0; }
+        .tab-btn { padding: 10px; font-size: 10px; font-weight: 900; text-transform: uppercase; color: #94a3b8; border-bottom: 2px solid transparent; }
+        .tab-btn.active { color: #1e5bb9; border-bottom-color: #1e5bb9; }
+        .menu-drop { display: none; position: absolute; right: 0; top: 30px; background: white; border-radius: 1rem; box-shadow: 0 10px 20px rgba(0,0,0,0.1); z-index: 10; border: 1px solid #eee; }
+        .menu-drop.active { display: block; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        th { background: #f8fafc; color: #64748b; padding: 8px; text-transform: uppercase; }
+        td { padding: 8px; border-bottom: 1px solid #f1f5f9; text-align: center; }
     </style>
 </head>
 <body class="pb-20">
 
     <header class="bg-[#1e5bb9] text-white p-4 shadow-md flex justify-between items-center sticky top-0 z-50">
         <a href="panel.html" class="text-xl"><i class="fas fa-arrow-left"></i></a>
-        <h1 class="font-black italic uppercase tracking-tighter">Gestión de Choferes</h1>
-        <button onclick="window.location.href='nuevo_chofer.html'" class="text-xl px-2">
-            <i class="fas fa-user-plus"></i>
-        </button>
+        <h1 class="font-black italic uppercase tracking-tighter">Choferes</h1>
+        <button onclick="window.location.href='nuevo_chofer.html'" class="text-xl px-2"><i class="fas fa-user-plus"></i></button>
     </header>
 
-    <main class="p-4 max-w-4xl mx-auto" id="listaChoferes">
-        <div class="text-center py-20 text-slate-400 font-bold italic">Cargando choferes...</div>
-    </main>
+    <main class="p-4 max-w-4xl mx-auto" id="listaChoferes"></main>
 
     <div id="modalVer" class="modal-full">
-        <header class="bg-slate-800 text-white p-4 flex justify-between items-center">
+        <header class="bg-slate-800 text-white p-4 flex justify-between items-center sticky top-0">
             <button onclick="cerrarModal()" class="text-xl"><i class="fas fa-times"></i></button>
-            <h2 id="det_nombre_titulo" class="font-black uppercase italic">Perfil del Chófer</h2>
+            <h2 id="det_nombre_titulo" class="font-black uppercase italic">Perfil</h2>
             <div class="w-6"></div>
         </header>
 
         <div class="p-4 space-y-6">
             <div class="text-center">
-                <img id="det_foto" src="https://via.placeholder.com/300" class="w-40 h-40 mx-auto rounded-[2.5rem] object-cover shadow-2xl border-4 border-blue-50">
+                <img id="det_foto" src="" class="w-48 h-48 mx-auto rounded-[3rem] object-cover shadow-2xl border-4 border-blue-50 bg-slate-200">
                 <h3 id="det_nombre_full" class="text-2xl font-black mt-4 uppercase text-slate-800">...</h3>
                 
-                <div class="flex justify-center gap-4 mt-2">
-                    <label class="flex items-center gap-2 text-[10px] font-black uppercase text-slate-500">
-                        <input type="checkbox" id="det_sin_credito" class="w-4 h-4"> Trabajar sin créditos
-                    </label>
-                </div>
-            </div>
+                <label class="flex justify-center items-center gap-2 text-xs font-black uppercase text-slate-500 mt-2">
+                    <input type="checkbox" id="det_sin_credito" onchange="actualizarCredito()"> Trabajar sin créditos
+                </label>
 
-            <div class="grid grid-cols-2 gap-3">
-                <div class="bg-blue-50 p-4 rounded-3xl text-center border border-blue-100">
-                    <p class="text-[9px] font-black text-blue-400 uppercase mb-1">Fondo Actual</p>
-                    <p id="det_fondo" class="text-xl font-black text-blue-700">$0</p>
-                </div>
-                <div class="bg-green-50 p-4 rounded-3xl text-center border border-green-100">
-                    <p class="text-[9px] font-black text-green-400 uppercase mb-1">Viajes Hoy</p>
-                    <p id="det_hoy" class="text-xl font-black text-green-700">0</p>
-                </div>
-            </div>
-
-            <div class="flex border-b gap-6 overflow-x-auto scrollbar-hide px-2">
-                <button onclick="showTab('info')" class="tab-btn active pb-2 font-black text-[11px] uppercase tracking-widest">Información</button>
-                <button onclick="showTab('auto')" class="tab-btn pb-2 font-black text-[11px] uppercase tracking-widest">Vehículo</button>
-                <button onclick="showTab('fondo')" class="tab-btn pb-2 font-black text-[11px] uppercase tracking-widest">Fondo</button>
-            </div>
-
-            <div id="tab_info" class="tab-content space-y-4">
-                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-                    <p class="text-[10px] font-black text-slate-400 uppercase">Teléfono / WhatsApp</p>
-                    <p id="det_tel" class="font-bold text-slate-700 text-lg">...</p>
-                </div>
-                <button onclick="abrirWA()" class="w-full bg-green-500 text-white p-4 rounded-2xl font-black uppercase shadow-lg shadow-green-100">
-                    <i class="fab fa-whatsapp mr-2"></i> Chatear con Chófer
-                </button>
-            </div>
-
-            <div id="tab_auto" class="tab-content hidden space-y-4">
-                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-                    <p class="text-[10px] font-black text-slate-400 uppercase">Marca y Modelo</p>
-                    <p id="det_auto" class="font-bold text-slate-700 uppercase">...</p>
-                    <div class="flex gap-4 mt-4">
-                        <span id="badge_lic" class="text-[10px] font-black px-3 py-1 rounded-full border"></span>
-                        <span id="badge_aire" class="text-[10px] font-black px-3 py-1 rounded-full border"></span>
+                <div class="mt-4 p-2 bg-slate-100 rounded-xl inline-block">
+                    <p class="text-[10px] font-black uppercase text-slate-400">Grupo</p>
+                    <div class="flex gap-4">
+                        <label class="text-xs font-bold"><input type="radio" name="det_grupo" value="Grupo A" onchange="actualizarGrupo()"> A</label>
+                        <label class="text-xs font-bold"><input type="radio" name="det_grupo" value="Grupo B" onchange="actualizarGrupo()"> B</label>
                     </div>
                 </div>
             </div>
 
-            <div id="tab_fondo" class="tab-content hidden">
-                <div class="text-center py-10">
-                    <p class="text-slate-400 font-bold italic text-sm">Próximamente: Registro detallado de movimientos.</p>
+            <div class="grid grid-cols-2 gap-2">
+                <div class="bg-blue-600 p-4 rounded-3xl text-white text-center">
+                    <p class="text-[9px] font-bold uppercase opacity-80">Fondo Actual</p>
+                    <p id="det_fondo" class="text-2xl font-black">$0</p>
+                </div>
+                <div class="bg-slate-800 p-4 rounded-3xl text-white text-center">
+                    <p class="text-[9px] font-bold uppercase opacity-80">Viajes Hoy</p>
+                    <p id="det_hoy" class="text-2xl font-black">0</p>
+                </div>
+                <div class="bg-slate-100 p-3 rounded-2xl text-center">
+                    <p class="text-[9px] font-black uppercase text-slate-400">Este Mes</p>
+                    <p id="det_mes" class="font-black">0</p>
+                </div>
+                <div class="bg-slate-100 p-3 rounded-2xl text-center">
+                    <p class="text-[9px] font-black uppercase text-slate-400">Total</p>
+                    <p id="det_total" class="font-black">0</p>
                 </div>
             </div>
-            
-            <button onclick="eliminarChofer()" class="w-full text-red-400 font-bold text-xs uppercase mt-10">Eliminar Chófer definitivamente</button>
+
+            <div class="grid grid-cols-3 gap-2">
+                <button class="bg-slate-200 p-3 rounded-xl font-black text-[10px] uppercase"><i class="fas fa-filter block mb-1"></i> Filtrar</button>
+                <button onclick="abrirWA()" class="bg-green-500 text-white p-3 rounded-xl font-black text-[10px] uppercase"><i class="fab fa-whatsapp block mb-1"></i> Whatsapp</button>
+                <button onclick="eliminarChofer()" class="bg-red-100 text-red-600 p-3 rounded-xl font-black text-[10px] uppercase"><i class="fas fa-trash block mb-1"></i> Eliminar</button>
+            </div>
+
+            <div class="flex border-b justify-between">
+                <button onclick="showTab('info')" id="btn_info" class="tab-btn active">Información</button>
+                <button onclick="showTab('auto')" id="btn_auto" class="tab-btn">Auto</button>
+                <button onclick="showTab('fondo')" id="btn_fondo" class="tab-btn">Fondo</button>
+            </div>
+
+            <div id="tab_info" class="tab-content space-y-4">
+                <div class="bg-white p-4 rounded-2xl border">
+                    <p class="text-[10px] font-black text-slate-400 uppercase">Nombre Completo</p>
+                    <p id="info_nombre" class="font-bold text-slate-700">...</p>
+                    <p class="text-[10px] font-black text-slate-400 uppercase mt-3">Teléfono</p>
+                    <p id="info_tel" class="font-bold text-slate-700">...</p>
+                </div>
+            </div>
+
+            <div id="tab_auto" class="tab-content hidden space-y-4 text-center">
+                <img id="auto_foto" src="" class="w-full h-40 object-cover rounded-2xl bg-slate-100">
+                <div class="bg-white p-4 rounded-2xl border text-left">
+                    <p id="auto_desc" class="font-bold text-slate-700 uppercase">...</p>
+                    <div class="mt-3 space-y-1">
+                        <p id="auto_aire" class="text-[10px] font-black uppercase"></p>
+                        <p id="auto_lic" class="text-[10px] font-black uppercase"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab_fondo" class="tab-content hidden space-y-4">
+                <div class="flex gap-2">
+                    <button onclick="abrirTransaccion('Agregar')" class="flex-1 bg-green-600 text-white p-2 rounded-lg font-black text-[10px] uppercase">Agregar</button>
+                    <button onclick="abrirTransaccion('Retirar')" class="flex-1 bg-orange-500 text-white p-2 rounded-lg font-black text-[10px] uppercase">Retirar</button>
+                    <button onclick="rectificarFondo()" class="flex-1 bg-blue-100 text-blue-600 p-2 rounded-lg font-black text-[10px] uppercase">Rectificar</button>
+                </div>
+
+                <div id="formFondo" class="hidden bg-slate-50 p-4 rounded-2xl border-2 border-dashed border-slate-200">
+                    <h4 id="trans_titulo" class="font-black uppercase text-xs mb-3">...</h4>
+                    <select id="trans_metodo" class="w-full p-2 rounded-lg mb-2 text-xs font-bold">
+                        <option value="Efectivo">Efectivo</option>
+                        <option value="Transferencia">Transferencia</option>
+                    </select>
+                    <input type="number" id="trans_cantidad" placeholder="Cantidad" class="w-full p-2 rounded-lg mb-2 text-xs font-bold border">
+                    <button onclick="procesarTransaccion()" class="w-full bg-slate-800 text-white p-2 rounded-lg font-black text-[10px] uppercase">Procesar</button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Usuario</th><th>Método</th><th>Saldo</th><th>Fondo</th><th>Activo</th><th>Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaHistorial"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -103,82 +145,130 @@
         const supabaseClient = supabase.createClient(URL_PROYECTO, CLAVE_API);
 
         let choferCargado = null;
+        let transaccionTipo = '';
 
         window.onload = cargarChoferes;
 
         async function cargarChoferes() {
-            const { data, error } = await supabaseClient.from('choferes').select('*').order('nombre');
+            const { data } = await supabaseClient.from('choferes').select('*').order('nombre');
             const lista = document.getElementById('listaChoferes');
-            
-            if (!data || data.length === 0) {
-                lista.innerHTML = `
-                    <div class="text-center py-20">
-                        <p class="text-slate-400 font-bold italic">No hay choferes registrados.</p>
-                        <button onclick="window.location.href='nuevo_chofer.html'" class="mt-4 bg-blue-600 text-white px-8 py-3 rounded-full font-black uppercase text-xs">Registrar ahora</button>
-                    </div>`;
-                return;
-            }
-
             lista.innerHTML = data.map(c => `
-                <div class="card-chofer flex justify-between items-center" onclick="verChofer('${c.id}')">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 font-black text-lg">
-                            ${c.nombre.charAt(0)}
-                        </div>
-                        <div>
-                            <p class="text-sm font-black text-slate-800 uppercase tracking-tighter">${c.nombre}</p>
-                            <p class="text-[9px] font-bold text-slate-400 uppercase">${c.telefono}</p>
-                            <p class="text-xs font-black text-blue-600">FONDO: $${c.fondo_actual}</p>
+                <div class="card-chofer relative">
+                    <div onclick="verChofer('${c.id}')" class="flex-1">
+                        <p class="text-xs font-black uppercase text-slate-800">${c.nombre} ${c.apellidos || ''}</p>
+                        <p class="text-[9px] font-bold text-slate-400 uppercase">${c.telefono} • LIC: ${c.lic_operativa ? 'SI' : 'NO'}</p>
+                        <p class="text-[11px] font-black text-blue-600 mt-1">FONDO: $${c.fondo_actual}</p>
+                    </div>
+                    <div class="relative">
+                        <button onclick="toggleMenu('menu-${c.id}')" class="p-2 text-slate-400"><i class="fas fa-ellipsis-v"></i></button>
+                        <div id="menu-${c.id}" class="menu-drop w-32 p-2">
+                            <button onclick="verChofer('${c.id}')" class="w-full text-left p-2 text-[10px] font-black uppercase text-slate-600 border-b">Ver</button>
+                            <button onclick="eliminarChoferId('${c.id}')" class="w-full text-left p-2 text-[10px] font-black uppercase text-red-500">Eliminar</button>
                         </div>
                     </div>
-                    <i class="fas fa-chevron-right text-slate-200"></i>
                 </div>
             `).join('');
         }
 
+        function toggleMenu(id) {
+            document.querySelectorAll('.menu-drop').forEach(m => m.id !== id && m.classList.remove('active'));
+            document.getElementById(id).classList.toggle('active');
+        }
+
         async function verChofer(id) {
             const { data } = await supabaseClient.from('choferes').select('*').eq('id', id).single();
-            if(!data) return;
             choferCargado = data;
             
+            // Datos básicos
             document.getElementById('det_nombre_titulo').innerText = data.nombre;
-            document.getElementById('det_nombre_full').innerText = data.nombre;
+            document.getElementById('det_nombre_full').innerText = data.nombre + " " + (data.apellidos || "");
+            document.getElementById('det_foto').src = data.foto_url || 'https://via.placeholder.com/300?text=SIN+FOTO';
             document.getElementById('det_fondo').innerText = `$${data.fondo_actual}`;
-            document.getElementById('det_tel').innerText = data.telefono;
-            document.getElementById('det_auto').innerText = data.auto_marca || 'No especificado';
-            
-            // Licencia
-            const lic = document.getElementById('badge_lic');
-            lic.innerText = data.lic_operativa ? 'CON LICENCIA' : 'SIN LICENCIA';
-            lic.className = data.lic_operativa ? 'text-green-600 border-green-600 px-3 py-1 rounded-full text-[10px] font-black' : 'text-red-400 border-red-400 px-3 py-1 rounded-full text-[10px] font-black';
+            document.getElementById('det_sin_credito').checked = data.trabajar_sin_credito;
+            document.querySelector(`input[name="det_grupo"][value="${data.grupo}"]`).checked = true;
 
-            // Aire
-            const aire = document.getElementById('badge_aire');
-            aire.innerText = data.aire_acondicionado ? 'CON AIRE' : 'SIN AIRE';
-            aire.className = 'text-slate-400 border-slate-200 px-3 py-1 rounded-full text-[10px] font-black';
+            // Pestaña Info y Auto
+            document.getElementById('info_nombre').innerText = `${data.nombre} ${data.apellidos || ''}`;
+            document.getElementById('info_tel').innerText = data.telefono;
+            document.getElementById('auto_foto').src = data.auto_foto_url || 'https://via.placeholder.com/400x200?text=AUTO+SIN+FOTO';
+            document.getElementById('auto_desc').innerText = `${data.auto_marca} ${data.auto_modelo} - ${data.auto_color}`;
+            document.getElementById('auto_aire').innerText = data.aire_acondicionado ? '✅ Con Aire' : '❌ Sin Aire';
+            document.getElementById('auto_lic').innerText = data.lic_operativa ? '✅ Con Licencia (12%)' : '❌ Sin Licencia (15%)';
 
+            cargarHistorial(id);
             document.getElementById('modalVer').classList.add('active');
         }
 
-        function abrirWA() {
-            if(choferCargado) window.open(`https://wa.me/${choferCargado.telefono}`, '_blank');
+        async function cargarHistorial(id) {
+            const { data } = await supabaseClient.from('movimientos_fondo').select('*').eq('usuario', id).order('created_at', { ascending: false });
+            const tabla = document.getElementById('tablaHistorial');
+            tabla.innerHTML = data.map(m => `
+                <tr>
+                    <td>Admin</td>
+                    <td>${m.metodo}</td>
+                    <td class="font-bold text-blue-600">$${m.saldo}</td>
+                    <td class="text-slate-400">$${m.fondo_ant}</td>
+                    <td class="font-bold">$${m.activo}</td>
+                    <td class="text-[8px]">${new Date(m.created_at).toLocaleDateString()}</td>
+                </tr>
+            `).join('');
+        }
+
+        function abrirTransaccion(tipo) {
+            transaccionTipo = tipo;
+            document.getElementById('trans_titulo').innerText = tipo + " Fondo";
+            document.getElementById('formFondo').classList.remove('hidden');
+        }
+
+        async function procesarTransaccion() {
+            const cantidad = parseFloat(document.getElementById('trans_cantidad').value);
+            if (!cantidad) return;
+
+            const saldo = transaccionTipo === 'Agregar' ? cantidad : -cantidad;
+            const fondo_ant = choferCargado.fondo_actual;
+            const activo = fondo_ant + saldo;
+
+            // 1. Insertar movimiento
+            const { error: errMov } = await supabaseClient.from('movimientos_fondo').insert([{
+                usuario: choferCargado.id,
+                metodo: document.getElementById('trans_metodo').value,
+                saldo: saldo,
+                fondo_ant: fondo_ant,
+                activo: activo
+            }]);
+
+            // 2. Actualizar Chofer
+            const { error: errChof } = await supabaseClient.from('choferes').update({ fondo_actual: activo }).eq('id', choferCargado.id);
+
+            if (!errMov && !errChof) {
+                alert("Operación Exitosa");
+                document.getElementById('formFondo').classList.add('hidden');
+                verChofer(choferCargado.id);
+            }
         }
 
         async function eliminarChofer() {
-            if(confirm("¿Estás seguro de eliminar a este chófer? Esta acción no se puede deshacer.")){
+            if(confirm("¿Eliminar chofer?")) {
                 await supabaseClient.from('choferes').delete().eq('id', choferCargado.id);
-                cerrarModal();
-                cargarChoferes();
+                location.reload();
             }
         }
 
         function cerrarModal() { document.getElementById('modalVer').classList.remove('active'); }
-
         function showTab(tab) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('tab_' + tab).classList.remove('hidden');
-            event.currentTarget.classList.add('active');
+            document.getElementById('btn_' + tab).classList.add('active');
+        }
+
+        // Simulación WhatsApp
+        function abrirWA() { window.open(`https://wa.me/${choferCargado.telefono}`, '_blank'); }
+
+        // Aquí iría la lógica de rectificar (re-calculando la suma de toda la tabla)
+        async function rectificarFondo() {
+            alert("Calculando integridad de la columna Activo...");
+            cargarHistorial(choferCargado.id);
         }
     </script>
 </body>
