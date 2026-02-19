@@ -10,80 +10,92 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .form-card { background: white; border-radius: 2rem; padding: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        input, select { border-radius: 0.8rem !important; border: 1px solid #e2e8f0 !important; padding: 0.6rem !important; width: 100%; background: #f8fafc; font-weight: 600; font-size: 14px; }
-        .label-style { font-size: 0.65rem; font-weight: 900; color: #64748b; text-transform: uppercase; margin-bottom: 0.2rem; display: block; margin-left: 0.5rem;}
-        .img-preview { width: 80px; height: 80px; border-radius: 1rem; object-cover: cover; background: #e2e8f0; display: none; }
+        .input-group { background: white; border-radius: 1.5rem; padding: 1.2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        input, select { width: 100%; background: #f8fafc; border: none; padding: 0.75rem; border-radius: 0.8rem; font-weight: bold; font-size: 14px; outline: none; margin-top: 0.5rem; }
+        input:focus { ring: 2px solid #1e5bb9; }
+        label { font-size: 10px; font-weight: 900; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.05em; }
     </style>
 </head>
 <body class="pb-10">
+
     <header class="bg-[#1e5bb9] text-white p-4 shadow-md flex justify-between items-center sticky top-0 z-50">
-        <a href="choferes.html" class="text-xl"><i class="fas fa-arrow-left"></i></a>
-        <h1 class="font-black italic uppercase tracking-tighter">Registrar Nuevo Chofer</h1>
-        <div></div>
+        <a href="choferes.html" class="text-xl w-10"><i class="fas fa-arrow-left"></i></a>
+        <h1 class="font-black italic uppercase tracking-tighter text-center flex-1">Nuevo Chofer</h1>
+        <div class="w-10"></div>
     </header>
 
     <main class="p-4 max-w-xl mx-auto space-y-4">
-        <form id="formNuevoChofer" class="form-card space-y-3">
-            <h2 class="text-center font-black text-slate-800 text-lg uppercase italic mb-4">Información Personal</h2>
-            
-            <div class="flex items-center gap-4 bg-blue-50 p-3 rounded-2xl">
-                <div class="flex-1">
-                    <label class="label-style">Foto del Chofer</label>
-                    <input type="file" id="foto_file" accept="image/*" class="text-xs">
+        
+        <div class="input-group">
+            <p class="text-blue-600 font-black text-xs uppercase mb-4 border-b pb-2">Datos Personales</p>
+            <div class="space-y-3">
+                <div>
+                    <label>Nombre del Chofer</label>
+                    <input type="text" id="nombre" placeholder="Ej: Juan">
                 </div>
-                <img id="preview_chofer" class="img-preview">
-            </div>
-
-            <div class="grid grid-cols-2 gap-2">
-                <div><label class="label-style">Nombre</label><input type="text" id="nombre" required></div>
-                <div><label class="label-style">Apellidos</label><input type="text" id="apellidos" required></div>
-            </div>
-            <div><label class="label-style">Teléfono (WhatsApp)</label><input type="tel" id="telefono" required placeholder="53XXXXXX"></div>
-
-            <div class="pt-4 border-t">
-                <h2 class="text-center font-black text-slate-800 text-lg uppercase italic mb-4">Datos del Vehículo</h2>
-            </div>
-
-            <div class="flex items-center gap-4 bg-slate-50 p-3 rounded-2xl">
-                <div class="flex-1">
-                    <label class="label-style">Foto del Auto/Moto</label>
-                    <input type="file" id="auto_foto_file" accept="image/*" class="text-xs">
+                <div>
+                    <label>Apellidos</label>
+                    <input type="text" id="apellidos" placeholder="Ej: Pérez García">
                 </div>
-                <img id="preview_auto" class="img-preview">
+                <div>
+                    <label>Teléfono (WhatsApp)</label>
+                    <input type="tel" id="telefono" placeholder="5XXXXXXX">
+                </div>
             </div>
+        </div>
 
-            <div class="grid grid-cols-2 gap-2">
-                <div><label class="label-style">Marca</label><input type="text" id="auto_marca"></div>
-                <div><label class="label-style">Modelo</label><input type="text" id="auto_modelo"></div>
+        <div class="input-group">
+            <p class="text-blue-600 font-black text-xs uppercase mb-4 border-b pb-2">Vehículo</p>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="col-span-2">
+                    <label>Marca y Modelo</label>
+                    <input type="text" id="auto_marca" placeholder="Ej: Hyundai Elantra">
+                </div>
+                <div>
+                    <label>Color</label>
+                    <input type="text" id="auto_color" placeholder="Ej: Blanco">
+                </div>
+                <div>
+                    <label>Grupo</label>
+                    <select id="grupo">
+                        <option value="Auto">Auto</option>
+                        <option value="Moto">Moto</option>
+                    </select>
+                </div>
             </div>
-            <div><label class="label-style">Color</label><input type="text" id="auto_color"></div>
+        </div>
 
-            <div class="grid grid-cols-2 gap-4 bg-slate-100 p-3 rounded-xl border">
-                <label class="flex items-center gap-2 text-[10px] font-black uppercase text-slate-600">
-                    <input type="checkbox" id="lic_operativa" class="w-4 h-4"> Lic. Operativa
-                </label>
-                <label class="flex items-center gap-2 text-[10px] font-black uppercase text-slate-600">
-                    <input type="checkbox" id="aire_acondicionado" class="w-4 h-4"> Aire Acond.
-                </label>
-            </div>
-
-            <div class="p-3 bg-blue-50 rounded-2xl">
-                <label class="label-style text-center">Grupo al que pertenece</label>
-                <div class="flex justify-around mt-2">
-                    <label class="flex items-center gap-2 font-black text-xs uppercase text-blue-800">
-                        <input type="radio" name="grupo" value="Auto" checked class="w-4 h-4"> Auto
+        <div class="input-group">
+            <p class="text-blue-600 font-black text-xs uppercase mb-4 border-b pb-2">Configuración y Fondos</p>
+            <div class="space-y-4">
+                <div>
+                    <label>Fondo Inicial ($)</label>
+                    <input type="number" id="fondo_inicial" value="0" class="text-green-600 font-black">
+                </div>
+                
+                <div class="flex flex-col gap-3 pt-2">
+                    <label class="flex items-center gap-3 bg-slate-50 p-3 rounded-xl cursor-pointer">
+                        <input type="checkbox" id="lic_operativa" class="w-5 h-5 mt-0">
+                        <span class="text-[11px] font-bold text-slate-700">TIENE LICENCIA OPERATIVA (12%)</span>
                     </label>
-                    <label class="flex items-center gap-2 font-black text-xs uppercase text-blue-800">
-                        <input type="radio" name="grupo" value="Moto" class="w-4 h-4"> Moto
+                    
+                    <label class="flex items-center gap-3 bg-slate-50 p-3 rounded-xl cursor-pointer">
+                        <input type="checkbox" id="aire_acondicionado" class="w-5 h-5 mt-0" checked>
+                        <span class="text-[11px] font-bold text-slate-700">TIENE AIRE ACONDICIONADO</span>
+                    </label>
+
+                    <label class="flex items-center gap-3 bg-slate-50 p-3 rounded-xl cursor-pointer">
+                        <input type="checkbox" id="sin_credito" class="w-5 h-5 mt-0">
+                        <span class="text-[11px] font-bold text-slate-700">PERMITIR TRABAJAR SIN CRÉDITO</span>
                     </label>
                 </div>
             </div>
+        </div>
 
-            <button type="submit" id="btnGuardar" class="w-full bg-[#1e5bb9] text-white font-black py-4 rounded-xl shadow-lg uppercase tracking-widest mt-4">
-                Guardar Chofer
-            </button>
-        </form>
+        <button onclick="guardarChofer()" class="w-full bg-[#1e5bb9] text-white p-5 rounded-[2rem] font-black uppercase italic tracking-tighter shadow-xl mt-4 active:scale-95 transition-transform">
+            Registrar Chofer
+        </button>
+
     </main>
 
     <script>
@@ -91,78 +103,39 @@
         const CLAVE_API = 'sb_publishable_rCrNB27M4ypZk7j0a10p_Q_3iNO7qRO';
         const supabaseClient = supabase.createClient(URL_PROYECTO, CLAVE_API);
 
-        // Previsualización de imágenes
-        function setupPreview(inputId, imgId) {
-            document.getElementById(inputId).onchange = evt => {
-                const [file] = evt.target.files;
-                if (file) {
-                    document.getElementById(imgId).src = URL.createObjectURL(file);
-                    document.getElementById(imgId).style.display = 'block';
-                }
+        async function guardarChofer() {
+            const nombre = document.getElementById('nombre').value;
+            const telefono = document.getElementById('telefono').value;
+
+            if(!nombre || !telefono) {
+                alert("Por favor rellena al menos Nombre y Teléfono");
+                return;
             }
-        }
-        setupPreview('foto_file', 'preview_chofer');
-        setupPreview('auto_foto_file', 'preview_auto');
 
-        async function subirImagen(fileInputId) {
-            const fileInput = document.getElementById(fileInputId);
-            if (fileInput.files.length === 0) return null;
-            
-            const file = fileInput.files[0];
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Math.random()}.${fileExt}`;
-            const filePath = `fotos/${fileName}`;
-
-            const { data, error } = await supabaseClient.storage
-                .from('imagenes_sistema')
-                .upload(filePath, file);
-
-            if (error) {
-                console.error("Error subiendo:", error);
-                return null;
-            }
-            
-            const { data: urlData } = supabaseClient.storage
-                .from('imagenes_sistema')
-                .getPublicUrl(filePath);
-                
-            return urlData.publicUrl;
-        }
-
-        document.getElementById('formNuevoChofer').onsubmit = async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('btnGuardar');
-            btn.innerText = "SUBIENDO DATOS...";
-            btn.disabled = true;
-
-            const fotoChoferUrl = await subirImagen('foto_file');
-            const fotoAutoUrl = await subirImagen('auto_foto_file');
-            const grupoVal = document.querySelector('input[name="grupo"]:checked').value;
-
-            const { error } = await supabaseClient.from('choferes').insert([{
-                nombre: document.getElementById('nombre').value,
+            const nuevoChofer = {
+                nombre: nombre,
                 apellidos: document.getElementById('apellidos').value,
-                telefono: document.getElementById('telefono').value,
-                foto_url: fotoChoferUrl,
+                telefono: telefono,
                 auto_marca: document.getElementById('auto_marca').value,
-                auto_modelo: document.getElementById('auto_modelo').value,
                 auto_color: document.getElementById('auto_color').value,
-                auto_foto_url: fotoAutoUrl,
+                grupo: document.getElementById('grupo').value,
+                fondo_actual: parseFloat(document.getElementById('fondo_inicial').value) || 0,
                 lic_operativa: document.getElementById('lic_operativa').checked,
                 aire_acondicionado: document.getElementById('aire_acondicionado').checked,
-                grupo: grupoVal,
-                fondo_actual: 0
-            }]);
+                trabajar_sin_credito: document.getElementById('sin_credito').checked
+            };
 
-            if (error) {
-                alert("Error: " + error.message);
-                btn.innerText = "GUARDAR CHOFER";
-                btn.disabled = false;
+            const { data, error } = await supabaseClient
+                .from('choferes')
+                .insert([nuevoChofer]);
+
+            if(error) {
+                alert("Error al guardar: " + error.message);
             } else {
-                alert("✅ Chofer y Fotos guardados");
+                alert("Chofer registrado correctamente");
                 window.location.href = 'choferes.html';
             }
-        };
+        }
     </script>
 </body>
 </html>
