@@ -10,54 +10,68 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .form-card { background: white; border-radius: 2.5rem; padding: 2rem; }
-        input, select { border-radius: 1rem !important; border: 1px solid #e2e8f0 !important; padding: 0.75rem !important; outline: none; width: 100%; background: #f8fafc; }
-        .label-style { font-size: 0.7rem; font-weight: 900; color: #64748b; text-transform: uppercase; margin-bottom: 0.3rem; display: block; }
+        .form-card { background: white; border-radius: 2rem; padding: 1.5rem; shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        input, select { border-radius: 0.8rem !important; border: 1px solid #e2e8f0 !important; padding: 0.6rem !important; width: 100%; background: #f8fafc; font-weight: 600; }
+        .label-style { font-size: 0.65rem; font-weight: 900; color: #64748b; text-transform: uppercase; margin-bottom: 0.2rem; display: block; margin-left: 0.5rem;}
     </style>
 </head>
 <body class="pb-10">
-
     <header class="bg-[#1e5bb9] text-white p-4 shadow-md flex justify-between items-center sticky top-0 z-50">
         <a href="choferes.html" class="text-xl"><i class="fas fa-arrow-left"></i></a>
-        <h1 class="font-black italic uppercase tracking-tighter text-sm">Registrar Chofer</h1>
+        <h1 class="font-black italic uppercase tracking-tighter">Registrar Nuevo Chofer</h1>
         <div></div>
     </header>
 
-    <main class="p-4 max-w-xl mx-auto">
-        <form id="formNuevoChofer" class="form-card space-y-4 shadow-xl">
-            <h2 class="text-center font-black text-slate-800 text-xl uppercase italic mb-6">Datos del Chofer</h2>
-
+    <main class="p-4 max-w-xl mx-auto space-y-4">
+        <form id="formNuevoChofer" class="form-card space-y-3">
+            <h2 class="text-center font-black text-slate-800 text-lg uppercase italic mb-4">Información Personal</h2>
+            
             <div>
-                <label class="label-style">Nombre Completo</label>
-                <input type="text" id="nombre" required placeholder="Ej: Juan Pérez">
+                <label class="label-style">Nombre</label>
+                <input type="text" id="nombre" required placeholder="Nombre">
             </div>
-
             <div>
-                <label class="label-style">Teléfono</label>
+                <label class="label-style">Apellidos</label>
+                <input type="text" id="apellidos" required placeholder="Apellidos">
+            </div>
+            <div>
+                <label class="label-style">Teléfono (WhatsApp)</label>
                 <input type="tel" id="telefono" required placeholder="53XXXXXX">
             </div>
+            <div>
+                <label class="label-style">URL Foto del Chofer</label>
+                <input type="url" id="foto_url" placeholder="https://enlace-a-foto.jpg">
+            </div>
 
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="label-style">Marca Auto</label>
-                    <input type="text" id="auto_marca" placeholder="Lada">
-                </div>
-                <div>
-                    <label class="label-style">Color</label>
-                    <input type="text" id="auto_color" placeholder="Azul">
+            <div class="pt-4 border-t">
+                <h2 class="text-center font-black text-slate-800 text-lg uppercase italic mb-4">Datos del Auto</h2>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+                <div><label class="label-style">Marca</label><input type="text" id="auto_marca" placeholder="Ej: Hyundai"></div>
+                <div><label class="label-style">Modelo</label><input type="text" id="auto_modelo" placeholder="Ej: H1"></div>
+            </div>
+            <div><label class="label-style">Color</label><input type="text" id="auto_color" placeholder="Color del auto"></div>
+            <div><label class="label-style">URL Foto del Auto</label><input type="url" id="auto_foto_url" placeholder="Enlace foto auto"></div>
+
+            <div class="grid grid-cols-2 gap-4 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                <label class="flex items-center gap-2 text-[10px] font-black uppercase text-slate-600">
+                    <input type="checkbox" id="lic_operativa" class="w-4 h-4"> Lic. Operativa
+                </label>
+                <label class="flex items-center gap-2 text-[10px] font-black uppercase text-slate-600">
+                    <input type="checkbox" id="aire_acondicionado" class="w-4 h-4"> Aire Acond.
+                </label>
+            </div>
+
+            <div>
+                <label class="label-style">Grupo al que pertenece</label>
+                <div class="flex gap-4 p-2">
+                    <label class="text-xs font-bold"><input type="radio" name="grupo" value="Grupo A" checked> Grupo A</label>
+                    <label class="text-xs font-bold"><input type="radio" name="grupo" value="Grupo B"> Grupo B</label>
                 </div>
             </div>
 
-            <div class="flex flex-col gap-3 bg-slate-50 p-4 rounded-2xl">
-                <label class="flex items-center gap-2 text-xs font-black uppercase text-slate-600">
-                    <input type="checkbox" id="lic_operativa"> Lic. Operativa
-                </label>
-                <label class="flex items-center gap-2 text-xs font-black uppercase text-slate-600">
-                    <input type="checkbox" id="aire_acondicionado"> Aire Acondicionado
-                </label>
-            </div>
-
-            <button type="submit" class="w-full bg-[#1e5bb9] text-white font-black py-4 rounded-2xl shadow-lg uppercase tracking-widest mt-6 active:scale-95 transition-all">
+            <button type="submit" class="w-full bg-[#1e5bb9] text-white font-black py-4 rounded-xl shadow-lg uppercase tracking-widest mt-4">
                 Guardar Chofer
             </button>
         </form>
@@ -70,25 +84,28 @@
 
         document.getElementById('formNuevoChofer').onsubmit = async (e) => {
             e.preventDefault();
+            const grupoVal = document.querySelector('input[name="grupo"]:checked').value;
 
-            const datos = {
+            const nuevoChofer = {
                 nombre: document.getElementById('nombre').value,
+                apellidos: document.getElementById('apellidos').value,
                 telefono: document.getElementById('telefono').value,
+                foto_url: document.getElementById('foto_url').value,
                 auto_marca: document.getElementById('auto_marca').value,
+                auto_modelo: document.getElementById('auto_modelo').value,
                 auto_color: document.getElementById('auto_color').value,
+                auto_foto_url: document.getElementById('auto_foto_url').value,
                 lic_operativa: document.getElementById('lic_operativa').checked,
                 aire_acondicionado: document.getElementById('aire_acondicionado').checked,
-                fondo_actual: 0
+                grupo: grupoVal,
+                fondo_actual: 0,
+                trabajar_sin_credito: false
             };
 
-            const { error } = await supabaseClient.from('choferes').insert([datos]);
+            const { error } = await supabaseClient.from('choferes').insert([nuevoChofer]);
 
-            if (error) {
-                alert("Error: " + error.message);
-            } else {
-                alert("✅ Chofer guardado");
-                window.location.href = 'choferes.html';
-            }
+            if (error) alert("Error: " + error.message);
+            else { alert("✅ Chofer guardado correctamente"); window.location.href = 'choferes.html'; }
         };
     </script>
 </body>
