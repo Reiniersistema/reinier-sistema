@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Viajes - TransGestion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .card-viaje { background: white; border-radius: 1.5rem; padding: 1.2rem; margin-bottom: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border-left: 6px solid #1e5bb9; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; padding: 2rem; }
+        .modal.active { display: flex; }
+    </style>
+</head>
+<body class="pb-20">
+
+    <header class="bg-[#1e5bb9] text-white p-4 shadow-md flex justify-between items-center sticky top-0 z-50">
+        <a href="panel.html" class="text-xl"><i class="fas fa-arrow-left"></i></a>
+        <h1 class="font-black italic uppercase tracking-tighter">Historial de Viajes</h1>
+        <button onclick="toggleFiltros()" class="text-xl px-2"><i class="fas fa-filter"></i></button>
+    </header>
+
+    <div id="modalFiltros" class="modal">
+        <div class="bg-white w-full max-w-sm p-6 rounded-[2.5rem] space-y-4">
+            <h2 class="font-black text-center text-slate-800 uppercase italic">Filtrar Viajes</h2>
+            <div class="grid grid-cols-1 gap-2">
+                <button onclick="aplicarFiltro('todos')" class="p-3 bg-blue-50 text-blue-700 rounded-xl font-bold uppercase text-xs">Ver Todo</button>
+                <button onclick="aplicarFiltro('hoy')" class="p-3 bg-slate-100 rounded-xl font-bold text-xs uppercase">Hoy</button>
+                <button onclick="aplicarFiltro('semana')" class="p-3 bg-slate-100 rounded-xl font-bold text-xs uppercase">Esta Semana</button>
+            </div>
+            <div class="border-t pt-4 space-y-2">
+                <p class="text-[10px] font-black text-slate-400 uppercase">Rango Personalizado</p>
+                <input type="date" id="fechaDesde" class="w-full p-3 bg-slate-50 rounded-xl text-sm font-bold outline-none">
+                <input type="date" id="fechaHasta" class="w-full p-3 bg-slate-50 rounded-xl text-sm font-bold outline-none">
+                <button onclick="aplicarFiltro('rango')" class="w-full p-4 bg-blue-600 text-white rounded-2xl font-black uppercase italic shadow-lg shadow-blue-200">Aplicar Rango</button>
+            </div>
+            <button onclick="toggleFiltros()" class="w-full text-[10px] font-black text-slate-300 uppercase tracking-widest">Cerrar</button>
+        </div>
+    </div>
+
+    <main class="p-4 max-w-2xl mx-auto">
+        <div id="resumenCarga" class="mb-6 flex justify-between items-end px-2">
+            <div>
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mostrando</p>
+                <h2 id="rangoTexto" class="text-lg font-black text-blue-900 uppercase italic leading-none">Cargando...</h2>
+            </div>
+            <div class="text-right">
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Facturado</p>
+                <span id="totalDinero" class="text-2xl font-black text-green-600 leading-none">$0.00</span>
+            </div>
+        </div>
+
+        <div id="listaViajes" class="space-y-1">
+            </div>
+    </main>
+
+    <script>
+        const URL_PROYECTO = 'https://rkcqrnqlmuzcvwlgkmyb.supabase.co'; 
+        const CLAVE_API = 'sb_publishable_rCrNB27M4ypZk7j0a10p_Q_3iNO7qRO';
+        const supabaseClient = supabase.createClient(URL_PROYECTO, CLAVE_API);
+
+        function toggleFiltros() {
+            document.getElementById('modalFiltros').classList.toggle('active');
+        }
+
+        window.onload = () => {
+            aplicarFiltro('todos'); // Cambiado a 'todos' para asegurar que veas los datos al principio
+        };
+
+        async function aplicarFiltro(tipo) {
+            let query = supabaseClient.from('viajes').select('*').order('created_at', { ascending: false });
+            const ahora = new Date();
+            let textoFiltro = "Todos los Viajes";
+
+            if (tipo === 'hoy') {
+                const hoy = new Date().toISOString().split('T')[0];
+                query = query.gte('created_at', hoy + 'T00:00:00Z');
+                textoFiltro = "Viajes de Hoy";
+            } 
+            else if (tipo === 'semana') {
+                const semanaAtras = new Date(ahora.setDate(ahora.getDate() - 7)).toISOString();
+                query = query.gte('created_at', semanaAtras);
+                textoFiltro = "Últimos 7 días";
+            }
+            else if (tipo === 'rango') {
+                const desde = document.getElementById('fechaDesde').value;
+                const hasta = document.getElementById('fechaHasta').value;
+                if(!desde || !hasta) return alert("Selecciona ambas fechas");
+                query = query.gte('created_at', desde + 'T00:00:00Z').lte('created_at', hasta + 'T23:59:59Z');
+                textoFiltro = `Del ${desde} al ${hasta}`;
+            }
+
+            const { data, error } = await query;
+            
+            if (error) {
+                console.error("Error en Supabase:", error);
+                alert("Error al cargar viajes. Revisa las políticas RLS.");
+            }
+
+            if (document.getElementById('modalFiltros').classList.contains('active')) toggleFiltros();
+            renderizarViajes(data, textoFiltro);
+        }
+
+        function renderizarViajes(viajes, titulo) {
+            const contenedor = document.getElementById('listaViajes');
+            const txtRango = document.getElementById('rangoTexto');
+            const txtTotal = document.getElementById('totalDinero');
+            
+            txtRango.innerText = titulo;
+            contenedor.innerHTML = "";
+            let total = 0;
+
+            if (!viajes || viajes.length === 0) {
+                contenedor.innerHTML = `
+                    <div class="text-center py-20">
+                        <i class="fas fa-route text-slate-200 text-5xl mb-4"></i>
+                        <p class="text-slate-400 font-bold italic underline">No se encontraron viajes registrados.</p>
+                    </div>`;
+                txtTotal.innerText = "$0.00";
+                return;
+            }
+
+            viajes.forEach(v => {
+                total += parseFloat(v.precio || 0);
+                const fechaObj = new Date(v.created_at);
+                const fechaFormateada = fechaObj.toLocaleDateString() + " " + fechaObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                contenedor.innerHTML += `
+                    <div class="card-viaje">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <p class="text-[9px] font-black text-blue-500 uppercase tracking-tighter mb-1">
+                                    <i class="fas fa-calendar-alt"></i> ${fechaFormateada}
+                                </p>
+                                <h3 class="font-black text-slate-800 text-sm uppercase leading-tight">
+                                    ${v.origen} 
+                                    <i class="fas fa-long-arrow-alt-right mx-1 text-slate-300"></i> 
+                                    <span class="text-blue-700">${v.destino}</span>
+                                </h3>
+                            </div>
+                            <div class="text-right">
+                                <span class="bg-green-50 text-green-600 font-black px-3 py-1 rounded-xl text-sm">$${v.precio}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-3 border-t pt-3 mt-2">
+                            <div class="flex items-center gap-1 text-[9px] font-black text-slate-500 uppercase">
+                                <i class="fas fa-user-tie text-blue-400"></i> ${v.chofer || 'S/N'}
+                            </div>
+                            <div class="flex items-center gap-1 text-[9px] font-black text-slate-500 uppercase">
+                                <i class="fas fa-phone-alt text-slate-300"></i> ${v.telefono_chofer || 'S/T'}
+                            </div>
+                            <div class="flex items-center gap-1 text-[9px] font-black text-slate-500 uppercase">
+                                <i class="fas fa-users text-slate-300"></i> ${v.pax || 1} PAX
+                            </div>
+                            ${v.es_reserva ? '<span class="text-[8px] bg-orange-100 text-orange-600 font-black px-2 py-0.5 rounded-md uppercase italic">Reserva</span>' : ''}
+                        </div>
+                    </div>
+                `;
+            });
+
+            txtTotal.innerText = `$${total.toFixed(2)}`;
+        }
+    </script>
+</body>
+</html>
