@@ -186,7 +186,6 @@
 
             const { error: errV } = await supabaseClient.from('viajes').insert([{
                 colaboracion: document.getElementById('colaboracion').value,
-                chofer: datosChoferActual.nombre,
                 chofer_tel: document.getElementById('tel_chofer').value,
                 cliente_tel: document.getElementById('tel_cliente').value,
                 precio: precio,
@@ -209,7 +208,7 @@
                 const nFondo = datosChoferActual.fondo_actual - desc;
                 await supabaseClient.from('choferes').update({ fondo_actual: nFondo }).eq('id', datosChoferActual.id);
                 await supabaseClient.from('movimientos_fondo').insert([{
-                    chofer_id: datosChoferActual.id, monto: -desc, motivo: "12% Viaje: " + document.getElementById('origen').value
+                    chofer_id: datosChoferActual.id, monto: -desc, motivo: "12% Viaje Origen: " + document.getElementById('origen').value
                 }]);
             }
 
