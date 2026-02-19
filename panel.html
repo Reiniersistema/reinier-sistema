@@ -1,22 +1,117 @@
-// SUSTITUIR LA FUNCIÓN cargarDatosPanel() en panel.html
-async function cargarDatosPanel() {
-    const { data, error } = await supabaseClient
-        .from('viajes')
-        .select('chofer_tel, precio, origen') // Cambiado chofer por chofer_tel
-        .order('created_at', { ascending: false })
-        .limit(5);
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TransGestion - Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; overflow-x: hidden; }
+        .sidebar { transition: 0.3s; width: 0; overflow: hidden; position: fixed; z-index: 50; height: 100vh; background: #1e5bb9; color: white; }
+        .sidebar.active { width: 260px; }
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; }
+        .overlay.active { display: block; }
+    </style>
+</head>
+<body class="flex flex-col">
 
-    const tabla = document.getElementById('tablaRecientes');
-    if (data && data.length > 0) {
-        tabla.innerHTML = data.map(v => `
-            <tr class="border-b">
-                <td class="py-3 px-2">${v.chofer_tel}</td> 
-                <td class="py-3 px-2 text-green-600">$${v.precio}</td>
-                <td class="py-3 px-2">${v.origen}</td>
-            </tr>
-        `).join('');
-    } else {
-        tabla.innerHTML = `<tr><td colspan="3" class="py-8 text-center text-slate-400">No hay viajes registrados</td></tr>`;
-    }
-    // ... resto del código de la gráfica ...
-}
+    <div id="overlay" class="overlay" onclick="toggleMenu()"></div>
+
+    <nav id="sidebar" class="sidebar shadow-2xl">
+        <div class="p-6">
+            <h2 class="text-2xl font-black italic mb-8 border-b border-blue-400 pb-4 text-white">TransGestion</h2>
+            <ul class="space-y-4 font-bold text-sm uppercase tracking-wider text-white">
+                <li><a href="panel.html" class="flex items-center gap-3 p-2 bg-blue-700 rounded-xl"><i class="fas fa-chart-line"></i> Panel de Control</a></li>
+                <li><a href="crear-viaje.html" class="flex items-center gap-3 p-2 hover:bg-blue-800 rounded-xl"><i class="fas fa-plus-circle"></i> Crear Viajes</a></li>
+                <li><a href="mis-viajes.html" class="flex items-center gap-3 p-2 hover:bg-blue-800 rounded-xl"><i class="fas fa-route"></i> Mis Viajes</a></li>
+                <li><a href="choferes.html" class="flex items-center gap-3 p-2 hover:bg-blue-800 rounded-xl"><i class="fas fa-users"></i> Choferes</a></li>
+                <li><a href="filtrar_viajes.html" class="flex items-center gap-3 p-2 hover:bg-blue-800 rounded-xl"><i class="fas fa-search"></i> Buscar</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <header class="bg-[#1e5bb9] text-white p-4 shadow-md flex justify-between items-center sticky top-0 z-30">
+        <button onclick="toggleMenu()" class="text-2xl px-2"><i class="fas fa-bars"></i></button>
+        <h1 class="font-black italic text-lg uppercase tracking-tighter">TransGestion</h1>
+        <button onclick="logout()" class="text-xl px-2 text-red-300"><i class="fas fa-sign-out-alt"></i></button>
+    </header>
+
+    <main class="p-4 max-w-5xl mx-auto w-full">
+        <div class="mb-8">
+            <h2 class="text-3xl font-black text-slate-800">Panel de Control</h2>
+            <p class="text-blue-600 font-bold">Hola, <span id="userNameDisplay">...</span></p>
+        </div>
+
+        <div class="bg-white rounded-3xl p-6 shadow-lg mb-8">
+            <h3 class="font-black text-slate-800 uppercase mb-4 flex items-center gap-2">
+                <i class="fas fa-history text-blue-600"></i> Viajes Recientes
+            </h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="text-[10px] uppercase text-slate-400 border-b">
+                            <th class="py-3 px-2">Chófer (Tel)</th>
+                            <th class="py-3 px-2">Precio</th>
+                            <th class="py-3 px-2">Origen</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaRecientes" class="text-sm font-bold text-slate-600"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const URL_PROYECTO = 'https://rkcqrnqlmuzcvwlgkmyb.supabase.co'; 
+        const CLAVE_API = 'sb_publishable_rCrNB27M4ypZk7j0a10p_Q_3iNO7qRO';
+        const supabaseClient = supabase.createClient(URL_PROYECTO, CLAVE_API);
+
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('overlay').classList.toggle('active');
+        }
+
+        window.onload = () => {
+            const nombre = localStorage.getItem('userName');
+            if(!nombre) { window.location.href = 'index.html'; return; }
+            document.getElementById('userNameDisplay').innerText = nombre;
+            cargarDatosPanel();
+        };
+
+        async function cargarDatosPanel() {
+            const { data, error } = await supabaseClient
+                .from('viajes')
+                .select('chofer_tel, precio, origen') 
+                .order('created_at', { ascending: false })
+                .limit(5);
+
+            const tabla = document.getElementById('tablaRecientes');
+            if (error) {
+                tabla.innerHTML = `<tr><td colspan="3" class="py-8 text-center text-red-500">Error: ${error.message}</td></tr>`;
+                return;
+            }
+
+            if (data && data.length > 0) {
+                tabla.innerHTML = data.map(v => `
+                    <tr class="border-b">
+                        <td class="py-3 px-2">${v.chofer_tel || 'S/N'}</td>
+                        <td class="py-3 px-2 text-green-600">$${v.precio}</td>
+                        <td class="py-3 px-2">${v.origen}</td>
+                    </tr>
+                `).join('');
+            } else {
+                tabla.innerHTML = `<tr><td colspan="3" class="py-8 text-center text-slate-400">No hay viajes registrados</td></tr>`;
+            }
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>
