@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crear Viaje - CONGO MUSUNDI</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
@@ -17,13 +20,14 @@
         .btn-calc { background: #f1f5f9; padding: 8px 15px; border-radius: 10px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
         .btn-main { border-radius: 1.5rem; padding: 1.2rem; font-weight: 900; text-transform: uppercase; italic; transition: all 0.2s; }
         .planilla-box { background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 1rem; padding: 1.5rem; margin-top: 1rem; }
+        .logo-text { font-weight: 900; font-style: italic; text-transform: uppercase; letter-spacing: -0.05em; }
     </style>
 </head>
 <body class="pb-10">
 
     <header class="bg-[#1e5bb9] text-white p-4 shadow-md flex items-center sticky top-0 z-50">
         <a href="panel.html" class="text-xl w-10"><i class="fas fa-arrow-left"></i></a>
-        <h1 class="font-black italic uppercase tracking-tighter text-center flex-1">Elaborar Viaje</h1>
+        <h1 class="logo-text text-lg text-center flex-1">Elaborar Viaje</h1>
         <div class="w-10"></div>
     </header>
 
@@ -123,7 +127,7 @@
 
             <div class="input-cell">
                 <label class="label-cell">Observación</label>
-                <textarea id="observacion" rows="3" placeholder="Equipajes, mascotas, instrucciones especiales..."></textarea>
+                <textarea id="observacion" rows="3" placeholder="Equipajes, mascotas..."></textarea>
             </div>
 
             <div class="grid grid-cols-2 gap-4 mt-8">
@@ -153,10 +157,6 @@
     </main>
 
     <script>
-        const URL_PROYECTO = 'https://rkcqrnqlmuzcvwlgkmyb.supabase.co'; 
-        const CLAVE_API = 'sb_publishable_rCrNB27M4ypZk7j0a10p_Q_3iNO7qRO';
-        const supabaseClient = supabase.createClient(URL_PROYECTO, CLAVE_API);
-
         let datosChoferActual = null;
 
         async function buscarChofer() {
@@ -204,31 +204,51 @@
             const cliente = document.getElementById('tel_cliente').value;
             const origen = document.getElementById('origen').value;
             const destino = document.getElementById('destino').value;
-            const pax = document.getElementById('pax').value;
-            const fondo = datosChoferActual.fondo_actual;
-
-            // Planilla Chofer
-            const pChofer = `*DATOS DEL VIAJE*\nPrecio: ${precio}\nCliente: ${cliente}\nOrigen: ${origen}\nDestino: ${destino}\nPax: ${pax}\nFondo Actual: $${fondo}\n\n⚠️ IMPORTANTE ⚠️\n\n•usted tiene 15 minutos máximo para llegar a la dirección de recojida del cliente.\n\n•El cliente tiene 15 minutos para abordar su vehículo,por encima de este tiempo se le cobrará 25 cup el minuto extra\n\n•En caso de llegada tarde a un servicio programado se le descontará el 50% del precio del servicio.\n\n•Recuerde mantener su auto limpio y en perfectas condiciones técnicas al igual que un trato cordial con cada cliente.`;
-
-            // Planilla Cliente
-            const pCliente = `*Taxi En Camino*\nPrecio: ${precio}\nChofer: ${datosChoferActual.nombre}\nAuto: ${datosChoferActual.auto_marca}\nColor: ${datosChoferActual.auto_color}\n⚠️ *IMPORTANTE* ⚠️\n\n•Cada parada extra se recalcula la ruta y modifica el costo.\n\n•Al llegar el taxi a su origen usted tiene 10min de espera como cortesía, pasado este tiempo debe pagar por cada minuto extra.\n\n•Tiempo de espera extra: 25cup x minutos.\n\n•En caso de cancelar estando el auto en el lugar de recogida, deberá pagar la mitad del costo del servicio`;
+            const pChofer = `*DATOS DEL VIAJE*\nPrecio: ${precio}\nCliente: ${cliente}\nOrigen: ${origen}\nDestino: ${destino}\nFondo Actual: $${datosChoferActual.fondo_actual}`;
+            const pCliente = `*Taxi En Camino*\nPrecio: ${precio}\nChofer: ${datosChoferActual.nombre}\nAuto: ${datosChoferActual.auto_marca}`;
 
             document.getElementById('txt_planilla_chofer').innerText = pChofer;
             document.getElementById('txt_planilla_cliente').innerText = pCliente;
             document.getElementById('seccion_planillas').classList.remove('hidden');
-            window.scrollTo(0, document.body.scrollHeight);
         }
 
         function enviarWA(tipo) {
             const texto = tipo === 'chofer' ? document.getElementById('txt_planilla_chofer').innerText : document.getElementById('txt_planilla_cliente').innerText;
             const tel = tipo === 'chofer' ? document.getElementById('tel_chofer').value : document.getElementById('tel_cliente').value;
-            const msg = encodeURIComponent(texto);
-            window.open(`https://wa.me/${tel}?text=${msg}`, '_blank');
+            window.open(`https://wa.me/${tel}?text=${encodeURIComponent(texto)}`, '_blank');
         }
 
         async function crearViaje() {
-            // Aquí va la lógica de insertar en Supabase (tabla viajes)
-            alert("Viaje registrado en el sistema.");
+            const precio = parseFloat(document.getElementById('precio_viaje').value);
+            if (!datosChoferActual || isNaN(precio)) return alert("Datos incompletos.");
+
+            const comision = datosChoferActual.lic_operativa ? 0.12 : 0.15;
+            const costoComision = precio * comision;
+
+            if (datosChoferActual.fondo_actual < costoComision && !datosChoferActual.trabajar_sin_credito) {
+                return alert("Fondo insuficiente.");
+            }
+
+            const nuevoViaje = {
+                chofer_tel: datosChoferActual.telefono,
+                cliente_tel: document.getElementById('tel_cliente').value,
+                precio: precio,
+                origen: document.getElementById('origen').value,
+                destino: document.getElementById('destino').value,
+                colaboracion: document.getElementById('colaboracion').value,
+                observacion: document.getElementById('observacion').value
+            };
+
+            const { error: errorViaje } = await supabaseClient.from('viajes').insert([nuevoViaje]);
+            
+            if (!errorViaje) {
+                const nuevoFondo = datosChoferActual.fondo_actual - costoComision;
+                await supabaseClient.from('choferes').update({ fondo_actual: nuevoFondo }).eq('id', datosChoferActual.id);
+                alert("Viaje creado y fondo actualizado.");
+                window.location.href = 'panel.html';
+            } else {
+                alert("Error al guardar.");
+            }
         }
     </script>
 </body>
