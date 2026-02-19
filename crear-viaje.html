@@ -1,162 +1,4 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crear Viaje - CONGO MUSUNDI</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="config.js"></script>
-    
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
-        .form-container { background: white; border-radius: 2rem; padding: 2rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
-        .input-cell { margin-bottom: 1.5rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem; }
-        .label-cell { font-size: 10px; font-weight: 900; text-transform: uppercase; color: #64748b; letter-spacing: 0.05em; }
-        input, select, textarea { width: 100%; border: none; font-weight: 700; font-size: 15px; outline: none; padding: 5px 0; color: #1e293b; }
-        .btn-calc { background: #f1f5f9; padding: 8px 15px; border-radius: 10px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
-        .btn-main { border-radius: 1.5rem; padding: 1.2rem; font-weight: 900; text-transform: uppercase; italic; transition: all 0.2s; }
-        .planilla-box { background: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 1rem; padding: 1.5rem; margin-top: 1rem; }
-        .logo-text { font-weight: 900; font-style: italic; text-transform: uppercase; letter-spacing: -0.05em; }
-    </style>
-</head>
-<body class="pb-10">
-
-    <header class="bg-[#1e5bb9] text-white p-4 shadow-md flex items-center sticky top-0 z-50">
-        <a href="panel.html" class="text-xl w-10"><i class="fas fa-arrow-left"></i></a>
-        <h1 class="logo-text text-lg text-center flex-1">Elaborar Viaje</h1>
-        <div class="w-10"></div>
-    </header>
-
-    <main class="p-4 max-w-2xl mx-auto mt-4">
-        <div class="form-container">
-            
-            <div class="input-cell">
-                <label class="label-cell">Colaboración</label>
-                <select id="colaboracion">
-                    <option value="Ninguna">Ninguna</option>
-                    <option value="Agencia">Agencia</option>
-                    <option value="Socio">Socio</option>
-                    <option value="Propio">Propio</option>
-                </select>
-            </div>
-
-            <div class="input-cell">
-                <label class="label-cell">Chofer (Teléfono)</label>
-                <div class="flex gap-2">
-                    <input type="tel" id="tel_chofer" placeholder="Número del chofer">
-                    <button onclick="buscarChofer()" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-black">BUSCAR</button>
-                </div>
-                <div id="info_chofer" class="hidden mt-3 bg-blue-50 p-3 rounded-xl border border-blue-100">
-                    <p class="text-[11px] font-bold text-blue-800">Nombre: <span id="c_nombre" class="font-black">-</span></p>
-                    <p class="text-[11px] font-bold text-blue-800">Vehículo: <span id="c_auto" class="font-black">-</span></p>
-                    <p class="text-[11px] font-bold text-blue-800">Fondo Actual: <span id="c_fondo" class="font-black">$0</span></p>
-                </div>
-            </div>
-
-            <div class="input-cell">
-                <label class="label-cell">Teléfono Cliente</label>
-                <input type="tel" id="tel_cliente" placeholder="Número del cliente">
-            </div>
-
-            <div class="input-cell">
-                <label class="label-cell">Precio del Viaje</label>
-                <input type="number" id="precio_viaje" placeholder="0.00" class="text-2xl text-blue-600">
-                
-                <div class="mt-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                    <p class="text-[9px] font-black uppercase text-slate-400 mb-2">Calculadora de Tarifa</p>
-                    <div class="grid grid-cols-2 gap-3 mb-3">
-                        <input type="number" id="calc_tarifa" placeholder="Tarifa por KM" class="bg-white p-2 rounded-lg text-xs">
-                        <input type="number" id="calc_km" placeholder="Distancia KM" class="bg-white p-2 rounded-lg text-xs">
-                    </div>
-                    <button onclick="calcularPrecio()" class="w-full btn-calc">Calcular y Aplicar</button>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div class="input-cell">
-                    <label class="label-cell">Cantidad Pasajeros</label>
-                    <input type="number" id="pax" value="1">
-                </div>
-                <div class="input-cell">
-                    <label class="label-cell">Grupo WhatsApp</label>
-                    <input type="text" id="grupo" placeholder="Nombre del grupo">
-                </div>
-            </div>
-
-            <div class="input-cell">
-                <label class="label-cell">Origen</label>
-                <input type="text" id="origen" placeholder="Dirección de recogida">
-                <div id="paradas_contenedor" class="mt-2 space-y-2"></div>
-                <button onclick="añadirParada()" class="mt-2 text-blue-600 font-black text-[10px] uppercase">
-                    <i class="fas fa-plus-circle"></i> Añadir Parada Intermedia
-                </button>
-            </div>
-
-            <div class="input-cell">
-                <label class="label-cell">Destino</label>
-                <input type="text" id="destino" placeholder="Dirección de llegada">
-            </div>
-
-            <div class="grid grid-cols-2 gap-2 mb-6">
-                <label class="flex items-center gap-2 p-3 bg-slate-50 rounded-xl cursor-pointer">
-                    <input type="checkbox" id="check_transfer" class="w-4 h-4">
-                    <span class="text-[10px] font-black uppercase text-slate-600">Transferencia</span>
-                </label>
-                <label class="flex items-center gap-2 p-3 bg-slate-50 rounded-xl cursor-pointer">
-                    <input type="checkbox" id="check_aire" class="w-4 h-4" checked>
-                    <span class="text-[10px] font-black uppercase text-slate-600">Aire Acond.</span>
-                </label>
-                <label class="flex items-center gap-2 p-3 bg-slate-50 rounded-xl cursor-pointer">
-                    <input type="checkbox" id="check_regreso" class="w-4 h-4">
-                    <span class="text-[10px] font-black uppercase text-slate-600">Ida y Vuelta</span>
-                </label>
-                <label class="flex items-center gap-2 p-3 bg-slate-50 rounded-xl cursor-pointer">
-                    <input type="checkbox" id="check_reserva" onchange="toggleReserva()" class="w-4 h-4">
-                    <span class="text-[10px] font-black uppercase text-slate-600">Reservado</span>
-                </label>
-            </div>
-
-            <div id="box_reserva" class="hidden input-cell bg-orange-50 p-4 rounded-2xl border border-orange-100">
-                <label class="label-cell">Fecha y Hora de Reserva</label>
-                <input type="datetime-local" id="fecha_reserva">
-            </div>
-
-            <div class="input-cell">
-                <label class="label-cell">Observación</label>
-                <textarea id="observacion" rows="3" placeholder="Equipajes, mascotas..."></textarea>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4 mt-8">
-                <button onclick="generarPlanilla()" class="btn-main bg-slate-800 text-white">Planilla</button>
-                <button onclick="crearViaje()" class="btn-main bg-[#1e5bb9] text-white shadow-lg shadow-blue-200">Crear Viaje</button>
-            </div>
-
-        </div>
-
-        <div id="seccion_planillas" class="hidden space-y-6 mt-8 pb-10">
-            <div class="planilla-box">
-                <h4 class="text-center font-black uppercase text-xs mb-4 text-slate-500">Planilla para el Chofer</h4>
-                <div id="txt_planilla_chofer" class="text-xs font-mono whitespace-pre-wrap leading-relaxed"></div>
-                <button onclick="enviarWA('chofer')" class="w-full bg-green-500 text-white p-4 rounded-2xl font-black uppercase text-xs mt-4">
-                    <i class="fab fa-whatsapp mr-2"></i> WhatsApp Chofer
-                </button>
-            </div>
-
-            <div class="planilla-box">
-                <h4 class="text-center font-black uppercase text-xs mb-4 text-slate-500">Planilla para el Cliente</h4>
-                <div id="txt_planilla_cliente" class="text-xs font-mono whitespace-pre-wrap leading-relaxed"></div>
-                <button onclick="enviarWA('cliente')" class="w-full bg-green-600 text-white p-4 rounded-2xl font-black uppercase text-xs mt-4">
-                    <i class="fab fa-whatsapp mr-2"></i> WhatsApp Cliente
-                </button>
-            </div>
-        </div>
-    </main>
-
-    <script>
+<script>
         let datosChoferActual = null;
 
         async function buscarChofer() {
@@ -167,7 +9,7 @@
                 datosChoferActual = data;
                 document.getElementById('c_nombre').innerText = data.nombre;
                 document.getElementById('c_auto').innerText = `${data.auto_marca} (${data.auto_color})`;
-                document.getElementById('c_fondo').innerText = `$${data.fondo_actual}`;
+                document.getElementById('c_fondo').innerText = `$${data.fondo_actual.toFixed(2)}`;
                 document.getElementById('info_chofer').classList.remove('hidden');
             } else {
                 alert("Chofer no encontrado.");
@@ -204,7 +46,8 @@
             const cliente = document.getElementById('tel_cliente').value;
             const origen = document.getElementById('origen').value;
             const destino = document.getElementById('destino').value;
-            const pChofer = `*DATOS DEL VIAJE*\nPrecio: ${precio}\nCliente: ${cliente}\nOrigen: ${origen}\nDestino: ${destino}\nFondo Actual: $${datosChoferActual.fondo_actual}`;
+            
+            const pChofer = `*DATOS DEL VIAJE*\nPrecio: ${precio}\nCliente: ${cliente}\nOrigen: ${origen}\nDestino: ${destino}\nFondo Actual: $${datosChoferActual.fondo_actual.toFixed(2)}`;
             const pCliente = `*Taxi En Camino*\nPrecio: ${precio}\nChofer: ${datosChoferActual.nombre}\nAuto: ${datosChoferActual.auto_marca}`;
 
             document.getElementById('txt_planilla_chofer').innerText = pChofer;
@@ -218,15 +61,18 @@
             window.open(`https://wa.me/${tel}?text=${encodeURIComponent(texto)}`, '_blank');
         }
 
+        // --- CÓDIGO ACTUALIZADO PARA TU TABLA VIAJES ---
         async function crearViaje() {
             const precio = parseFloat(document.getElementById('precio_viaje').value);
-            if (!datosChoferActual || isNaN(precio)) return alert("Datos incompletos.");
+            if (!datosChoferActual || isNaN(precio)) return alert("Primero busca un chofer e ingresa el precio.");
 
+            // Lógica de comisión: 12% si tiene licencia, 15% si no
             const comision = datosChoferActual.lic_operativa ? 0.12 : 0.15;
             const costoComision = precio * comision;
 
+            // Bloqueo por falta de saldo
             if (datosChoferActual.fondo_actual < costoComision && !datosChoferActual.trabajar_sin_credito) {
-                return alert("Fondo insuficiente.");
+                return alert("Fondo insuficiente. Comisión requerida: $" + costoComision.toFixed(2));
             }
 
             const nuevoViaje = {
@@ -235,8 +81,16 @@
                 precio: precio,
                 origen: document.getElementById('origen').value,
                 destino: document.getElementById('destino').value,
+                pax: parseInt(document.getElementById('pax').value) || 1,
                 colaboracion: document.getElementById('colaboracion').value,
-                observacion: document.getElementById('observacion').value
+                grupo_whatsapp: document.getElementById('grupo').value,
+                pago_transferencia: document.getElementById('check_transfer').checked,
+                aire_acondicionado: document.getElementById('check_aire').checked,
+                ida_vuelta: document.getElementById('check_regreso').checked,
+                es_reserva: document.getElementById('check_reserva').checked,
+                fecha_reserva: document.getElementById('check_reserva').checked ? document.getElementById('fecha_reserva').value : null,
+                observacion: document.getElementById('observacion').value,
+                paradas: Array.from(document.querySelectorAll('#paradas_contenedor input')).map(i => i.value).join(', ')
             };
 
             const { error: errorViaje } = await supabaseClient.from('viajes').insert([nuevoViaje]);
@@ -244,12 +98,11 @@
             if (!errorViaje) {
                 const nuevoFondo = datosChoferActual.fondo_actual - costoComision;
                 await supabaseClient.from('choferes').update({ fondo_actual: nuevoFondo }).eq('id', datosChoferActual.id);
-                alert("Viaje creado y fondo actualizado.");
+                
+                alert("✅ Viaje registrado. Comisión de $" + costoComision.toFixed(2) + " descontada.");
                 window.location.href = 'panel.html';
             } else {
-                alert("Error al guardar.");
+                alert("Error al guardar: " + errorViaje.message);
             }
         }
     </script>
-</body>
-</html>
