@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filtrar Viajes - CONGO MUSUNDI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .btn-mando { text-transform: uppercase; font-size: 10px; font-weight: 900; letter-spacing: 1px; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 1rem; overflow: hidden; }
+        th { background: #1e5bb9; color: white; text-transform: uppercase; font-size: 9px; padding: 12px 8px; }
+        td { padding: 12px 8px; border-bottom: 1px solid #f1f5f9; font-size: 11px; text-align: center; font-weight: 600; }
+    </style>
+</head>
+<body class="pb-10">
+
+    <header class="bg-[#1e5bb9] text-white p-4 shadow-lg sticky top-0 z-50 flex items-center gap-4">
+        <a href="panel.html" class="text-xl"><i class="fas fa-arrow-left"></i></a>
+        <h1 class="font-black italic uppercase tracking-tighter">Buscador de Viajes</h1>
+    </header>
+
+    <main class="p-4 space-y-4">
+        
+        <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-4">
+            
+            <div>
+                <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Dato a buscar (Chofer o Cliente)</label>
+                <input type="text" id="input_dato" placeholder="Escribe nombre..." 
+                       class="w-full p-4 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-blue-500 outline-none font-bold text-slate-700">
+            </div>
+
+            <div>
+                <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Seleccionar tipo de filtro</label>
+                <select id="menu_tipo" onchange="mostrarCalendarios()" 
+                        class="w-full p-4 rounded-2xl bg-slate-50 border-2 border-slate-100 font-bold text-slate-700 appearance-none">
+                    <option value="todos">Todos los viajes</option>
+                    <option value="fecha">Por Fecha</option>
+                    <option value="rango">Desde - Hasta</option>
+                    <option value="mes">Por Mes</option>
+                </select>
+            </div>
+
+            <div id="contenedor_fechas" class="grid grid-cols-1 gap-3"></div>
+
+            <div class="grid grid-cols-2 gap-3 pt-2">
+                <button onclick="window.location.href='panel.html'" 
+                        class="btn-mando bg-slate-100 text-slate-500 p-4 rounded-2xl active:scale-95 transition-all">
+                    <i class="fas fa-times mr-2"></i> Cancelar
+                </button>
+                <button onclick="ejecutarBusqueda()" 
+                        class="btn-mando bg-[#1e5bb9] text-white p-4 rounded-2xl shadow-lg shadow-blue-100 active:scale-95 transition-all">
+                    <i class="fas fa-search mr-2"></i> Filtrar
+                </button>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto shadow-xl rounded-[1.5rem] border border-slate-100">
+            <table id="tabla_viajes">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Chofer</th>
+                        <th>Cliente</th>
+                        <th>Tarifa</th>
+                        <th>Admin</th>
+                    </tr>
+                </thead>
+                <tbody id="cuerpo_tabla">
+                    </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        // Configuración de Supabase
+        const URL_PROYECTO = 'https://rkcqrnqlmuzcvwlgkmyb.supabase.co'; 
+        const CLAVE_API = 'sb_publishable_rCrNB27M4ypZk7j0a10p_Q_3iNO7qRO';
+        const supabaseClient = supabase.createClient(URL_PROYECTO, CLAVE_API);
+
+        // Función para mostrar los calendarios según la opción del menú deslizante
+        function mostrarCalendarios() {
+            const tipo = document.getElementById('menu_tipo').value;
+            const caja = document.getElementById('contenedor_fechas');
+            caja.innerHTML = '';
+
+            if(tipo === 'fecha') {
+                caja.innerHTML = `<input type="date" id="val_fecha" class="w-full p-4 rounded-2xl border-2 border-blue-100 bg-blue-50 font-bold">`;
+            } else if(tipo === 'rango') {
+                caja.innerHTML = `
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="date" id="val_desde" class="p-4 rounded-2xl border-2 border-blue-100 bg-blue-50 font-bold text-xs">
+                        <input type="date" id="val_hasta" class="p-4 rounded-2xl border-2 border-blue-100 bg-blue-50 font-bold text-xs">
+                    </div>`;
+            } else if(tipo === 'mes') {
+                caja.innerHTML = `<input type="month" id="val_mes" class="w-full p-4 rounded-2xl border-2 border-blue-100 bg-blue-50 font-bold">`;
+            }
+        }
+
+        async function ejecutarBusqueda() {
+            const datoBusqueda = document.getElementById('input_dato').value.toLowerCase();
+            const tipoFiltro = document.getElementById('menu_tipo').value;
+            
+            // 1. Empezamos la consulta a Supabase conectando con choferes para traer el nombre
+            let consulta = supabaseClient.from('viajes').select('*, choferes(nombre)');
+
+            // 2. Aplicamos filtros de fecha según la selección
+            if(tipoFiltro === 'fecha') {
+                const f = document.getElementById('val_fecha').value;
+                if(f) consulta = consulta.gte('created_at', `${f}T00:00:00`).lte('created_at', `${f}T23:59:59`);
+            } else if(tipoFiltro === 'rango') {
+                const d = document.getElementById('val_desde').value;
+                const h = document.getElementById('val_hasta').value;
+                if(d && h) consulta = consulta.gte('created_at', d).lte('created_at', h);
+            } else if(tipoFiltro === 'mes') {
+                const m = document.getElementById('val_mes').value;
+                if(m) consulta = consulta.gte('created_at', `${m}-01`).lte('created_at', `${m}-31`);
+            }
+
+            const { data, error } = await consulta.order('created_at', { ascending: false });
+
+            if(error) { alert("Error al buscar"); return; }
+
+            // 3. Filtrar por el "Dato a buscar" (Nombre del chofer o del cliente)
+            const filtrados = data.filter(v => {
+                const nombreChofer = v.choferes?.nombre?.toLowerCase() || "";
+                const nombreCliente = v.cliente?.toLowerCase() || "";
+                return nombreChofer.includes(datoBusqueda) || nombreCliente.includes(datoBusqueda);
+            });
+
+            // 4. Dibujar la tabla
+            const cuerpo = document.getElementById('cuerpo_tabla');
+            cuerpo.innerHTML = filtrados.map(v => `
+                <tr>
+                    <td class="text-[8px]">${new Date(v.created_at).toLocaleDateString()}</td>
+                    <td class="text-blue-700 font-black">${v.choferes?.nombre || 'S/N'}</td>
+                    <td class="text-slate-500 uppercase">${v.cliente}</td>
+                    <td class="text-slate-800">$${v.tarifa}</td>
+                    <td class="text-green-600 font-black">$${v.ganancia_admin}</td>
+                </tr>
+            `).join('');
+
+            if(filtrados.length === 0) {
+                cuerpo.innerHTML = `<tr><td colspan="5" class="p-10 text-slate-400 italic">No se encontraron viajes con esos datos</td></tr>`;
+            }
+        }
+    </script>
+</body>
+</html>
