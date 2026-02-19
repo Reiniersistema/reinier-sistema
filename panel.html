@@ -29,7 +29,9 @@
                 <li><a href="crear-viaje.html" class="flex items-center gap-3 p-2 hover:bg-blue-800 rounded-xl"><i class="fas fa-plus-circle"></i> Crear Viajes</a></li>
                 <li><a href="mis-viajes.html" class="flex items-center gap-3 p-2 hover:bg-blue-800 rounded-xl"><i class="fas fa-route"></i> Mis Viajes</a></li>
                 <li><a href="choferes.html" class="flex items-center gap-3 p-2 hover:bg-blue-800 rounded-xl"><i class="fas fa-users"></i> Choferes</a></li>
-                <li><a href="filtrar.html" class="flex items-center gap-3 p-2 hover:bg-blue-800 rounded-xl"><i class="fas fa-filter"></i> Filtrar Viajes</a></li>
+                
+                <li><a href="filtrar_viajes.html" class="flex items-center gap-3 p-2 hover:bg-blue-800 rounded-xl"><i class="fas fa-filter"></i> Filtrar Viajes</a></li>
+                
                 <li><a href="pendientes.html" class="flex items-center gap-3 p-2 hover:bg-blue-800 rounded-xl"><i class="fas fa-clock"></i> Pagos Pendientes</a></li>
                 <li><a href="aprobar.html" class="flex items-center gap-3 p-2 hover:bg-blue-800 rounded-xl"><i class="fas fa-check-double"></i> Pagos por Aprobar</a></li>
                 <li><a href="tarjetas.html" class="flex items-center gap-3 p-2 hover:bg-blue-800 rounded-xl"><i class="fas fa-credit-card"></i> Tarjetas</a></li>
@@ -106,7 +108,6 @@
         };
 
         async function cargarDatosPanel() {
-            // Aquí buscaremos los últimos 5 viajes en la tabla 'viajes' (que crearemos luego)
             const { data, error } = await supabaseClient
                 .from('viajes')
                 .select('chofer, precio, origen')
@@ -126,7 +127,6 @@
                 tabla.innerHTML = `<tr><td colspan="3" class="py-8 text-center text-slate-400">No hay viajes registrados</td></tr>`;
             }
 
-            // Lógica básica para la gráfica
             const ctx = document.getElementById('graficaViajes').getContext('2d');
             new Chart(ctx, {
                 type: 'bar',
@@ -134,7 +134,7 @@
                     labels: ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'],
                     datasets: [{
                         label: 'Cantidad de Viajes',
-                        data: [12, 19, 3, 5, 2, 3, 7], // Datos de ejemplo
+                        data: [12, 19, 3, 5, 2, 3, 7], 
                         backgroundColor: '#1e5bb9'
                     }]
                 }
