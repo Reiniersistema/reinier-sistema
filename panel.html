@@ -3,91 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel - CONGO MUSUNDI</title>
+    <title>Panel de Control - CONGO MUSUNDI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
-        .btn-menu { background: white; padding: 1.5rem; border-radius: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.3s; border-bottom: 4px solid #e2e8f0; }
-        .btn-menu:active { transform: scale(0.95); border-bottom-width: 0; margin-top: 4px; }
-        .btn-menu i { font-size: 1.5rem; margin-bottom: 0.5rem; }
-        .stats-card { background: #1e5bb9; border-radius: 2.5rem; padding: 1.5rem; color: white; margin-bottom: 1.5rem; }
+        
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; overflow-x: hidden; }
+        
+        /* Sidebar Deslizante */
+        #sidebar {
+            transition: transform 0.3s ease-in-out;
+            transform: translateX(-100%);
+        }
+        #sidebar.open { transform: translateX(0); }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            color: #cbd5e1;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.2s;
+        }
+        .nav-item:hover { background: #1e293b; color: white; }
+        .nav-item i { width: 20px; margin-right: 12px; font-size: 1rem; }
+
+        .glass-card {
+            background: white;
+            border-radius: 1.5rem;
+            border-bottom: 4px solid #e2e8f0;
+        }
+
+        /* Tipografía Especial */
+        .logo-text { font-weight: 900; font-style: italic; text-transform: uppercase; letter-spacing: -0.05em; }
     </style>
 </head>
-<body class="pb-10">
+<body>
 
-    <header class="p-6 flex justify-between items-center bg-white shadow-sm sticky top-0 z-50">
-        <div>
-            <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Bienvenido,</p>
-            <h1 class="text-xl font-black italic uppercase tracking-tighter text-[#1e5bb9]">CONGO MUSUNDI</h1>
+    <div id="overlay" onclick="toggleMenu()" class="fixed inset-0 bg-black/50 hidden z-40"></div>
+
+    <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-[#0f172a] text-white z-50 overflow-y-auto">
+        <div class="p-6 border-b border-slate-800">
+            <h2 class="logo-text text-xl text-[#3b82f6]">CONGO MUSUNDI</h2>
         </div>
-        <button onclick="cerrarSesion()" class="w-10 h-10 bg-slate-100 rounded-full text-slate-400 flex items-center justify-center">
-            <i class="fas fa-sign-out-alt"></i>
-        </button>
-    </header>
+        <nav class="mt-4">
+            <a href="panel.html" class="nav-item text-white bg-blue-600"><i class="fas fa-chart-line"></i> Panel de Control</a>
+            <a href="crear-viaje.html" class="nav-item"><i class="fas fa-plus-circle"></i> Crear Viajes</a>
+            <a href="mis-viajes.html" class="nav-item"><i class="fas fa-route"></i> Mis Viajes</a>
+            <a href="choferes.html" class="nav-item"><i class="fas fa-users"></i> Choferes</a>
+            <a href="filtrar_viajes.html" class="nav-item"><i class="fas fa-filter"></i> Filtrar Viajes</a>
+            <a href="#" class="nav-item"><i class="fas fa-clock"></i> Pagos Pendientes</a>
+            <a href="#" class="nav-item"><i class="fas fa-check-double"></i> Pagos por Aprobar</a>
+            <a href="#" class="nav-item"><i class="fas fa-credit-card"></i> Tarjetas</a>
+            <a href="#" class="nav-item"><i class="fas fa-exchange-alt"></i> Transferencias</a>
+            <a href="#" class="nav-item"><i class="fas fa-handshake"></i> Colaboración</a>
+            <a href="usuarios.html" class="nav-item"><i class="fas fa-user-shield"></i> Usuarios</a>
+            <a href="#" class="nav-item"><i class="fas fa-dollar-sign"></i> Economía</a>
+            <a href="#" class="nav-item"><i class="fas fa-user-tie"></i> Clientes</a>
+            <a href="#" class="nav-item"><i class="fas fa-cog"></i> Configuración</a>
+            <a href="#" class="nav-item"><i class="fas fa-code"></i> API WhatsApp</a>
+        </nav>
+    </aside>
 
-    <main class="p-4 max-w-2xl mx-auto">
-        
-        <div class="stats-card shadow-xl shadow-blue-200">
-            <div class="flex justify-between items-start mb-4">
-                <p class="text-[10px] font-black uppercase opacity-70 tracking-widest">Resumen del Día</p>
-                <i class="fas fa-chart-line opacity-50"></i>
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <p id="total_viajes" class="text-3xl font-black">0</p>
-                    <p class="text-[9px] font-bold uppercase opacity-70">Viajes Realizados</p>
-                </div>
-                <div class="text-right">
-                    <p id="total_fondo" class="text-3xl font-black">$0</p>
-                    <p class="text-[9px] font-bold uppercase opacity-70">Recaudación App</p>
-                </div>
-            </div>
-        </div>
+    <div class="min-h-screen">
+        <header class="bg-white p-4 shadow-sm flex items-center justify-between sticky top-0 z-30">
+            <button onclick="toggleMenu()" class="text-slate-600 text-xl p-2">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h1 class="logo-text text-lg text-slate-800">Panel de Control</h1>
+            <div class="w-10"></div>
+        </header>
 
-        <div class="menu-grid">
-            <a href="crear-viaje.html" class="btn-menu text-blue-600">
-                <i class="fas fa-plus-circle"></i>
-                <span class="text-[10px] font-black uppercase">Nuevo Viaje</span>
-            </a>
+        <main class="p-4 lg:p-8 max-w-6xl mx-auto space-y-6">
             
-            <a href="mis-viajes.html" class="btn-menu text-orange-500">
-                <i class="fas fa-route"></i>
-                <span class="text-[10px] font-black uppercase">Viajes Activos</span>
-            </a>
-
-            <a href="choferes.html" class="btn-menu text-slate-700">
-                <i class="fas fa-users"></i>
-                <span class="text-[10px] font-black uppercase">Gestión Choferes</span>
-            </a>
-
-            <a href="filtrar_viajes.html" class="btn-menu text-purple-600">
-                <i class="fas fa-history"></i>
-                <span class="text-[10px] font-black uppercase">Historial</span>
-            </a>
-
-            <a href="#" class="btn-menu text-green-500 opacity-50">
-                <i class="fas fa-wallet"></i>
-                <span class="text-[10px] font-black uppercase">Caja Central</span>
-            </a>
-
-            <a href="#" class="btn-menu text-slate-400 opacity-50">
-                <i class="fas fa-cog"></i>
-                <span class="text-[10px] font-black uppercase">Ajustes</span>
-            </a>
-        </div>
-
-        <div class="mt-8 bg-white p-4 rounded-3xl border border-dashed border-slate-300">
-            <div class="flex items-center gap-3">
-                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <p class="text-[10px] font-black text-slate-500 uppercase">Estado del Servidor: Online</p>
+            <div class="glass-card p-6 shadow-sm">
+                <h3 class="text-[10px] font-black uppercase text-slate-400 mb-4 tracking-widest">Viajes Diarios (Actividad)</h3>
+                <div class="h-64">
+                    <canvas id="graficaViajes"></canvas>
+                </div>
             </div>
-        </div>
 
-    </main>
+            <div class="glass-card overflow-hidden shadow-sm">
+                <div class="p-6 border-b border-slate-50">
+                    <h3 class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Viajes Recientes (Últimos 5)</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 border-b border-slate-100">
+                            <tr>
+                                <th class="px-6 py-3 text-[10px] font-black uppercase text-slate-500">Chófer</th>
+                                <th class="px-6 py-3 text-[10px] font-black uppercase text-slate-500">Precio</th>
+                                <th class="px-6 py-3 text-[10px] font-black uppercase text-slate-500">Origen</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaRecientes" class="divide-y divide-slate-100">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
 
     <script>
         const URL_PROYECTO = 'https://rkcqrnqlmuzcvwlgkmyb.supabase.co'; 
@@ -95,34 +117,69 @@
         const supabaseClient = supabase.createClient(URL_PROYECTO, CLAVE_API);
 
         window.onload = function() {
-            if(localStorage.getItem('auth_congo') !== 'true') {
-                window.location.href = 'index.html';
-            }
-            cargarEstadisticas();
+            // Verificar sesión (Opcional, según tu lógica anterior)
+            cargarDatosPanel();
+        };
+
+        function toggleMenu() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('hidden');
         }
 
-        async function cargarEstadisticas() {
-            // Contar viajes de hoy
-            const hoy = new Date().toISOString().split('T')[0];
-            const { count: viajesHoy } = await supabaseClient
+        async function cargarDatosPanel() {
+            // 1. Cargar Viajes Recientes (Top 5)
+            const { data: recientes, error } = await supabaseClient
                 .from('viajes')
-                .select('*', { count: 'exact', head: true })
-                .gte('created_at', hoy);
-            
-            document.getElementById('total_viajes').innerText = viajesHoy || 0;
+                .select('chofer_tel, precio, origen')
+                .order('created_at', { ascending: false })
+                .limit(5);
 
-            // Calcular recaudación total (basado en fondos de choferes)
-            const { data: choferes } = await supabaseClient
-                .from('choferes')
-                .select('fondo_actual');
-            
-            const total = choferes.reduce((acc, c) => acc + (c.fondo_actual || 0), 0);
-            document.getElementById('total_fondo').innerText = "$" + total.toFixed(0);
+            if (!error && recientes) {
+                const tbody = document.getElementById('tablaRecientes');
+                tbody.innerHTML = recientes.map(v => `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 text-xs font-bold text-slate-700">${v.chofer_tel}</td>
+                        <td class="px-6 py-4 text-xs font-black text-blue-600">$${v.precio}</td>
+                        <td class="px-6 py-4 text-xs font-medium text-slate-500 uppercase">${v.origen}</td>
+                    </tr>
+                `).join('');
+            }
+
+            // 2. Cargar Gráfica de Viajes Diarios
+            generarGrafica();
         }
 
-        function cerrarSesion() {
-            localStorage.removeItem('auth_congo');
-            window.location.href = 'index.html';
+        async function generarGrafica() {
+            // Aquí simulamos datos de los últimos 7 días. 
+            // Para datos reales se requiere una consulta agrupada de Supabase.
+            const ctx = document.getElementById('graficaViajes').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+                    datasets: [{
+                        label: 'Viajes Realizados',
+                        data: [12, 19, 15, 8, 22, 30, 25],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
         }
     </script>
 </body>
