@@ -15,7 +15,6 @@
     </style>
 </head>
 <body class="pb-10">
-
     <header class="bg-[#1e5bb9] text-white p-4 shadow-md flex justify-between items-center sticky top-0 z-50">
         <a href="panel.html" class="text-xl w-10"><i class="fas fa-arrow-left"></i></a>
         <h1 class="font-black italic uppercase tracking-tighter text-center flex-1">Nuevo Servicio</h1>
@@ -50,35 +49,17 @@
                 <input type="tel" id="tel_cliente" placeholder="Número del cliente" class="w-full p-4 mt-1">
             </div>
 
-            <div class="space-y-2">
+            <div>
                 <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Precio del Viaje ($)</label>
                 <input type="number" id="precio_viaje" class="w-full p-4 text-2xl text-blue-700 font-black" placeholder="0.00">
             </div>
 
             <div class="grid grid-cols-2 gap-3">
-                <div><label class="text-[10px] font-black uppercase text-slate-400 ml-2">Origen</label><input type="text" id="origen" class="w-full p-4 mt-1"></div>
-                <div><label class="text-[10px] font-black uppercase text-slate-400 ml-2">Destino</label><input type="text" id="destino" class="w-full p-4 mt-1"></div>
+                <input type="text" id="origen" placeholder="Origen" class="p-4">
+                <input type="text" id="destino" placeholder="Destino" class="p-4">
             </div>
 
-            <div class="grid grid-cols-2 gap-2">
-                <label class="flex items-center gap-2 text-[9px] font-black uppercase text-slate-500 bg-slate-50 p-3 rounded-2xl"><input type="checkbox" id="check_transfer"> Transferencia</label>
-                <label class="flex items-center gap-2 text-[9px] font-black uppercase text-slate-500 bg-slate-50 p-3 rounded-2xl"><input type="checkbox" id="check_reserva" onchange="toggleReserva()"> Reservado</label>
-            </div>
-
-            <div id="seccion_reserva" class="hidden p-4 bg-orange-50 rounded-3xl"><input type="datetime-local" id="fecha_reserva" class="w-full p-3 bg-white"></div>
-
-            <div class="flex gap-3 pt-4">
-                <button onclick="generarPlanillas()" class="flex-1 bg-slate-800 text-white p-5 rounded-[2rem] font-black uppercase italic text-sm">Planilla</button>
-                <button onclick="crearViaje()" class="flex-1 bg-[#1e5bb9] text-white p-5 rounded-[2rem] font-black uppercase italic text-sm shadow-lg shadow-blue-200">Crear Viaje</button>
-            </div>
-        </div>
-
-        <div id="area_planillas" class="hidden space-y-4 pb-10">
-            <div class="card p-6 border-2 border-dashed border-blue-200">
-                <p class="text-center font-black text-blue-800 text-xs mb-4 uppercase">Planilla Chófer</p>
-                <pre id="texto_chofer" class="text-[11px] font-sans bg-slate-50 p-4 rounded-xl whitespace-pre-wrap"></pre>
-                <button onclick="enviarWhatsApp('chofer')" class="w-full mt-3 bg-green-500 text-white p-4 rounded-2xl font-black uppercase text-xs">Enviar al Chófer</button>
-            </div>
+            <button onclick="crearViaje()" class="w-full bg-[#1e5bb9] text-white p-5 rounded-[2rem] font-black uppercase italic text-sm shadow-lg">Crear Viaje</button>
         </div>
     </main>
 
@@ -91,75 +72,52 @@
 
         async function buscarChofer() {
             const tel = document.getElementById('tel_chofer').value;
-            if(!tel) return;
-            const { data, error } = await supabaseClient.from('choferes').select('*').eq('telefono', tel).single();
+            const { data } = await supabaseClient.from('choferes').select('*').eq('telefono', tel).single();
             if(data) {
                 datosChoferActual = data;
                 document.getElementById('c_nombre').innerText = data.nombre;
                 document.getElementById('c_fondo').innerText = "$" + data.fondo_actual;
                 document.getElementById('datos_chofer').classList.remove('hidden');
-            } else { alert("Chófer no registrado."); }
-        }
-
-        function toggleReserva() {
-            document.getElementById('seccion_reserva').classList.toggle('hidden', !document.getElementById('check_reserva').checked);
-        }
-
-        function generarPlanillas() {
-            const p = document.getElementById('precio_viaje').value;
-            const o = document.getElementById('origen').value;
-            const d = document.getElementById('destino').value;
-            if(!p || !o || !datosChoferActual) { alert("Completa los datos y busca un chófer."); return; }
-            const txtC = `*TransGestion*\nViaje: ${o} -> ${d}\nPrecio: ${p}\nCliente: ${document.getElementById('tel_cliente').value}`;
-            document.getElementById('texto_chofer').innerText = txtC;
-            document.getElementById('area_planillas').classList.remove('hidden');
-        }
-
-        function enviarWhatsApp(tipo) {
-            const msg = encodeURIComponent(document.getElementById('texto_chofer').innerText);
-            window.open(`https://wa.me/${document.getElementById('tel_chofer').value}?text=${msg}`, '_blank');
+            } else { alert("No se encontró el chófer"); }
         }
 
         async function crearViaje() {
-            if(!datosChoferActual) { alert("Busca un chófer primero"); return; }
-            const precio = parseFloat(document.getElementById('precio_viaje').value) || 0;
-            const usuarioLogueado = localStorage.getItem('userName') || 'Admin';
+            if(!datosChoferActual) return alert("Busca un chófer");
+            const precio = parseFloat(document.getElementById('precio_viaje').value);
+            const userTel = localStorage.getItem('userTel') || 'Admin';
 
-            // 1. Insertar Viaje (Nombres de columna exactos según tu captura)
+            // INSERTAR VIAJE CON COLUMNAS REALES (chofer_tel, cliente_tel)
             const { error: errV } = await supabaseClient.from('viajes').insert([{
                 colaboracion: document.getElementById('colaboracion').value,
                 chofer_tel: document.getElementById('tel_chofer').value,
                 cliente_tel: document.getElementById('tel_cliente').value,
                 precio: precio,
                 origen: document.getElementById('origen').value,
-                destino: document.getElementById('destino').value,
-                pago_transferencia: document.getElementById('check_transfer').checked,
-                es_reserva: document.getElementById('check_reserva').checked,
-                fecha_reserva: document.getElementById('fecha_reserva').value || null
+                destino: document.getElementById('destino').value
             }]);
 
-            if(errV) { alert("Error al guardar: " + errV.message); return; }
+            if(errV) return alert("Error Viaje: " + errV.message);
 
-            // 2. Gestionar Fondo si tiene Licencia
+            // DESCUENTO SI TIENE LICENCIA
             if(datosChoferActual.lic_operativa) {
                 const desc = precio * 0.12;
                 const nuevoFondo = datosChoferActual.fondo_actual - desc;
-
-                // Actualizar Chofer
-                await supabaseClient.from('choferes').update({ fondo_actual: nuevoFondo }).eq('id', datosChoferActual.id);
                 
-                // Insertar Movimiento con TUS columnas reales
+                await supabaseClient.from('choferes').update({ fondo_actual: nuevoFondo }).eq('id', datosChoferActual.id);
+
+                // INSERTAR MOVIMIENTO CON COLUMNAS REALES
                 await supabaseClient.from('movimientos_fondo').insert([{
-                    usuario: datosChoferActual.id,
-                    metodo: 'Descuento Viaje',
-                    saldo: -desc,
-                    fondo_ant: datosChoferActual.fondo_actual,
-                    activo: nuevoFondo,
+                    chofer_tel: datosChoferActual.telefono,
+                    usuario: userTel,
+                    metodo: 'Descuento 12%',
+                    saldo_movedo: -desc,
+                    fondo_anterior: datosChoferActual.fondo_actual,
+                    activo_nuevo: nuevoFondo,
                     tipo: 'viaje'
                 }]);
             }
 
-            alert("Viaje creado correctamente.");
+            alert("✅ Viaje Creado");
             window.location.href = 'mis-viajes.html';
         }
     </script>
