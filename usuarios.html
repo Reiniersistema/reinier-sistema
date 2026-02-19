@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usuarios - CONGO MUSUNDI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .user-card { background: white; border-radius: 2rem; padding: 1.2rem; position: relative; border: 1px solid #f1f5f9; transition: 0.3s; }
+        .modal-user { display: none; position: fixed; inset: 0; background: white; z-index: 100; overflow-y: auto; }
+        .modal-user.active { display: block; }
+        .menu-dots { display: none; position: absolute; right: 15px; top: 45px; background: white; border-radius: 1.2rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 50; border: 1px solid #eee; width: 120px; }
+        .menu-dots.active { display: block; }
+        .btn-mando { text-transform: uppercase; font-size: 10px; font-weight: 900; letter-spacing: 1px; }
+    </style>
+</head>
+<body class="pb-24">
+
+    <header class="bg-[#1e5bb9] text-white p-4 shadow-lg sticky top-0 z-50 flex items-center justify-between">
+        <a href="panel.html" class="text-xl w-10"><i class="fas fa-arrow-left"></i></a>
+        <h1 class="font-black italic uppercase tracking-tighter text-center flex-1">Usuarios del Sistema</h1>
+        <button onclick="abrirModalNuevo()" class="bg-white text-[#1e5bb9] px-4 py-2 rounded-xl font-black text-[10px] uppercase shadow-md">Añadir</button>
+    </header>
+
+    <main class="p-4 grid grid-cols-1 gap-4" id="listaUsuarios">
+        <div class="text-center p-20 text-slate-400 italic">Cargando usuarios...</div>
+    </main>
+
+    <div id="modalUsuario" class="modal-user">
+        <header class="p-4 flex justify-between items-center border-b sticky top-0 bg-white z-10">
+            <button onclick="cerrarModal()" class="text-2xl text-slate-300 w-10"><i class="fas fa-times"></i></button>
+            <h2 id="modalTitulo" class="font-black uppercase italic text-slate-800 tracking-tighter">Nuevo Usuario</h2>
+            <div class="w-10"></div>
+        </header>
+
+        <div class="p-6 max-w-lg mx-auto space-y-6">
+            <div class="flex flex-col items-center">
+                <div id="contenedor_foto" onclick="document.getElementById('input_foto').click()" 
+                     class="w-48 h-48 bg-slate-50 rounded-[3rem] border-4 border-dashed border-slate-200 flex items-center justify-center overflow-hidden cursor-pointer relative">
+                    <img id="preview_foto" src="" class="hidden w-full h-full object-cover">
+                    <div id="placeholder_foto" class="text-center text-slate-300">
+                        <i class="fas fa-user-circle text-5xl mb-2"></i>
+                        <p class="text-[9px] font-black uppercase">Subir Foto</p>
+                    </div>
+                </div>
+                <input type="file" id="input_foto" class="hidden" accept="image/*" onchange="previsualizar(this)">
+            </div>
+
+            <div class="space-y-3" id="campos_formulario">
+                <div>
+                    <label class="text-[9px] font-black text-slate-400 ml-2 uppercase">Nombre</label>
+                    <input type="text" id="u_nombre" class="w-full p-4 rounded-2xl bg-slate-50 border-none font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="text-[9px] font-black text-slate-400 ml-2 uppercase">Apellidos</label>
+                    <input type="text" id="u_apellidos" class="w-full p-4 rounded-2xl bg-slate-50 border-none font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="text-[9px] font-black text-slate-400 ml-2 uppercase">Teléfono (Usuario para Login)</label>
+                    <input type="tel" id="u_tel" class="w-full p-4 rounded-2xl bg-slate-50 border-none font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="text-[9px] font-black text-slate-400 ml-2 uppercase">Rol de acceso</label>
+                    <select id="u_rol" class="w-full p-4 rounded-2xl bg-slate-50 border-none font-bold text-slate-700 outline-none appearance-none">
+                        <option value="Gestor">Gestor</option>
+                        <option value="Administrador">Administrador</option>
+                    </select>
+                </div>
+                <div id="seccion_pass">
+                    <label class="text-[9px] font-black text-slate-400 ml-2 uppercase">Contraseña de acceso</label>
+                    <input type="password" id="u_pass" class="w-full p-4 rounded-2xl bg-blue-50 border-none font-bold text-slate-800 outline-none">
+                </div>
+            </div>
+
+            <div class="pt-4 space-y-3">
+                <button id="btn_guardar" onclick="guardarUsuario()" class="btn-mando w-full bg-[#1e5bb9] text-white p-5 rounded-[2rem] shadow-xl shadow-blue-100 active:scale-95 transition-all">
+                    Registrar Usuario
+                </button>
+                <button onclick="cerrarModal()" class="btn-mando w-full bg-slate-100 text-slate-400 p-4 rounded-2xl">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const URL_PROYECTO = 'https://rkcqrnqlmuzcvwlgkmyb.supabase.co'; 
+        const CLAVE_API = 'sb_publishable_rCrNB27M4ypZk7j0a10p_Q_3iNO7qRO';
+        const supabaseClient = supabase.createClient(URL_PROYECTO, CLAVE_API);
+
+        let fotoParaSubir = null;
+
+        window.onload = cargarUsuarios;
+
+        async function cargarUsuarios() {
+            const { data, error } = await supabaseClient.from('usuarios').select('*').order('nombre');
+            const lista = document.getElementById('listaUsuarios');
+            
+            if(error || data.length === 0) {
+                lista.innerHTML = `<div class="text-center p-20 text-slate-400 italic">No hay usuarios registrados</div>`;
+                return;
+            }
+
+            lista.innerHTML = data.map(u => `
+                <div class="user-card shadow-sm flex items-center gap-4">
+                    <img src="${u.foto_url || 'https://via.placeholder.com/150'}" class="w-16 h-16 rounded-[1.2rem] object-cover bg-slate-100 border-2 border-white shadow-sm">
+                    <div class="flex-1">
+                        <p class="font-black uppercase text-slate-800 tracking-tighter leading-none mb-1">${u.nombre} ${u.apellidos}</p>
+                        <span class="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-lg text-[8px] font-black uppercase">${u.rol}</span>
+                        <p class="text-[10px] text-slate-400 font-bold mt-1"><i class="fas fa-phone-alt mr-1"></i> ${u.telefono}</p>
+                    </div>
+                    <button onclick="toggleMenu('${u.id}')" class="w-10 h-10 text-slate-300 active:bg-slate-50 rounded-full"><i class="fas fa-ellipsis-v"></i></button>
+                    
+                    <div id="menu-${u.id}" class="menu-dots py-2">
+                        <button onclick="verUsuario('${u.id}')" class="w-full text-left px-4 py-2 text-[10px] font-black uppercase text-slate-600 active:bg-slate-50"><i class="fas fa-eye mr-2 text-blue-500"></i> Ver</button>
+                        <button onclick="confirmarEliminar('${u.id}')" class="w-full text-left px-4 py-2 text-[10px] font-black uppercase text-red-500 active:bg-red-50"><i class="fas fa-trash mr-2"></i> Eliminar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleMenu(id) {
+            const menus = document.querySelectorAll('.menu-dots');
+            menus.forEach(m => { if(m.id !== `menu-${id}`) m.classList.remove('active'); });
+            document.getElementById(`menu-${id}`).classList.toggle('active');
+        }
+
+        function abrirModalNuevo() {
+            document.getElementById('modalTitulo').innerText = "Añadir Usuario";
+            document.getElementById('preview_foto').classList.add('hidden');
+            document.getElementById('placeholder_foto').classList.remove('hidden');
+            document.getElementById('seccion_pass').classList.remove('hidden');
+            document.getElementById('btn_guardar').classList.remove('hidden');
+            
+            // Limpiar inputs
+            document.querySelectorAll('input').forEach(i => i.value = '');
+            fotoParaSubir = null;
+
+            document.getElementById('modalUsuario').classList.add('active');
+        }
+
+        async function verUsuario(id) {
+            const { data } = await supabaseClient.from('usuarios').select('*').eq('id', id).single();
+            if(!data) return;
+
+            document.getElementById('modalTitulo').innerText = "Detalles de Usuario";
+            document.getElementById('u_nombre').value = data.nombre;
+            document.getElementById('u_apellidos').value = data.apellidos;
+            document.getElementById('u_tel').value = data.telefono;
+            document.getElementById('u_rol').value = data.rol;
+            
+            if(data.foto_url) {
+                document.getElementById('preview_foto').src = data.foto_url;
+                document.getElementById('preview_foto').classList.remove('hidden');
+                document.getElementById('placeholder_foto').classList.add('hidden');
+            }
+
+            document.getElementById('seccion_pass').classList.add('hidden');
+            document.getElementById('btn_guardar').classList.add('hidden');
+            
+            document.getElementById('modalUsuario').classList.add('active');
+            toggleMenu(id);
+        }
+
+        async function guardarUsuario() {
+            const nombre = document.getElementById('u_nombre').value;
+            const apellidos = document.getElementById('u_apellidos').value;
+            const telefono = document.getElementById('u_tel').value;
+            const rol = document.getElementById('u_rol').value;
+            const password = document.getElementById('u_pass').value;
+
+            if(!nombre || !telefono || !password) { alert("Nombre, Teléfono y Contraseña son obligatorios"); return; }
+
+            let urlFoto = "";
+            if (fotoParaSubir) {
+                const nombreArchivo = `${Date.now()}_${fotoParaSubir.name}`;
+                const { data: uploadData, error: uploadError } = await supabaseClient.storage
+                    .from('fotos_usuarios').upload(nombreArchivo, fotoParaSubir);
+                
+                if(!uploadError) {
+                    const { data } = supabaseClient.storage.from('fotos_usuarios').getPublicUrl(nombreArchivo);
+                    urlFoto = data.publicUrl;
+                }
+            }
+
+            const { error } = await supabaseClient.from('usuarios').insert([{
+                nombre, apellidos, telefono, rol, password, foto_url: urlFoto
+            }]);
+
+            if(!error) {
+                alert("Usuario registrado correctamente");
+                cerrarModal();
+                cargarUsuarios();
+            } else {
+                alert("Error: " + error.message);
+            }
+        }
+
+        async function confirmarEliminar(id) {
+            const passConfirm = prompt("ATENCIÓN: Se eliminará el usuario por completo. Ingresa TU CONTRASEÑA de Administrador para confirmar:");
+            if(!passConfirm) return;
+
+            // Verificamos contra la pass guardada en local (del admin logueado)
+            const miPassActual = localStorage.getItem('userPass');
+            
+            if(passConfirm === miPassActual) {
+                const { error } = await supabaseClient.from('usuarios').delete().eq('id', id);
+                if(!error) {
+                    alert("Usuario eliminado.");
+                    cargarUsuarios();
+                }
+            } else {
+                alert("Contraseña de confirmación incorrecta.");
+            }
+        }
+
+        function previsualizar(input) {
+            if (input.files && input.files[0]) {
+                fotoParaSubir = input.files[0];
+                const reader = new FileReader();
+                reader.onload = e => {
+                    document.getElementById('preview_foto').src = e.target.result;
+                    document.getElementById('preview_foto').classList.remove('hidden');
+                    document.getElementById('placeholder_foto').classList.add('hidden');
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function cerrarModal() { document.getElementById('modalUsuario').classList.remove('active'); }
+    </script>
+</body>
+</html>
