@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mis Viajes - CONGO MUSUNDI</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
@@ -24,7 +27,6 @@
             border-color: #1e5bb9;
         }
         
-        /* Estilo para las filas de la tabla */
         .row-viaje:nth-child(even) { background-color: #f8fafc; }
     </style>
 </head>
@@ -85,9 +87,7 @@
     </main>
 
     <script>
-        const URL_PROYECTO = 'https://rkcqrnqlmuzcvwlgkmyb.supabase.co'; 
-        const CLAVE_API = 'sb_publishable_rCrNB27M4ypZk7j0a10p_Q_3iNO7qRO';
-        const supabaseClient = supabase.createClient(URL_PROYECTO, CLAVE_API);
+        // supabaseClient se hereda de config.js
 
         window.onload = () => {
             aplicarFiltro('hoy');
@@ -136,7 +136,7 @@
             const { data, error } = await consulta;
 
             if (error) {
-                console.error(error);
+                console.error("Error cargando viajes:", error);
                 return;
             }
 
@@ -151,12 +151,15 @@
             }
 
             tbody.innerHTML = viajes.map(v => {
-                const fecha = new Date(v.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
+                const fechaObj = new Date(v.created_at);
+                const fecha = fechaObj.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
+                const hora = fechaObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
                 return `
                     <tr class="row-viaje hover:bg-blue-50 transition-colors">
                         <td class="px-4 py-4">
                             <p class="text-[10px] font-black text-slate-800">${fecha}</p>
-                            <p class="text-[8px] text-slate-400">${new Date(v.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                            <p class="text-[8px] text-slate-400">${hora}</p>
                         </td>
                         <td class="px-4 py-4">
                             <p class="text-[10px] font-black text-blue-600">${v.chofer_tel}</p>
