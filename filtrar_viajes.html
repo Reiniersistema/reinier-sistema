@@ -9,60 +9,97 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .filtro-card { background: white; border-radius: 2rem; padding: 1.5rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-        .input-busqueda { border-radius: 1rem; border: 2px solid #e2e8f0; padding: 0.8rem 1rem; width: 100%; outline: none; transition: all 0.3s; }
-        .input-busqueda:focus { border-color: #1e5bb9; box-shadow: 0 0 0 3px rgba(30, 91, 185, 0.1); }
-        .item-viaje { background: white; border-radius: 1.5rem; padding: 1rem; margin-bottom: 0.8rem; border-left: 5px solid #1e5bb9; }
-        .badge { font-size: 9px; font-weight: 900; padding: 4px 8px; rounded-radius: 8px; text-transform: uppercase; }
-        .badge-completado { background: #dcfce7; color: #166534; }
-        .badge-pendiente { background: #fef9c3; color: #854d0e; }
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+        .logo-text { font-weight: 900; font-style: italic; text-transform: uppercase; letter-spacing: -0.05em; }
+        .filter-card { background: white; border-radius: 2rem; border-bottom: 4px solid #e2e8f0; }
+        .input-custom { width: 100%; background: #f8fafc; border: 2px solid #e2e8f0; padding: 0.8rem 1rem; border-radius: 1rem; font-weight: 700; outline: none; transition: all 0.3s; }
+        .input-custom:focus { border-color: #1e5bb9; background: white; }
+        .btn-command { padding: 1rem; border-radius: 1.2rem; font-weight: 900; text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; transition: all 0.2s; }
     </style>
 </head>
 <body class="pb-10">
 
-    <header class="bg-[#1e5bb9] text-white p-4 shadow-md flex justify-between items-center sticky top-0 z-50">
+    <header class="bg-[#1e5bb9] text-white p-4 shadow-md flex items-center sticky top-0 z-50">
         <a href="panel.html" class="text-xl w-10"><i class="fas fa-arrow-left"></i></a>
-        <h1 class="font-black italic uppercase tracking-tighter text-center flex-1">Filtrar Viajes</h1>
+        <h1 class="logo-text text-lg text-center flex-1">Búsqueda Avanzada</h1>
         <div class="w-10"></div>
     </header>
 
-    <main class="p-4 max-w-2xl mx-auto space-y-4">
-        <div class="filtro-card space-y-4">
-            <div>
-                <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Buscador</label>
-                <input type="text" id="busqueda" oninput="aplicarFiltros()" placeholder="Chofer, cliente o destino..." class="input-busqueda">
+    <main class="p-4 max-w-3xl mx-auto space-y-6">
+        
+        <div class="filter-card p-6 shadow-sm">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-2">Dato a buscar</label>
+                    <input type="text" id="busqueda_general" placeholder="Chofer, Cliente, Origen..." class="input-custom">
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-2">Tipo de Filtro</label>
+                    <select id="tipo_filtro" onchange="actualizarInterfazFiltro()" class="input-custom">
+                        <option value="todos">Todos los registros</option>
+                        <option value="fecha">Por Fecha Específica</option>
+                        <option value="rango">Desde - Hasta</option>
+                        <option value="mes">Por Mes</option>
+                    </select>
+                </div>
+
+                <div id="contenedor_dinamico" class="md:col-span-2 hidden">
+                    <div id="div_fecha" class="hidden">
+                        <label class="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-2">Seleccione Fecha</label>
+                        <input type="date" id="filtro_fecha" class="input-custom">
+                    </div>
+
+                    <div id="div_rango" class="hidden grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-2">Desde</label>
+                            <input type="date" id="filtro_desde" class="input-custom">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-2">Hasta</label>
+                            <input type="date" id="filtro_hasta" class="input-custom">
+                        </div>
+                    </div>
+
+                    <div id="div_mes" class="hidden">
+                        <label class="text-[10px] font-black uppercase text-slate-400 mb-2 block ml-2">Seleccione Mes</label>
+                        <input type="month" id="filtro_mes" class="input-custom">
+                    </div>
+                </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Desde</label>
-                    <input type="date" id="fecha_inicio" onchange="aplicarFiltros()" class="input-busqueda">
-                </div>
-                <div>
-                    <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Hasta</label>
-                    <input type="date" id="fecha_fin" onchange="aplicarFiltros()" class="input-busqueda">
-                </div>
-            </div>
-
-            <div>
-                <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Estado</label>
-                <select id="filtro_estado" onchange="aplicarFiltros()" class="input-busqueda">
-                    <option value="todos">Todos los estados</option>
-                    <option value="completado">Completados</option>
-                    <option value="pendiente">Pendientes / Reservas</option>
-                    <option value="cancelado">Cancelados</option>
-                </select>
+            <div class="grid grid-cols-2 gap-4 mt-8">
+                <button onclick="window.location.href='panel.html'" class="btn-command bg-slate-100 text-slate-500 hover:bg-slate-200">
+                    <i class="fas fa-times mr-2"></i> Cancelar
+                </button>
+                <button onclick="ejecutarFiltro()" class="btn-command bg-[#1e5bb9] text-white shadow-lg shadow-blue-200 hover:scale-[1.02]">
+                    <i class="fas fa-search mr-2"></i> Filtrar
+                </button>
             </div>
         </div>
 
-        <div class="flex justify-between items-center px-2">
-            <p class="text-[10px] font-black uppercase text-slate-500"><span id="contador_viajes">0</span> Viajes encontrados</p>
-            <button onclick="limpiarFiltros()" class="text-[10px] font-black uppercase text-blue-600">Limpiar Filtros</button>
-        </div>
-
-        <div id="contenedor_resultados" class="space-y-3">
+        <div class="bg-white rounded-[2rem] overflow-hidden shadow-sm border-b-4 border-slate-200">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50 border-b border-slate-100">
+                        <tr>
+                            <th class="px-6 py-4 text-[9px] font-black uppercase text-slate-500">Info Viaje</th>
+                            <th class="px-6 py-4 text-[9px] font-black uppercase text-slate-500">Chofer/Cliente</th>
+                            <th class="px-6 py-4 text-[9px] font-black uppercase text-slate-500">Ruta</th>
+                            <th class="px-6 py-4 text-[9px] font-black uppercase text-slate-500 text-right">Precio</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultados_busqueda" class="divide-y divide-slate-100">
+                        <tr>
+                            <td colspan="4" class="px-6 py-12 text-center text-slate-400 text-xs font-bold italic uppercase opacity-50">
+                                Realice una búsqueda para ver resultados
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
+        </div>
     </main>
 
     <script>
@@ -70,90 +107,87 @@
         const CLAVE_API = 'sb_publishable_rCrNB27M4ypZk7j0a10p_Q_3iNO7qRO';
         const supabaseClient = supabase.createClient(URL_PROYECTO, CLAVE_API);
 
-        let viajesTodos = [];
-
-        window.onload = async () => {
-            await cargarTodosLosViajes();
-        };
-
-        async function cargarTodosLosViajes() {
-            const { data, error } = await supabaseClient
-                .from('viajes')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (data) {
-                viajesTodos = data;
-                renderizarViajes(viajesTodos);
+        function actualizarInterfazFiltro() {
+            const tipo = document.getElementById('tipo_filtro').value;
+            const contenedor = document.getElementById('contenedor_dinamico');
+            
+            // Ocultar todos los div de opciones
+            document.getElementById('div_fecha').classList.add('hidden');
+            document.getElementById('div_rango').classList.add('hidden');
+            document.getElementById('div_mes').classList.add('hidden');
+            
+            if (tipo === 'todos') {
+                contenedor.classList.add('hidden');
+            } else {
+                contenedor.classList.remove('hidden');
+                document.getElementById(`div_${tipo}`).classList.remove('hidden');
             }
         }
 
-        function renderizarViajes(lista) {
-            const contenedor = document.getElementById('contenedor_resultados');
-            const contador = document.getElementById('contador_viajes');
+        async function ejecutarFiltro() {
+            const busqueda = document.getElementById('busqueda_general').value.toLowerCase();
+            const tipo = document.getElementById('tipo_filtro').value;
             
-            contador.innerText = lista.length;
+            let query = supabaseClient.from('viajes').select('*').order('created_at', { ascending: false });
 
-            if (lista.length === 0) {
-                contenedor.innerHTML = `<div class="text-center py-10 opacity-30 font-black uppercase text-xs">No hay viajes que coincidan</div>`;
+            // Aplicar Filtros de Tiempo
+            if (tipo === 'fecha') {
+                const f = document.getElementById('filtro_fecha').value;
+                if(f) query = query.gte('created_at', f).lte('created_at', f + 'T23:59:59');
+            } else if (tipo === 'rango') {
+                const desde = document.getElementById('filtro_desde').value;
+                const hasta = document.getElementById('filtro_hasta').value;
+                if(desde && hasta) query = query.gte('created_at', desde).lte('created_at', hasta + 'T23:59:59');
+            } else if (tipo === 'mes') {
+                const mes = document.getElementById('filtro_mes').value; // Formato YYYY-MM
+                if(mes) {
+                    const primerDia = `${mes}-01`;
+                    const ultimoDia = `${mes}-31`; // Supabase manejará el límite
+                    query = query.gte('created_at', primerDia).lte('created_at', ultimoDia);
+                }
+            }
+
+            const { data, error } = await query;
+
+            if (error) {
+                alert("Error en la búsqueda");
                 return;
             }
 
-            contenedor.innerHTML = lista.map(v => `
-                <div class="item-viaje shadow-sm">
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <span class="badge ${v.completado ? 'badge-completado' : 'badge-pendiente'}">
-                                ${v.completado ? 'Completado' : 'Pendiente'}
-                            </span>
-                            <p class="text-[10px] font-bold text-slate-400 mt-1">${new Date(v.created_at).toLocaleDateString()} - ${new Date(v.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
-                        </div>
-                        <p class="text-lg font-black text-blue-700">$${v.precio}</p>
-                    </div>
-                    <div class="space-y-1">
-                        <p class="text-xs font-black uppercase tracking-tighter"><i class="fas fa-map-marker-alt text-red-500 mr-1"></i> ${v.origen} → ${v.destino}</p>
-                        <p class="text-[10px] font-bold text-slate-600 uppercase">Chofer: ${v.chofer_tel} | Cliente: ${v.cliente_tel}</p>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function aplicarFiltros() {
-            const busqueda = document.getElementById('busqueda').value.toLowerCase();
-            const fechaInicio = document.getElementById('fecha_inicio').value;
-            const fechaFin = document.getElementById('fecha_fin').value;
-            const estado = document.getElementById('filtro_estado').value;
-
-            let filtrados = viajesTodos.filter(v => {
-                // Filtro de texto
-                const coincideTexto = v.origen.toLowerCase().includes(busqueda) || 
-                                     v.destino.toLowerCase().includes(busqueda) || 
-                                     v.chofer_tel.includes(busqueda) ||
-                                     v.cliente_tel.includes(busqueda);
-
-                // Filtro de fecha
-                const fechaViaje = v.created_at.split('T')[0];
-                let coincideFecha = true;
-                if (fechaInicio) coincideFecha = coincideFecha && (fechaViaje >= fechaInicio);
-                if (fechaFin) coincideFecha = coincideFecha && (fechaViaje <= fechaFin);
-
-                // Filtro de estado
-                let coincideEstado = true;
-                if (estado === 'completado') coincideEstado = v.completado === true;
-                if (estado === 'pendiente') coincideEstado = v.completado === false;
-
-                return coincideTexto && coincideFecha && coincideEstado;
+            // Filtrar localmente por el "Dato a buscar" (texto)
+            const filtrados = data.filter(v => {
+                const contenido = `${v.chofer_tel} ${v.cliente_tel} ${v.origen} ${v.destino}`.toLowerCase();
+                return contenido.includes(busqueda);
             });
 
-            renderizarViajes(filtrados);
+            renderizarResultados(filtrados);
         }
 
-        function limpiarFiltros() {
-            document.getElementById('busqueda').value = '';
-            document.getElementById('fecha_inicio').value = '';
-            document.getElementById('fecha_fin').value = '';
-            document.getElementById('filtro_estado').value = 'todos';
-            renderizarViajes(viajesTodos);
+        function renderizarResultados(lista) {
+            const tbody = document.getElementById('resultados_busqueda');
+            if (lista.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-12 text-center text-slate-400 text-xs font-bold italic uppercase">No hay coincidencias</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = lista.map(v => `
+                <tr class="hover:bg-blue-50 transition-colors">
+                    <td class="px-6 py-4">
+                        <p class="text-[10px] font-black text-slate-800">${new Date(v.created_at).toLocaleDateString()}</p>
+                        <p class="text-[8px] text-slate-400 uppercase font-bold">${new Date(v.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</p>
+                    </td>
+                    <td class="px-6 py-4">
+                        <p class="text-[10px] font-black text-blue-600">C: ${v.chofer_tel}</p>
+                        <p class="text-[10px] font-bold text-slate-500">U: ${v.cliente_tel}</p>
+                    </td>
+                    <td class="px-6 py-4">
+                        <p class="text-[9px] font-bold text-slate-700 uppercase truncate w-32">${v.origen} → ${v.destino}</p>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <p class="text-xs font-black text-slate-900">$${v.precio}</p>
+                    </td>
+                </tr>
+            `).join('');
         }
     </script>
 </body>
