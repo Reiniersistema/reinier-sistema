@@ -5,18 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Choferes - CONGO MUSUNDI</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
         .logo-text { font-weight: 900; font-style: italic; text-transform: uppercase; letter-spacing: -0.05em; }
-        .chofer-card { background: white; border-radius: 1.5rem; border-bottom: 4px solid #e2e8f0; transition: all 0.2s; }
+        .chofer-card { background: white; border-radius: 1.5rem; border-bottom: 4px solid #e2e8f0; transition: all 0.2s; position: relative; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; overflow-y: auto; padding: 1rem; }
         .modal.active { display: flex; justify-content: center; }
         .profile-content { background: white; width: 100%; max-width: 500px; border-radius: 2.5rem; position: relative; height: fit-content; }
         .tab-btn { font-size: 9px; font-weight: 900; text-transform: uppercase; padding: 10px; border-radius: 12px; flex: 1; text-align: center; background: #f8fafc; color: #64748b; }
-        .tab-btn.active { background: #1e5bb9; color: white; shadow: 0 4px 10px rgba(30,91,185,0.2); }
+        .tab-btn.active { background: #1e5bb9; color: white; box-shadow: 0 4px 10px rgba(30,91,185,0.2); }
         .hidden { display: none; }
     </style>
 </head>
@@ -38,9 +41,6 @@
             <div id="perfil_header" class="text-center mt-4">
                 <img id="p_foto" src="" class="w-32 h-32 mx-auto rounded-3xl object-cover shadow-lg border-4 border-blue-50 mb-3" alt="Foto Chofer">
                 <h2 id="p_nombre" class="logo-text text-xl text-slate-800">Nombre Apellido</h2>
-                <div class="flex justify-center gap-4 mt-2">
-                    <label class="flex items-center gap-1 text-[9px] font-black uppercase"><input type="checkbox" id="p_sin_credito"> Trabajar sin créditos</label>
-                </div>
                 <div class="mt-3 flex justify-center gap-2">
                     <span id="p_grupo" class="text-[9px] font-black bg-blue-100 text-blue-700 px-3 py-1 rounded-full uppercase">Grupo: -</span>
                 </div>
@@ -51,30 +51,18 @@
                     <p class="text-[8px] font-black text-slate-400 uppercase">Fondo Actual</p>
                     <p id="p_fondo" class="text-lg font-black text-blue-600">$0</p>
                 </div>
-                <div class="bg-slate-50 p-3 rounded-2xl text-center">
-                    <p class="text-[8px] font-black text-slate-400 uppercase">Viajes Hoy</p>
-                    <p id="p_viajes_hoy" class="text-lg font-black text-slate-800">0</p>
+                <div class="bg-slate-50 p-3 rounded-2xl text-center flex items-center justify-center">
+                   <label class="flex flex-col items-center gap-1 text-[8px] font-black uppercase text-slate-400">
+                       TRABAJAR SIN CRÉDITO
+                       <input type="checkbox" id="p_sin_credito" onchange="actualizarPreferencia('trabajar_sin_credito', this.checked)">
+                   </label>
                 </div>
-                <div class="bg-slate-50 p-3 rounded-2xl text-center">
-                    <p class="text-[8px] font-black text-slate-400 uppercase">Viajes Mes</p>
-                    <p id="p_viajes_mes" class="text-lg font-black text-slate-800">0</p>
-                </div>
-                <div class="bg-slate-50 p-3 rounded-2xl text-center">
-                    <p class="text-[8px] font-black text-slate-400 uppercase">Viajes Total</p>
-                    <p id="p_viajes_total" class="text-lg font-black text-slate-800">0</p>
-                </div>
-            </div>
-
-            <div class="flex gap-2 mt-4">
-                <button class="flex-1 bg-slate-100 py-3 rounded-xl text-[9px] font-black uppercase text-slate-600"><i class="fas fa-filter mr-1"></i> Filtrar</button>
-                <button id="p_btn_wa" class="flex-1 bg-green-500 py-3 rounded-xl text-[9px] font-black uppercase text-white"><i class="fab fa-whatsapp mr-1"></i> Whatsapp</button>
-                <button id="p_btn_del" class="flex-1 bg-red-100 py-3 rounded-xl text-[9px] font-black uppercase text-red-500"><i class="fas fa-trash mr-1"></i> Eliminar</button>
             </div>
 
             <div class="flex gap-1 mt-6 border-t pt-6 overflow-x-auto pb-2">
-                <button onclick="showTab('info')" class="tab-btn active">Información</button>
-                <button onclick="showTab('auto')" class="tab-btn">Auto</button>
-                <button onclick="showTab('fondo')" class="tab-btn">Fondo</button>
+                <button onclick="showTab('info', this)" class="tab-btn active">Información</button>
+                <button onclick="showTab('auto', this)" class="tab-btn">Auto</button>
+                <button onclick="showTab('fondo', this)" class="tab-btn">Fondo</button>
             </div>
 
             <div id="tab_info" class="tab-content py-4">
@@ -85,7 +73,6 @@
             </div>
 
             <div id="tab_auto" class="tab-content hidden py-4">
-                <img id="p_auto_img" src="" class="w-full h-32 object-cover rounded-2xl mb-4 bg-slate-100" alt="Foto Auto">
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="text-[8px] font-black uppercase text-slate-400">Marca/Modelo</label>
@@ -97,56 +84,36 @@
                     </div>
                 </div>
                 <div class="flex gap-4 mt-4">
-                    <label class="text-[10px] font-bold"><input type="checkbox" id="p_aire" disabled> Aire Acond.</label>
-                    <label class="text-[10px] font-bold"><input type="checkbox" id="p_lic_check" disabled> Lic Operativa</label>
+                    <label class="text-[10px] font-bold text-slate-600"><input type="checkbox" id="p_aire" disabled> AIRE ACOND.</label>
+                    <label class="text-[10px] font-bold text-slate-600"><input type="checkbox" id="p_lic_check" disabled> LIC. OPERATIVA</label>
                 </div>
             </div>
 
             <div id="tab_fondo" class="tab-content hidden py-4">
-                <div class="flex gap-2 mb-4 overflow-x-auto">
-                    <button onclick="toggleFondoAccion('agregar')" class="bg-green-600 text-white px-3 py-2 rounded-xl text-[9px] font-black uppercase">Agregar</button>
-                    <button onclick="toggleFondoAccion('retirar')" class="bg-red-600 text-white px-3 py-2 rounded-xl text-[9px] font-black uppercase">Retirar</button>
-                    <button class="bg-slate-800 text-white px-3 py-2 rounded-xl text-[9px] font-black uppercase">Rectificar Fondo</button>
+                <div class="flex gap-2 mb-4">
+                    <button onclick="toggleFondoAccion('agregar')" class="flex-1 bg-green-600 text-white py-2 rounded-xl text-[9px] font-black uppercase">Recargar</button>
+                    <button onclick="toggleFondoAccion('retirar')" class="flex-1 bg-red-600 text-white py-2 rounded-xl text-[9px] font-black uppercase">Retirar</button>
                 </div>
 
-                <div id="form_fondo" class="hidden bg-slate-50 p-4 rounded-2xl mb-4">
+                <div id="form_fondo" class="hidden bg-slate-50 p-4 rounded-2xl mb-4 border border-slate-200">
                     <p id="fondo_titulo" class="text-[10px] font-black uppercase mb-2 text-slate-600">Agregar Fondo</p>
                     <div class="space-y-3">
-                        <select id="f_metodo" class="w-full p-2 rounded-lg text-xs font-bold outline-none border border-slate-200">
-                            <option value="Efectivo">Efectivo</option>
-                            <option value="Transferencia">Transferencia</option>
-                        </select>
-                        <input type="number" id="f_cantidad" placeholder="Cantidad $" class="w-full p-2 rounded-lg text-xs font-bold outline-none border border-slate-200">
-                        <button onclick="procesarFondo()" class="w-full bg-[#1e5bb9] text-white p-3 rounded-xl font-black uppercase text-[10px]">Procesar</button>
+                        <input type="number" id="f_cantidad" placeholder="Cantidad $" class="w-full p-2 rounded-lg text-xs font-bold border border-slate-200">
+                        <button onclick="procesarFondo()" class="w-full bg-[#1e5bb9] text-white p-3 rounded-xl font-black uppercase text-[10px]">Confirmar</button>
                     </div>
                 </div>
+            </div>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-[9px] text-left">
-                        <thead class="bg-slate-100">
-                            <tr>
-                                <th class="p-2 uppercase">Usuario</th>
-                                <th class="p-2 uppercase">Metodo</th>
-                                <th class="p-2 uppercase">Saldo</th>
-                                <th class="p-2 uppercase">Fondo</th>
-                                <th class="p-2 uppercase">Activo</th>
-                                <th class="p-2 uppercase">Fecha</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabla_movimientos" class="divide-y">
-                            </tbody>
-                    </table>
-                </div>
+            <div class="flex gap-2 mt-4">
+                <button id="p_btn_wa" class="flex-1 bg-green-500 py-3 rounded-xl text-[9px] font-black uppercase text-white"><i class="fab fa-whatsapp mr-1"></i> Whatsapp</button>
+                <button id="p_btn_del" class="flex-1 bg-red-100 py-3 rounded-xl text-[9px] font-black uppercase text-red-500"><i class="fas fa-trash mr-1"></i> Eliminar</button>
             </div>
         </div>
     </div>
 
     <script>
-        const URL_PROYECTO = 'https://rkcqrnqlmuzcvwlgkmyb.supabase.co'; 
-        const CLAVE_API = 'sb_publishable_rCrNB27M4ypZk7j0a10p_Q_3iNO7qRO';
-        const supabaseClient = supabase.createClient(URL_PROYECTO, CLAVE_API);
-
         let currentChofer = null;
+        let modoFondo = 'agregar';
 
         window.onload = cargarChoferes;
 
@@ -154,22 +121,22 @@
             const { data, error } = await supabaseClient.from('choferes').select('*').order('nombre');
             const lista = document.getElementById('lista_choferes');
             
+            if (error) return console.error(error);
+
             lista.innerHTML = data.map(c => `
                 <div class="chofer-card p-4 flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-black uppercase text-slate-800">${c.nombre}</p>
+                    <div onclick="verChofer('${c.id}')" class="flex-1 cursor-pointer">
+                        <p class="text-xs font-black uppercase text-slate-800">${c.nombre} ${c.apellidos || ''}</p>
                         <p class="text-[9px] font-bold text-slate-400">${c.telefono}</p>
                     </div>
-                    <div class="text-center">
+                    <div class="text-right px-4">
                         <p class="text-[8px] font-black text-slate-400 uppercase">Fondo</p>
-                        <p class="text-sm font-black text-blue-600">$${c.fondo_actual}</p>
+                        <p class="text-sm font-black ${c.fondo_actual < 0 ? 'text-red-500' : 'text-blue-600'}">$${c.fondo_actual.toFixed(2)}</p>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <span class="text-[8px] font-black ${c.lic_operativa ? 'text-green-500' : 'text-slate-300'} uppercase">Licencia</span>
-                        <button onclick="toggleMenuOp('${c.id}')" class="text-slate-400"><i class="fas fa-ellipsis-v"></i></button>
-                    </div>
-                    <div id="menu_${c.id}" class="hidden absolute right-10 bg-white shadow-xl rounded-xl border p-1 z-10">
-                        <button onclick="verChofer('${c.id}')" class="block w-full text-left px-4 py-2 text-[10px] font-bold hover:bg-blue-50">VER</button>
+                    <button onclick="toggleMenuOp('${c.id}')" class="text-slate-400 p-2"><i class="fas fa-ellipsis-v"></i></button>
+                    
+                    <div id="menu_${c.id}" class="hidden absolute right-12 top-10 bg-white shadow-2xl rounded-xl border p-1 z-10 w-32">
+                        <button onclick="verChofer('${c.id}')" class="block w-full text-left px-4 py-2 text-[10px] font-bold hover:bg-blue-50">PERFIL</button>
                         <button onclick="eliminarChofer('${c.id}')" class="block w-full text-left px-4 py-2 text-[10px] font-bold text-red-500 hover:bg-red-50">ELIMINAR</button>
                     </div>
                 </div>
@@ -177,8 +144,10 @@
         }
 
         function toggleMenuOp(id) {
-            document.querySelectorAll('[id^="menu_"]').forEach(el => el.id !== `menu_${id}` && el.classList.add('hidden'));
-            document.getElementById(`menu_${id}`).classList.toggle('hidden');
+            const menu = document.getElementById(`menu_${id}`);
+            const estaOculto = menu.classList.contains('hidden');
+            document.querySelectorAll('[id^="menu_"]').forEach(el => el.classList.add('hidden'));
+            if (estaOculto) menu.classList.remove('hidden');
         }
 
         async function verChofer(id) {
@@ -186,8 +155,8 @@
             currentChofer = c;
             
             document.getElementById('p_nombre').innerText = c.nombre;
-            document.getElementById('p_foto').src = c.foto_url || 'https://via.placeholder.com/150';
-            document.getElementById('p_fondo').innerText = `$${c.fondo_actual}`;
+            document.getElementById('p_foto').src = c.foto_url || 'https://ui-avatars.com/api/?name=' + c.nombre + '&background=1e5bb9&color=fff';
+            document.getElementById('p_fondo').innerText = `$${c.fondo_actual.toFixed(2)}`;
             document.getElementById('p_full_name').innerText = `${c.nombre} ${c.apellidos || ''}`;
             document.getElementById('p_tel').innerText = c.telefono;
             document.getElementById('p_marca').innerText = c.auto_marca || '-';
@@ -195,35 +164,55 @@
             document.getElementById('p_lic_check').checked = c.lic_operativa;
             document.getElementById('p_aire').checked = c.aire_acondicionado;
             document.getElementById('p_sin_credito').checked = c.trabajar_sin_credito;
-            document.getElementById('p_grupo').innerText = `Grupo: ${c.grupo || 'Ninguno'}`;
+            document.getElementById('p_grupo').innerText = `Grupo: ${c.grupo || 'Auto'}`;
             
+            document.getElementById('p_btn_wa').onclick = () => window.open(`https://wa.me/${c.telefono}`, '_blank');
+            document.getElementById('p_btn_del').onclick = () => eliminarChofer(c.id);
+
             document.getElementById('modal_perfil').classList.add('active');
         }
 
         function cerrarPerfil() { document.getElementById('modal_perfil').classList.remove('active'); }
 
-        function showTab(tab) {
+        function showTab(tab, btn) {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(`tab_${tab}`).classList.remove('hidden');
-            event.target.classList.add('active');
+            btn.classList.add('active');
         }
 
         function toggleFondoAccion(accion) {
-            const form = document.getElementById('form_fondo');
-            form.classList.remove('hidden');
-            document.getElementById('fondo_titulo').innerText = accion === 'agregar' ? 'Agregar Fondo' : 'Retirar Fondo';
-            document.getElementById('f_metodo').style.display = accion === 'agregar' ? 'block' : 'none';
+            modoFondo = accion;
+            document.getElementById('form_fondo').classList.remove('hidden');
+            document.getElementById('fondo_titulo').innerText = accion === 'agregar' ? 'Recargar Saldo' : 'Retirar Saldo';
         }
 
         async function procesarFondo() {
-            // Lógica para registrar movimientos y actualizar saldo
-            alert("Procesando operación...");
+            const cant = parseFloat(document.getElementById('f_cantidad').value);
+            if (!cant || cant <= 0) return alert("Ingrese una cantidad válida");
+
+            const variacion = modoFondo === 'agregar' ? cant : -cant;
+            const nuevoSaldo = currentChofer.fondo_actual + variacion;
+
+            const { error } = await supabaseClient.from('choferes').update({ fondo_actual: nuevoSaldo }).eq('id', currentChofer.id);
+
+            if (!error) {
+                alert("Operación exitosa");
+                document.getElementById('f_cantidad').value = "";
+                document.getElementById('form_fondo').classList.add('hidden');
+                verChofer(currentChofer.id);
+                cargarChoferes();
+            }
+        }
+
+        async function actualizarPreferencia(campo, valor) {
+            await supabaseClient.from('choferes').update({ [campo]: valor }).eq('id', currentChofer.id);
         }
 
         async function eliminarChofer(id) {
-            if(confirm("¿Seguro que deseas eliminar este chófer?")) {
+            if(confirm("¿Estás seguro de que quieres eliminar a este chofer? Esta acción es irreversible.")) {
                 await supabaseClient.from('choferes').delete().eq('id', id);
+                cerrarPerfil();
                 cargarChoferes();
             }
         }
