@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Control - CONGO MUSUNDI</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -40,7 +43,6 @@
             border-bottom: 4px solid #e2e8f0;
         }
 
-        /* Tipografía Especial */
         .logo-text { font-weight: 900; font-style: italic; text-transform: uppercase; letter-spacing: -0.05em; }
     </style>
 </head>
@@ -112,12 +114,9 @@
     </div>
 
     <script>
-        const URL_PROYECTO = 'https://rkcqrnqlmuzcvwlgkmyb.supabase.co'; 
-        const CLAVE_API = 'sb_publishable_rCrNB27M4ypZk7j0a10p_Q_3iNO7qRO';
-        const supabaseClient = supabase.createClient(URL_PROYECTO, CLAVE_API);
+        // NOTA: 'supabaseClient' ya está definido en config.js
 
         window.onload = function() {
-            // Verificar sesión (Opcional, según tu lógica anterior)
             cargarDatosPanel();
         };
 
@@ -129,31 +128,31 @@
         }
 
         async function cargarDatosPanel() {
-            // 1. Cargar Viajes Recientes (Top 5)
-            const { data: recientes, error } = await supabaseClient
-                .from('viajes')
-                .select('chofer_tel, precio, origen')
-                .order('created_at', { ascending: false })
-                .limit(5);
+            try {
+                const { data: recientes, error } = await supabaseClient
+                    .from('viajes')
+                    .select('chofer_tel, precio, origen')
+                    .order('created_at', { ascending: false })
+                    .limit(5);
 
-            if (!error && recientes) {
-                const tbody = document.getElementById('tablaRecientes');
-                tbody.innerHTML = recientes.map(v => `
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-6 py-4 text-xs font-bold text-slate-700">${v.chofer_tel}</td>
-                        <td class="px-6 py-4 text-xs font-black text-blue-600">$${v.precio}</td>
-                        <td class="px-6 py-4 text-xs font-medium text-slate-500 uppercase">${v.origen}</td>
-                    </tr>
-                `).join('');
+                if (!error && recientes) {
+                    const tbody = document.getElementById('tablaRecientes');
+                    tbody.innerHTML = recientes.map(v => `
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="px-6 py-4 text-xs font-bold text-slate-700">${v.chofer_tel}</td>
+                            <td class="px-6 py-4 text-xs font-black text-blue-600">$${v.precio}</td>
+                            <td class="px-6 py-4 text-xs font-medium text-slate-500 uppercase">${v.origen}</td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (err) {
+                console.error("Error cargando el panel:", err);
             }
 
-            // 2. Cargar Gráfica de Viajes Diarios
             generarGrafica();
         }
 
         async function generarGrafica() {
-            // Aquí simulamos datos de los últimos 7 días. 
-            // Para datos reales se requiere una consulta agrupada de Supabase.
             const ctx = document.getElementById('graficaViajes').getContext('2d');
             new Chart(ctx, {
                 type: 'line',
