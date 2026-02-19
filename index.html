@@ -3,96 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TransGestión - Acceso</title>
+    <title>Acceso - CONGO MUSUNDI</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1e5bb9 0%, #0f2d5c 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            overflow: hidden;
+        }
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2.5rem;
+            border-radius: 3rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+        .pin-input {
+            letter-spacing: 1.5rem;
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 900;
+            border-radius: 1.5rem;
+            border: 3px solid #e2e8f0;
+            transition: all 0.3s;
+        }
+        .pin-input:focus {
+            border-color: #1e5bb9;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(30, 91, 185, 0.2);
+        }
+        .logo-font {
+            font-weight: 900;
+            font-style: italic;
+            text-transform: uppercase;
+            letter-spacing: -0.05em;
+            color: #1e5bb9;
+        }
     </style>
 </head>
-<body class="bg-[#1e5bb9] text-white min-h-screen flex flex-col items-center justify-center p-6 text-center">
-    
-    <div class="bg-white p-4 rounded-2xl mb-6 shadow-lg w-32 h-32 flex items-center justify-center mx-auto">
-        <div class="text-center">
-            <h2 class="text-4xl font-black text-black leading-none">RF</h2>
-            <p class="text-black font-bold text-[10px] tracking-tighter uppercase">TransGestión</p>
-        </div>
-    </div>
+<body>
 
-    <h1 class="text-3xl font-black mb-8 drop-shadow-md italic uppercase">Acceso al Sistema</h1>
-
-    <div class="w-full max-w-sm bg-[#c8d7f0] p-8 rounded-[2.5rem] shadow-2xl text-gray-800 text-left">
-        <div class="mb-5">
-            <label class="block text-xs font-black uppercase mb-1 ml-2 text-slate-600">Teléfono</label>
-            <input id="phone" type="tel" placeholder="54322676" class="w-full bg-white border-none rounded-2xl p-4 text-lg outline-none shadow-inner">
-        </div>
-        
+    <div class="login-card">
         <div class="mb-8">
-            <label class="block text-xs font-black uppercase mb-1 ml-2 text-slate-600">Contraseña</label>
-            <input id="pass" type="password" placeholder="*******" class="w-full bg-white border-none rounded-2xl p-4 text-lg outline-none shadow-inner">
+            <div class="bg-blue-600 w-16 h-16 rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-lg">
+                <i class="fas fa-taxi text-white text-3xl"></i>
+            </div>
+            <h1 class="text-3xl logo-font">CONGO MUSUNDI</h1>
+            <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2">Panel de Administración</p>
         </div>
 
-        <button onclick="login()" id="loginBtn" class="w-full bg-[#2b6ada] text-white font-black py-4 rounded-2xl text-xl shadow-lg active:scale-95 transition-all uppercase italic">
-            Entrar
-        </button>
-        <p id="msg" class="text-center mt-4 text-sm font-bold text-red-600 h-5"></p>
+        <div class="space-y-6">
+            <div>
+                <label class="block text-[10px] font-black uppercase text-slate-500 mb-2">Ingresa tu PIN de acceso</label>
+                <input type="password" id="pin" maxlength="4" inputmode="numeric" placeholder="••••" class="w-full p-4 pin-input">
+            </div>
+
+            <button onclick="validarAcceso()" class="w-full bg-[#1e5bb9] text-white p-5 rounded-2xl font-black uppercase italic tracking-tighter shadow-xl active:scale-95 transition-transform">
+                Entrar al Sistema
+            </button>
+        </div>
+
+        <p class="mt-8 text-[9px] font-bold text-slate-400 uppercase">v2.0 • 2024 © Seguridad Privada</p>
     </div>
 
     <script>
-        // Configuración de Supabase con TUS datos reales
-        const URL_PROYECTO = 'https://rkcqrnqlmuzcvwlgkmyb.supabase.co'; 
-        const CLAVE_API = 'sb_publishable_rCrNB27M4ypZk7j0a10p_Q_3iNO7qRO';
-        
-        const supabaseClient = supabase.createClient(URL_PROYECTO, CLAVE_API);
-
-        async function login() {
-            const tel = document.getElementById('phone').value.trim();
-            const password = document.getElementById('pass').value.trim();
-            const msg = document.getElementById('msg');
-            const btn = document.getElementById('loginBtn');
-
-            if(!tel || !password) {
-                msg.innerText = "Completa los datos";
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerText = "Verificando...";
-
-            try {
-                // Buscamos en la tabla 'usuarios' que creaste en Supabase
-                const { data, error } = await supabaseClient
-                    .from('usuarios')
-                    .select('*')
-                    .eq('telefono', tel)
-                    .eq('password', password)
-                    .single();
-
-                if (error || !data) {
-                    msg.innerText = "Usuario o clave incorrectos";
-                    btn.disabled = false;
-                    btn.innerText = "Entrar";
-                } else {
-                    // Guardamos la sesión en el navegador
-                    localStorage.setItem('userTel', data.telefono);
-                    localStorage.setItem('userName', data.nombre);
-                    localStorage.setItem('userRole', data.rol);
-
-                    msg.style.color = "green";
-                    msg.innerText = "¡Bienvenido, " + data.nombre + "!";
-
-                    // Redirigimos al panel (se creará en el siguiente paso)
-                    setTimeout(() => {
-                        window.location.href = 'panel.html';
-                    }, 1000);
-                }
-            } catch (err) {
-                msg.innerText = "Error de conexión con la base de datos";
-                btn.disabled = false;
-                btn.innerText = "Entrar";
+        function validarAcceso() {
+            const pin = document.getElementById('pin').value;
+            // El PIN por defecto es 2024, cámbialo si lo necesitas
+            if(pin === '2024') {
+                localStorage.setItem('auth_congo', 'true');
+                window.location.href = 'panel.html';
+            } else {
+                alert('PIN Incorrecto');
+                document.getElementById('pin').value = '';
             }
         }
+
+        // Permitir entrar con la tecla Enter
+        document.getElementById('pin').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                validarAcceso();
+            }
+        });
     </script>
 </body>
 </html>
