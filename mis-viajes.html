@@ -1,27 +1,96 @@
-// Cambia la parte donde generas el HTML de la tarjeta por esta:
-contenedor.innerHTML += `
-    <div class="card-viaje">
-        <div class="flex justify-between items-start mb-3">
-            <div>
-                <p class="text-[9px] font-black text-blue-500 uppercase mb-1">
-                    <i class="fas fa-calendar-alt"></i> ${fechaFormateada}
-                </p>
-                <h3 class="font-black text-slate-800 text-sm uppercase">
-                    ${v.origen} -> <span class="text-blue-700">${v.destino}</span>
-                </h3>
-            </div>
-            <div class="text-right">
-                <span class="bg-green-50 text-green-600 font-black px-3 py-1 rounded-xl text-sm">$${v.precio}</span>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Viajes - TransGestion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .viaje-card { background: white; border-radius: 2rem; transition: transform 0.2s; }
+        .viaje-card:active { transform: scale(0.98); }
+    </style>
+</head>
+<body class="pb-20">
+    <header class="bg-[#1e5bb9] text-white p-4 shadow-md flex justify-between items-center sticky top-0 z-50">
+        <a href="panel.html" class="text-xl w-10"><i class="fas fa-arrow-left"></i></a>
+        <h1 class="font-black italic uppercase tracking-tighter text-center flex-1 text-white">Historial de Viajes</h1>
+        <div class="w-10"></div>
+    </header>
+
+    <main class="p-4 max-w-2xl mx-auto">
+        <div id="listaViajes" class="space-y-4">
+            <div class="text-center py-10 text-slate-400">
+                <i class="fas fa-spinner fa-spin text-3xl mb-2"></i>
+                <p class="font-bold">Cargando viajes...</p>
             </div>
         </div>
-        
-        <div class="flex flex-wrap gap-3 border-t pt-3 mt-2">
-            <div class="flex items-center gap-1 text-[9px] font-black text-slate-500 uppercase">
-                <i class="fas fa-user-tie text-blue-400"></i> TEL CHÓFER: ${v.chofer_tel || 'S/N'}
-            </div>
-            <div class="flex items-center gap-1 text-[9px] font-black text-slate-500 uppercase">
-                <i class="fas fa-phone-alt text-slate-300"></i> CLIENTE: ${v.cliente_tel || 'S/T'}
-            </div>
-        </div>
-    </div>
-`;
+    </main>
+
+    <script>
+        const URL_PROYECTO = 'https://rkcqrnqlmuzcvwlgkmyb.supabase.co'; 
+        const CLAVE_API = 'sb_publishable_rCrNB27M4ypZk7j0a10p_Q_3iNO7qRO';
+        const supabaseClient = supabase.createClient(URL_PROYECTO, CLAVE_API);
+
+        async function cargarViajes() {
+            const { data, error } = await supabaseClient
+                .from('viajes')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            const contenedor = document.getElementById('listaViajes');
+
+            if (error) {
+                contenedor.innerHTML = `<div class="bg-red-100 text-red-700 p-4 rounded-2xl font-bold text-sm">Error: ${error.message}</div>`;
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                contenedor.innerHTML = `<div class="text-center py-20 text-slate-400 font-bold italic">No hay viajes registrados aún.</div>`;
+                return;
+            }
+
+            contenedor.innerHTML = data.map(v => {
+                const fecha = new Date(v.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+                
+                return `
+                <div class="viaje-card p-5 shadow-lg border border-slate-100">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="bg-blue-100 text-blue-700 text-[10px] font-black px-3 py-1 rounded-full uppercase italic">${v.colaboracion || 'Directo'}</span>
+                        <span class="text-[11px] font-bold text-slate-400">${fecha}</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <p class="text-[10px] uppercase font-black text-slate-400">Chófer</p>
+                            <p class="font-black text-slate-700"><i class="fas fa-user-tie mr-1 text-blue-500"></i> ${v.chofer_tel || 'S/N'}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[10px] uppercase font-black text-slate-400">Precio</p>
+                            <p class="font-black text-2xl text-green-600">$${v.precio || 0}</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 p-3 rounded-2xl flex items-center gap-3 text-sm">
+                        <div class="flex flex-col items-center">
+                            <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+                            <div class="w-0.5 h-4 bg-slate-300"></div>
+                            <div class="w-2 h-2 rounded-full bg-red-500"></div>
+                        </div>
+                        <div class="flex-1 font-bold text-slate-600 leading-tight">
+                            <p>${v.origen || 'Origen no especificado'}</p>
+                            <p class="mt-2 text-slate-400 font-medium">${v.destino || 'Destino no especificado'}</p>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        window.onload = cargarViajes;
+    </script>
+</body>
+</html>
