@@ -3,66 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TransGestion - Panel</title>
+    <title>Panel - CONGO MUSUNDI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; overflow-x: hidden; }
-        .sidebar { transition: 0.3s; width: 0; overflow: hidden; position: fixed; z-index: 50; height: 100vh; background: #1e5bb9; color: white; }
-        .sidebar.active { width: 260px; }
-        .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; }
-        .overlay.active { display: block; }
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+        .btn-menu { background: white; padding: 1.5rem; border-radius: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.3s; border-bottom: 4px solid #e2e8f0; }
+        .btn-menu:active { transform: scale(0.95); border-bottom-width: 0; margin-top: 4px; }
+        .btn-menu i { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .stats-card { background: #1e5bb9; border-radius: 2.5rem; padding: 1.5rem; color: white; margin-bottom: 1.5rem; }
     </style>
 </head>
-<body class="flex flex-col">
+<body class="pb-10">
 
-    <div id="overlay" class="overlay" onclick="toggleMenu()"></div>
-
-    <nav id="sidebar" class="sidebar shadow-2xl">
-        <div class="p-6">
-            <h2 class="text-2xl font-black italic mb-8 border-b border-blue-400 pb-4 text-white">TransGestion</h2>
-            <ul class="space-y-4 font-bold text-sm uppercase tracking-wider text-white">
-                <li><a href="panel.html" class="flex items-center gap-3 p-2 bg-blue-700 rounded-xl"><i class="fas fa-chart-line"></i> Panel de Control</a></li>
-                <li><a href="crear-viaje.html" class="flex items-center gap-3 p-2 hover:bg-blue-800 rounded-xl"><i class="fas fa-plus-circle"></i> Crear Viajes</a></li>
-                <li><a href="mis-viajes.html" class="flex items-center gap-3 p-2 hover:bg-blue-800 rounded-xl"><i class="fas fa-route"></i> Mis Viajes</a></li>
-                <li><a href="choferes.html" class="flex items-center gap-3 p-2 hover:bg-blue-800 rounded-xl"><i class="fas fa-users"></i> Choferes</a></li>
-                <li><a href="filtrar_viajes.html" class="flex items-center gap-3 p-2 hover:bg-blue-800 rounded-xl"><i class="fas fa-search"></i> Buscar</a></li>
-            </ul>
+    <header class="p-6 flex justify-between items-center bg-white shadow-sm sticky top-0 z-50">
+        <div>
+            <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Bienvenido,</p>
+            <h1 class="text-xl font-black italic uppercase tracking-tighter text-[#1e5bb9]">CONGO MUSUNDI</h1>
         </div>
-    </nav>
-
-    <header class="bg-[#1e5bb9] text-white p-4 shadow-md flex justify-between items-center sticky top-0 z-30">
-        <button onclick="toggleMenu()" class="text-2xl px-2"><i class="fas fa-bars"></i></button>
-        <h1 class="font-black italic text-lg uppercase tracking-tighter">TransGestion</h1>
-        <button onclick="logout()" class="text-xl px-2 text-red-300"><i class="fas fa-sign-out-alt"></i></button>
+        <button onclick="cerrarSesion()" class="w-10 h-10 bg-slate-100 rounded-full text-slate-400 flex items-center justify-center">
+            <i class="fas fa-sign-out-alt"></i>
+        </button>
     </header>
 
-    <main class="p-4 max-w-5xl mx-auto w-full">
-        <div class="mb-8">
-            <h2 class="text-3xl font-black text-slate-800">Panel de Control</h2>
-            <p class="text-blue-600 font-bold">Hola, <span id="userNameDisplay">...</span></p>
-        </div>
-
-        <div class="bg-white rounded-3xl p-6 shadow-lg mb-8">
-            <h3 class="font-black text-slate-800 uppercase mb-4 flex items-center gap-2">
-                <i class="fas fa-history text-blue-600"></i> Viajes Recientes
-            </h3>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead>
-                        <tr class="text-[10px] uppercase text-slate-400 border-b">
-                            <th class="py-3 px-2">Chófer (Tel)</th>
-                            <th class="py-3 px-2">Precio</th>
-                            <th class="py-3 px-2">Origen</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tablaRecientes" class="text-sm font-bold text-slate-600"></tbody>
-                </table>
+    <main class="p-4 max-w-2xl mx-auto">
+        
+        <div class="stats-card shadow-xl shadow-blue-200">
+            <div class="flex justify-between items-start mb-4">
+                <p class="text-[10px] font-black uppercase opacity-70 tracking-widest">Resumen del Día</p>
+                <i class="fas fa-chart-line opacity-50"></i>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p id="total_viajes" class="text-3xl font-black">0</p>
+                    <p class="text-[9px] font-bold uppercase opacity-70">Viajes Realizados</p>
+                </div>
+                <div class="text-right">
+                    <p id="total_fondo" class="text-3xl font-black">$0</p>
+                    <p class="text-[9px] font-bold uppercase opacity-70">Recaudación App</p>
+                </div>
             </div>
         </div>
+
+        <div class="menu-grid">
+            <a href="crear-viaje.html" class="btn-menu text-blue-600">
+                <i class="fas fa-plus-circle"></i>
+                <span class="text-[10px] font-black uppercase">Nuevo Viaje</span>
+            </a>
+            
+            <a href="mis-viajes.html" class="btn-menu text-orange-500">
+                <i class="fas fa-route"></i>
+                <span class="text-[10px] font-black uppercase">Viajes Activos</span>
+            </a>
+
+            <a href="choferes.html" class="btn-menu text-slate-700">
+                <i class="fas fa-users"></i>
+                <span class="text-[10px] font-black uppercase">Gestión Choferes</span>
+            </a>
+
+            <a href="filtrar_viajes.html" class="btn-menu text-purple-600">
+                <i class="fas fa-history"></i>
+                <span class="text-[10px] font-black uppercase">Historial</span>
+            </a>
+
+            <a href="#" class="btn-menu text-green-500 opacity-50">
+                <i class="fas fa-wallet"></i>
+                <span class="text-[10px] font-black uppercase">Caja Central</span>
+            </a>
+
+            <a href="#" class="btn-menu text-slate-400 opacity-50">
+                <i class="fas fa-cog"></i>
+                <span class="text-[10px] font-black uppercase">Ajustes</span>
+            </a>
+        </div>
+
+        <div class="mt-8 bg-white p-4 rounded-3xl border border-dashed border-slate-300">
+            <div class="flex items-center gap-3">
+                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <p class="text-[10px] font-black text-slate-500 uppercase">Estado del Servidor: Online</p>
+            </div>
+        </div>
+
     </main>
 
     <script>
@@ -70,46 +94,34 @@
         const CLAVE_API = 'sb_publishable_rCrNB27M4ypZk7j0a10p_Q_3iNO7qRO';
         const supabaseClient = supabase.createClient(URL_PROYECTO, CLAVE_API);
 
-        function toggleMenu() {
-            document.getElementById('sidebar').classList.toggle('active');
-            document.getElementById('overlay').classList.toggle('active');
+        window.onload = function() {
+            if(localStorage.getItem('auth_congo') !== 'true') {
+                window.location.href = 'index.html';
+            }
+            cargarEstadisticas();
         }
 
-        window.onload = () => {
-            const nombre = localStorage.getItem('userName');
-            if(!nombre) { window.location.href = 'index.html'; return; }
-            document.getElementById('userNameDisplay').innerText = nombre;
-            cargarDatosPanel();
-        };
-
-        async function cargarDatosPanel() {
-            const { data, error } = await supabaseClient
+        async function cargarEstadisticas() {
+            // Contar viajes de hoy
+            const hoy = new Date().toISOString().split('T')[0];
+            const { count: viajesHoy } = await supabaseClient
                 .from('viajes')
-                .select('chofer_tel, precio, origen') 
-                .order('created_at', { ascending: false })
-                .limit(5);
+                .select('*', { count: 'exact', head: true })
+                .gte('created_at', hoy);
+            
+            document.getElementById('total_viajes').innerText = viajesHoy || 0;
 
-            const tabla = document.getElementById('tablaRecientes');
-            if (error) {
-                tabla.innerHTML = `<tr><td colspan="3" class="py-8 text-center text-red-500">Error: ${error.message}</td></tr>`;
-                return;
-            }
-
-            if (data && data.length > 0) {
-                tabla.innerHTML = data.map(v => `
-                    <tr class="border-b">
-                        <td class="py-3 px-2">${v.chofer_tel || 'S/N'}</td>
-                        <td class="py-3 px-2 text-green-600">$${v.precio}</td>
-                        <td class="py-3 px-2">${v.origen}</td>
-                    </tr>
-                `).join('');
-            } else {
-                tabla.innerHTML = `<tr><td colspan="3" class="py-8 text-center text-slate-400">No hay viajes registrados</td></tr>`;
-            }
+            // Calcular recaudación total (basado en fondos de choferes)
+            const { data: choferes } = await supabaseClient
+                .from('choferes')
+                .select('fondo_actual');
+            
+            const total = choferes.reduce((acc, c) => acc + (c.fondo_actual || 0), 0);
+            document.getElementById('total_fondo').innerText = "$" + total.toFixed(0);
         }
 
-        function logout() {
-            localStorage.clear();
+        function cerrarSesion() {
+            localStorage.removeItem('auth_congo');
             window.location.href = 'index.html';
         }
     </script>
