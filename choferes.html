@@ -3,128 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Choferes - CONGO MUSUNDI</title>
+    <title>Gestión de Choferes - CONGO MUSUNDI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .card-chofer { background: white; border-radius: 1.5rem; padding: 1rem; margin-bottom: 0.8rem; border-bottom: 4px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; position: relative; }
-        .modal-full { display: none; position: fixed; inset: 0; background: white; z-index: 1000; overflow-y: auto; }
-        .modal-full.active { display: block; }
-        .menu-drop { display: none; position: absolute; right: 10px; top: 40px; background: white; border-radius: 1rem; box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 100; border: 1px solid #eee; min-width: 120px; }
-        .menu-drop.active { display: block; }
-        .tab-btn { padding: 10px; font-size: 10px; font-weight: 900; text-transform: uppercase; color: #94a3b8; border-bottom: 2px solid transparent; }
-        .tab-btn.active { color: #1e5bb9; border-bottom-color: #1e5bb9; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; }
-        th { background: #f8fafc; color: #64748b; padding: 8px; text-transform: uppercase; }
-        td { padding: 8px; border-bottom: 1px solid #f1f5f9; text-align: center; }
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+        .logo-text { font-weight: 900; font-style: italic; text-transform: uppercase; letter-spacing: -0.05em; }
+        .chofer-card { background: white; border-radius: 1.5rem; border-bottom: 4px solid #e2e8f0; transition: all 0.2s; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; overflow-y: auto; padding: 1rem; }
+        .modal.active { display: flex; justify-content: center; }
+        .profile-content { background: white; width: 100%; max-width: 500px; border-radius: 2.5rem; position: relative; height: fit-content; }
+        .tab-btn { font-size: 9px; font-weight: 900; text-transform: uppercase; padding: 10px; border-radius: 12px; flex: 1; text-align: center; background: #f8fafc; color: #64748b; }
+        .tab-btn.active { background: #1e5bb9; color: white; shadow: 0 4px 10px rgba(30,91,185,0.2); }
+        .hidden { display: none; }
     </style>
 </head>
-<body class="pb-20">
+<body class="pb-10">
 
-    <header class="bg-[#1e5bb9] text-white p-4 shadow-md flex justify-between items-center sticky top-0 z-50">
-        <a href="panel.html" class="text-xl"><i class="fas fa-arrow-left"></i></a>
-        <h1 class="font-black italic uppercase tracking-tighter">Lista de Choferes</h1>
-        <button onclick="window.location.href='nuevo_chofer.html'" class="text-xl"><i class="fas fa-user-plus"></i></button>
+    <header class="bg-[#1e5bb9] text-white p-4 shadow-md flex items-center sticky top-0 z-50">
+        <a href="panel.html" class="text-xl w-10"><i class="fas fa-arrow-left"></i></a>
+        <h1 class="logo-text text-lg text-center flex-1">Nuestros Choferes</h1>
+        <div class="w-10"></div>
     </header>
 
-    <main class="p-4 max-w-4xl mx-auto" id="listaChoferes">
+    <main class="p-4 max-w-2xl mx-auto space-y-3" id="lista_choferes">
         </main>
 
-    <div id="modalVer" class="modal-full">
-        <header class="bg-[#1e5bb9] text-white p-4 flex justify-between items-center sticky top-0 shadow-lg">
-            <button onclick="cerrarModal()" class="text-xl"><i class="fas fa-times"></i></button>
-            <h2 class="font-black uppercase italic tracking-tighter">Perfil del Chofer</h2>
-            <div class="w-6"></div>
-        </header>
+    <div id="modal_perfil" class="modal">
+        <div class="profile-content p-6 shadow-2xl">
+            <button onclick="cerrarPerfil()" class="absolute top-4 right-4 text-slate-300 text-xl"><i class="fas fa-times-circle"></i></button>
+            
+            <div id="perfil_header" class="text-center mt-4">
+                <img id="p_foto" src="" class="w-32 h-32 mx-auto rounded-3xl object-cover shadow-lg border-4 border-blue-50 mb-3" alt="Foto Chofer">
+                <h2 id="p_nombre" class="logo-text text-xl text-slate-800">Nombre Apellido</h2>
+                <div class="flex justify-center gap-4 mt-2">
+                    <label class="flex items-center gap-1 text-[9px] font-black uppercase"><input type="checkbox" id="p_sin_credito"> Trabajar sin créditos</label>
+                </div>
+                <div class="mt-3 flex justify-center gap-2">
+                    <span id="p_grupo" class="text-[9px] font-black bg-blue-100 text-blue-700 px-3 py-1 rounded-full uppercase">Grupo: -</span>
+                </div>
+            </div>
 
-        <div class="p-4 space-y-6">
-            <div class="text-center">
-                <img id="det_foto" src="" class="w-48 h-48 mx-auto rounded-[3rem] object-cover shadow-2xl border-4 border-blue-50 bg-slate-200">
-                <h3 id="det_nombre_full" class="text-2xl font-black mt-4 uppercase text-slate-800 tracking-tighter">...</h3>
-                
-                <div class="flex flex-col items-center gap-2 mt-3">
-                    <label class="flex items-center gap-2 text-[10px] font-black uppercase text-slate-500">
-                        <input type="checkbox" id="det_sin_credito"> Trabajar sin créditos
-                    </label>
-                    <div class="bg-slate-100 p-2 rounded-xl border w-full max-w-[200px]">
-                        <p class="text-[9px] font-black uppercase text-slate-400 mb-1">Grupo</p>
-                        <div class="flex justify-around">
-                            <label class="text-xs font-bold"><input type="radio" name="det_grupo" value="Auto"> Auto</label>
-                            <label class="text-xs font-bold"><input type="radio" name="det_grupo" value="Moto"> Moto</label>
-                        </div>
+            <div class="grid grid-cols-2 gap-2 mt-6">
+                <div class="bg-slate-50 p-3 rounded-2xl text-center">
+                    <p class="text-[8px] font-black text-slate-400 uppercase">Fondo Actual</p>
+                    <p id="p_fondo" class="text-lg font-black text-blue-600">$0</p>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-2xl text-center">
+                    <p class="text-[8px] font-black text-slate-400 uppercase">Viajes Hoy</p>
+                    <p id="p_viajes_hoy" class="text-lg font-black text-slate-800">0</p>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-2xl text-center">
+                    <p class="text-[8px] font-black text-slate-400 uppercase">Viajes Mes</p>
+                    <p id="p_viajes_mes" class="text-lg font-black text-slate-800">0</p>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-2xl text-center">
+                    <p class="text-[8px] font-black text-slate-400 uppercase">Viajes Total</p>
+                    <p id="p_viajes_total" class="text-lg font-black text-slate-800">0</p>
+                </div>
+            </div>
+
+            <div class="flex gap-2 mt-4">
+                <button class="flex-1 bg-slate-100 py-3 rounded-xl text-[9px] font-black uppercase text-slate-600"><i class="fas fa-filter mr-1"></i> Filtrar</button>
+                <button id="p_btn_wa" class="flex-1 bg-green-500 py-3 rounded-xl text-[9px] font-black uppercase text-white"><i class="fab fa-whatsapp mr-1"></i> Whatsapp</button>
+                <button id="p_btn_del" class="flex-1 bg-red-100 py-3 rounded-xl text-[9px] font-black uppercase text-red-500"><i class="fas fa-trash mr-1"></i> Eliminar</button>
+            </div>
+
+            <div class="flex gap-1 mt-6 border-t pt-6 overflow-x-auto pb-2">
+                <button onclick="showTab('info')" class="tab-btn active">Información</button>
+                <button onclick="showTab('auto')" class="tab-btn">Auto</button>
+                <button onclick="showTab('fondo')" class="tab-btn">Fondo</button>
+            </div>
+
+            <div id="tab_info" class="tab-content py-4">
+                <label class="text-[8px] font-black uppercase text-slate-400">Nombre y Apellidos</label>
+                <p id="p_full_name" class="font-bold text-slate-700 mb-2 border-b pb-2">-</p>
+                <label class="text-[8px] font-black uppercase text-slate-400">Teléfono</label>
+                <p id="p_tel" class="font-bold text-slate-700">-</p>
+            </div>
+
+            <div id="tab_auto" class="tab-content hidden py-4">
+                <img id="p_auto_img" src="" class="w-full h-32 object-cover rounded-2xl mb-4 bg-slate-100" alt="Foto Auto">
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[8px] font-black uppercase text-slate-400">Marca/Modelo</label>
+                        <p id="p_marca" class="font-bold text-slate-700">-</p>
+                    </div>
+                    <div>
+                        <label class="text-[8px] font-black uppercase text-slate-400">Color</label>
+                        <p id="p_color" class="font-bold text-slate-700">-</p>
                     </div>
                 </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-                <div class="bg-blue-600 p-4 rounded-3xl text-white text-center shadow-lg">
-                    <p class="text-[9px] font-bold uppercase opacity-80">Fondo Actual</p>
-                    <p id="det_fondo" class="text-2xl font-black">$0</p>
-                </div>
-                <div class="bg-slate-800 p-4 rounded-3xl text-white text-center shadow-lg">
-                    <p class="text-[9px] font-bold uppercase opacity-80">Viajes Hoy</p>
-                    <p id="det_hoy" class="text-2xl font-black">0</p>
+                <div class="flex gap-4 mt-4">
+                    <label class="text-[10px] font-bold"><input type="checkbox" id="p_aire" disabled> Aire Acond.</label>
+                    <label class="text-[10px] font-bold"><input type="checkbox" id="p_lic_check" disabled> Lic Operativa</label>
                 </div>
             </div>
 
-            <div class="grid grid-cols-3 gap-2">
-                <button class="bg-slate-100 p-3 rounded-2xl font-black text-[10px] uppercase text-slate-600"><i class="fas fa-filter block mb-1 text-lg"></i> Filtrar</button>
-                <button onclick="abrirWA()" class="bg-green-100 p-3 rounded-2xl font-black text-[10px] uppercase text-green-600"><i class="fab fa-whatsapp block mb-1 text-lg"></i> Whatsapp</button>
-                <button onclick="eliminarChoferActual()" class="bg-red-100 p-3 rounded-2xl font-black text-[10px] uppercase text-red-600"><i class="fas fa-trash block mb-1 text-lg"></i> Eliminar</button>
-            </div>
-
-            <div class="flex border-b justify-between">
-                <button onclick="showTab('info')" id="btn_info" class="tab-btn active flex-1">Información</button>
-                <button onclick="showTab('auto')" id="btn_auto" class="tab-btn flex-1">Auto</button>
-                <button onclick="showTab('fondo')" id="btn_fondo" class="tab-btn flex-1">Fondo</button>
-            </div>
-
-            <div id="tab_info" class="tab-content space-y-4">
-                <div class="bg-white p-4 rounded-2xl border shadow-sm">
-                    <p class="text-[10px] font-black text-slate-400 uppercase">Teléfono Registrado</p>
-                    <p id="info_tel" class="text-lg font-bold text-slate-700">...</p>
+            <div id="tab_fondo" class="tab-content hidden py-4">
+                <div class="flex gap-2 mb-4 overflow-x-auto">
+                    <button onclick="toggleFondoAccion('agregar')" class="bg-green-600 text-white px-3 py-2 rounded-xl text-[9px] font-black uppercase">Agregar</button>
+                    <button onclick="toggleFondoAccion('retirar')" class="bg-red-600 text-white px-3 py-2 rounded-xl text-[9px] font-black uppercase">Retirar</button>
+                    <button class="bg-slate-800 text-white px-3 py-2 rounded-xl text-[9px] font-black uppercase">Rectificar Fondo</button>
                 </div>
-            </div>
 
-            <div id="tab_auto" class="tab-content hidden space-y-4">
-                <img id="auto_foto" src="" class="w-full h-44 object-cover rounded-3xl bg-slate-100 shadow-inner">
-                <div class="bg-white p-4 rounded-2xl border shadow-sm">
-                    <p id="auto_desc" class="font-black text-slate-800 uppercase text-sm">...</p>
-                    <div class="mt-4 grid grid-cols-2 gap-2">
-                        <span id="auto_aire" class="bg-blue-50 text-blue-700 p-2 rounded-lg text-[10px] font-black text-center uppercase"></span>
-                        <span id="auto_lic" class="bg-green-50 text-green-700 p-2 rounded-lg text-[10px] font-black text-center uppercase"></span>
+                <div id="form_fondo" class="hidden bg-slate-50 p-4 rounded-2xl mb-4">
+                    <p id="fondo_titulo" class="text-[10px] font-black uppercase mb-2 text-slate-600">Agregar Fondo</p>
+                    <div class="space-y-3">
+                        <select id="f_metodo" class="w-full p-2 rounded-lg text-xs font-bold outline-none border border-slate-200">
+                            <option value="Efectivo">Efectivo</option>
+                            <option value="Transferencia">Transferencia</option>
+                        </select>
+                        <input type="number" id="f_cantidad" placeholder="Cantidad $" class="w-full p-2 rounded-lg text-xs font-bold outline-none border border-slate-200">
+                        <button onclick="procesarFondo()" class="w-full bg-[#1e5bb9] text-white p-3 rounded-xl font-black uppercase text-[10px]">Procesar</button>
                     </div>
                 </div>
-            </div>
 
-            <div id="tab_fondo" class="tab-content hidden space-y-4">
-                <div class="flex gap-2">
-                    <button onclick="abrirTransaccion('Agregar')" class="flex-1 bg-green-600 text-white p-3 rounded-xl font-black text-[10px] uppercase shadow-md">Agregar</button>
-                    <button onclick="abrirTransaccion('Retirar')" class="flex-1 bg-orange-500 text-white p-3 rounded-xl font-black text-[10px] uppercase shadow-md">Retirar</button>
-                    <button onclick="rectificarFondo()" class="flex-1 bg-blue-100 text-blue-600 p-3 rounded-xl font-black text-[10px] uppercase border border-blue-200">Rectificar</button>
-                </div>
-
-                <div id="formFondo" class="hidden bg-slate-50 p-4 rounded-2xl border-2 border-dashed border-slate-300">
-                    <h4 id="trans_titulo" class="font-black uppercase text-xs mb-3 text-slate-600 text-center">...</h4>
-                    <select id="trans_metodo" class="w-full p-3 rounded-xl mb-2 text-xs font-bold border">
-                        <option value="Efectivo">Efectivo</option>
-                        <option value="Transferencia">Transferencia</option>
-                    </select>
-                    <input type="number" id="trans_cantidad" placeholder="Cantidad $" class="w-full p-3 rounded-xl mb-2 text-xs font-bold border">
-                    <button onclick="procesarTransaccion()" class="w-full bg-[#1e5bb9] text-white p-3 rounded-xl font-black text-[10px] uppercase">Confirmar Operación</button>
-                </div>
-
-                <div class="overflow-x-auto rounded-xl border">
-                    <table>
-                        <thead>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-[9px] text-left">
+                        <thead class="bg-slate-100">
                             <tr>
-                                <th>Método</th><th>Saldo</th><th>Fondo</th><th>Activo</th><th>Fecha</th>
+                                <th class="p-2 uppercase">Usuario</th>
+                                <th class="p-2 uppercase">Metodo</th>
+                                <th class="p-2 uppercase">Saldo</th>
+                                <th class="p-2 uppercase">Fondo</th>
+                                <th class="p-2 uppercase">Activo</th>
+                                <th class="p-2 uppercase">Fecha</th>
                             </tr>
                         </thead>
-                        <tbody id="tablaHistorial"></tbody>
+                        <tbody id="tabla_movimientos" class="divide-y">
+                            </tbody>
                     </table>
                 </div>
             </div>
@@ -136,139 +146,86 @@
         const CLAVE_API = 'sb_publishable_rCrNB27M4ypZk7j0a10p_Q_3iNO7qRO';
         const supabaseClient = supabase.createClient(URL_PROYECTO, CLAVE_API);
 
-        let choferCargado = null;
+        let currentChofer = null;
 
         window.onload = cargarChoferes;
 
         async function cargarChoferes() {
             const { data, error } = await supabaseClient.from('choferes').select('*').order('nombre');
-            if(error) return;
-
-            const lista = document.getElementById('listaChoferes');
+            const lista = document.getElementById('lista_choferes');
+            
             lista.innerHTML = data.map(c => `
-                <div class="card-chofer">
-                    <div onclick="verChofer('${c.id}')" class="flex-1">
-                        <p class="text-sm font-black uppercase text-slate-800 tracking-tighter">${c.nombre} ${c.apellidos || ''}</p>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">${c.telefono} • LIC: ${c.lic_operativa ? 'SÍ' : 'NO'}</p>
-                        <p class="text-xs font-black text-blue-600 mt-1">FONDO: $${c.fondo_actual}</p>
-                    </div>
+                <div class="chofer-card p-4 flex items-center justify-between">
                     <div>
-                        <button onclick="toggleMenu('${c.id}')" class="p-4 text-slate-300"><i class="fas fa-ellipsis-v"></i></button>
-                        <div id="menu-${c.id}" class="menu-drop">
-                            <button onclick="verChofer('${c.id}')" class="w-full text-left p-3 text-[10px] font-black uppercase text-slate-600 border-b">
-                                <i class="fas fa-eye mr-2 text-blue-500"></i> Ver Perfil
-                            </button>
-                            <button onclick="eliminarDesdeLista('${c.id}')" class="w-full text-left p-3 text-[10px] font-black uppercase text-red-500">
-                                <i class="fas fa-trash mr-2"></i> Eliminar
-                            </button>
-                        </div>
+                        <p class="text-xs font-black uppercase text-slate-800">${c.nombre}</p>
+                        <p class="text-[9px] font-bold text-slate-400">${c.telefono}</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-[8px] font-black text-slate-400 uppercase">Fondo</p>
+                        <p class="text-sm font-black text-blue-600">$${c.fondo_actual}</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-[8px] font-black ${c.lic_operativa ? 'text-green-500' : 'text-slate-300'} uppercase">Licencia</span>
+                        <button onclick="toggleMenuOp('${c.id}')" class="text-slate-400"><i class="fas fa-ellipsis-v"></i></button>
+                    </div>
+                    <div id="menu_${c.id}" class="hidden absolute right-10 bg-white shadow-xl rounded-xl border p-1 z-10">
+                        <button onclick="verChofer('${c.id}')" class="block w-full text-left px-4 py-2 text-[10px] font-bold hover:bg-blue-50">VER</button>
+                        <button onclick="eliminarChofer('${c.id}')" class="block w-full text-left px-4 py-2 text-[10px] font-bold text-red-500 hover:bg-red-50">ELIMINAR</button>
                     </div>
                 </div>
             `).join('');
         }
 
-        function toggleMenu(id) {
-            document.querySelectorAll('.menu-drop').forEach(m => {
-                if(m.id !== `menu-${id}`) m.classList.remove('active');
-            });
-            document.getElementById(`menu-${id}`).classList.toggle('active');
+        function toggleMenuOp(id) {
+            document.querySelectorAll('[id^="menu_"]').forEach(el => el.id !== `menu_${id}` && el.classList.add('hidden'));
+            document.getElementById(`menu_${id}`).classList.toggle('hidden');
         }
 
         async function verChofer(id) {
-            const { data } = await supabaseClient.from('choferes').select('*').eq('id', id).single();
-            if(!data) return;
-            choferCargado = data;
-
-            // Llenar Modal
-            document.getElementById('det_nombre_full').innerText = `${data.nombre} ${data.apellidos || ''}`;
-            document.getElementById('det_foto').src = data.foto_url || 'https://via.placeholder.com/300?text=SIN+FOTO';
-            document.getElementById('det_fondo').innerText = `$${data.fondo_actual}`;
-            document.getElementById('info_tel').innerText = data.telefono;
-            document.getElementById('auto_foto').src = data.auto_foto_url || 'https://via.placeholder.com/400x200?text=SIN+FOTO';
-            document.getElementById('auto_desc').innerText = `${data.auto_marca} ${data.auto_modelo} (${data.auto_color})`;
-            document.getElementById('auto_aire').innerText = data.aire_acondicionado ? 'Con Aire' : 'Sin Aire';
-            document.getElementById('auto_lic').innerText = data.lic_operativa ? 'Licencia 12%' : 'No Licencia 15%';
+            const { data: c } = await supabaseClient.from('choferes').select('*').eq('id', id).single();
+            currentChofer = c;
             
-            // Checks y Radios
-            document.getElementById('det_sin_credito').checked = data.trabajar_sin_credito;
-            const radioGrupo = document.querySelector(`input[name="det_grupo"][value="${data.grupo}"]`);
-            if(radioGrupo) radioGrupo.checked = true;
-
-            cargarHistorial(id);
-            document.getElementById('modalVer').classList.add('active');
-            document.querySelectorAll('.menu-drop').forEach(m => m.classList.remove('active'));
-        }
-
-        async function cargarHistorial(id) {
-            const { data } = await supabaseClient.from('movimientos_fondo').select('*').eq('usuario', id).order('created_at', { ascending: false });
-            const tabla = document.getElementById('tablaHistorial');
-            tabla.innerHTML = data.map(m => `
-                <tr>
-                    <td>${m.metodo}</td>
-                    <td class="font-bold ${m.saldo >= 0 ? 'text-green-600' : 'text-red-600'}">${m.saldo >= 0 ? '+' : ''}${m.saldo}</td>
-                    <td class="text-slate-400">$${m.fondo_ant}</td>
-                    <td class="font-black">$${m.activo}</td>
-                    <td class="text-[8px] opacity-50">${new Date(m.created_at).toLocaleDateString()}</td>
-                </tr>
-            `).join('');
-        }
-
-        function abrirTransaccion(tipo) {
-            window.tipoTransaccion = tipo;
-            document.getElementById('trans_titulo').innerText = tipo + " Dinero al Fondo";
-            document.getElementById('formFondo').classList.remove('hidden');
-        }
-
-        async function procesarTransaccion() {
-            const cant = parseFloat(document.getElementById('trans_cantidad').value);
-            if(!cant || !choferCargado) return;
-
-            const saldo = window.tipoTransaccion === 'Agregar' ? cant : -cant;
-            const nuevoActivo = choferCargado.fondo_actual + saldo;
-
-            // 1. Registro movimiento
-            await supabaseClient.from('movimientos_fondo').insert([{
-                usuario: choferCargado.id,
-                metodo: document.getElementById('trans_metodo').value,
-                saldo: saldo,
-                fondo_ant: choferCargado.fondo_actual,
-                activo: nuevoActivo
-            }]);
-
-            // 2. Actualizar Chofer
-            await supabaseClient.from('choferes').update({ fondo_actual: nuevoActivo }).eq('id', choferCargado.id);
+            document.getElementById('p_nombre').innerText = c.nombre;
+            document.getElementById('p_foto').src = c.foto_url || 'https://via.placeholder.com/150';
+            document.getElementById('p_fondo').innerText = `$${c.fondo_actual}`;
+            document.getElementById('p_full_name').innerText = `${c.nombre} ${c.apellidos || ''}`;
+            document.getElementById('p_tel').innerText = c.telefono;
+            document.getElementById('p_marca').innerText = c.auto_marca || '-';
+            document.getElementById('p_color').innerText = c.auto_color || '-';
+            document.getElementById('p_lic_check').checked = c.lic_operativa;
+            document.getElementById('p_aire').checked = c.aire_acondicionado;
+            document.getElementById('p_sin_credito').checked = c.trabajar_sin_credito;
+            document.getElementById('p_grupo').innerText = `Grupo: ${c.grupo || 'Ninguno'}`;
             
-            alert("Operación completada");
-            document.getElementById('formFondo').classList.add('hidden');
-            verChofer(choferCargado.id);
+            document.getElementById('modal_perfil').classList.add('active');
         }
 
-        async function eliminarDesdeLista(id) {
-            if(confirm("¿Seguro que quieres eliminar este chofer?")) {
+        function cerrarPerfil() { document.getElementById('modal_perfil').classList.remove('active'); }
+
+        function showTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tab_${tab}`).classList.remove('hidden');
+            event.target.classList.add('active');
+        }
+
+        function toggleFondoAccion(accion) {
+            const form = document.getElementById('form_fondo');
+            form.classList.remove('hidden');
+            document.getElementById('fondo_titulo').innerText = accion === 'agregar' ? 'Agregar Fondo' : 'Retirar Fondo';
+            document.getElementById('f_metodo').style.display = accion === 'agregar' ? 'block' : 'none';
+        }
+
+        async function procesarFondo() {
+            // Lógica para registrar movimientos y actualizar saldo
+            alert("Procesando operación...");
+        }
+
+        async function eliminarChofer(id) {
+            if(confirm("¿Seguro que deseas eliminar este chófer?")) {
                 await supabaseClient.from('choferes').delete().eq('id', id);
                 cargarChoferes();
             }
-        }
-
-        async function eliminarChoferActual() {
-            if(confirm("¿Eliminar este perfil permanentemente?")) {
-                await supabaseClient.from('choferes').delete().eq('id', choferCargado.id);
-                cerrarModal();
-                cargarChoferes();
-            }
-        }
-
-        function cerrarModal() { document.getElementById('modalVer').classList.remove('active'); }
-        
-        function showTab(tab) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('tab_' + tab).classList.remove('hidden');
-            document.getElementById('btn_' + tab).classList.add('active');
-        }
-
-        function abrirWA() {
-            window.open(`https://wa.me/${choferCargado.telefono}`, '_blank');
         }
     </script>
 </body>
