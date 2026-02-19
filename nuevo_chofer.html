@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nuevo Chofer - CONGO MUSUNDI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .form-card { background: white; border-radius: 2.5rem; padding: 2rem; shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        input, select { border-radius: 1rem !important; border: 1px solid #e2e8f0 !important; padding: 0.75rem !important; outline: none; width: 100%; bg: #f8fafc; }
+        input:focus { border-color: #1e5bb9 !important; ring: 2px solid #1e5bb9; }
+        .label-style { font-size: 0.7rem; font-weight: 900; color: #64748b; text-transform: uppercase; margin-left: 0.5rem; margin-bottom: 0.3rem; display: block; }
+    </style>
+</head>
+<body class="pb-10">
+
+    <header class="bg-[#1e5bb9] text-white p-4 shadow-md flex justify-between items-center sticky top-0 z-50">
+        <a href="choferes.html" class="text-xl"><i class="fas fa-arrow-left"></i></a>
+        <h1 class="font-black italic uppercase tracking-tighter">Registrar Chofer</h1>
+        <div></div>
+    </header>
+
+    <main class="p-4 max-w-xl mx-auto space-y-6">
+        <form id="formNuevoChofer" class="form-card space-y-4">
+            
+            <h2 class="text-center font-black text-slate-800 text-xl uppercase italic mb-6">Datos Personales</h2>
+
+            <div>
+                <label class="label-style">Nombre Completo</label>
+                <input type="text" id="nombre" required placeholder="Ej: Juan Pérez">
+            </div>
+
+            <div>
+                <label class="label-style">Teléfono (WhatsApp)</label>
+                <input type="tel" id="telefono" required placeholder="53XXXXXX">
+            </div>
+
+            <div>
+                <label class="label-style">URL de Foto de Perfil</label>
+                <input type="url" id="foto_url" placeholder="https://enlace-a-la-foto.jpg">
+            </div>
+
+            <div class="pt-4 border-t">
+                <h2 class="text-center font-black text-slate-800 text-xl uppercase italic mb-6">Datos del Vehículo</h2>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="label-style">Marca/Modelo</label>
+                    <input type="text" id="auto_marca" placeholder="Ej: Hyundai H1">
+                </div>
+                <div>
+                    <label class="label-style">Color</label>
+                    <input type="text" id="auto_color" placeholder="Blanco">
+                </div>
+            </div>
+
+            <div>
+                <label class="label-style">URL Foto del Auto</label>
+                <input type="url" id="auto_foto_url" placeholder="Enlace a la foto del vehículo">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl">
+                <label class="flex items-center gap-2 text-xs font-black text-slate-600 uppercase">
+                    <input type="checkbox" id="lic_operativa" class="w-5 h-5"> Lic. Operativa
+                </label>
+                <label class="flex items-center gap-2 text-xs font-black text-slate-600 uppercase">
+                    <input type="checkbox" id="aire_acondicionado" class="w-5 h-5"> Aire Acond.
+                </label>
+            </div>
+
+            <div>
+                <label class="label-style">Grupo al que pertenece</label>
+                <select id="grupo">
+                    <option value="Grupo A">Grupo A</option>
+                    <option value="Grupo B">Grupo B</option>
+                </select>
+            </div>
+
+            <button type="submit" class="w-full bg-[#1e5bb9] text-white font-black py-4 rounded-2xl shadow-lg shadow-blue-200 uppercase tracking-widest mt-6 active:scale-95 transition-all">
+                Guardar Chofer
+            </button>
+        </form>
+    </main>
+
+    <script>
+        const URL_PROYECTO = 'https://rkcqrnqlmuzcvwlgkmyb.supabase.co'; 
+        const CLAVE_API = 'sb_publishable_rCrNB27M4ypZk7j0a10p_Q_3iNO7qRO';
+        const supabaseClient = supabase.createClient(URL_PROYECTO, CLAVE_API);
+
+        document.getElementById('formNuevoChofer').onsubmit = async (e) => {
+            e.preventDefault();
+
+            const nuevoChofer = {
+                nombre: document.getElementById('nombre').value,
+                telefono: document.getElementById('telefono').value,
+                foto_url: document.getElementById('foto_url').value,
+                auto_marca: document.getElementById('auto_marca').value,
+                auto_color: document.getElementById('auto_color').value,
+                auto_foto_url: document.getElementById('auto_foto_url').value,
+                lic_operativa: document.getElementById('lic_operativa').checked,
+                aire_acondicionado: document.getElementById('aire_acondicionado').checked,
+                grupo: document.getElementById('grupo').value,
+                fondo_actual: 0, // Inicia en cero
+                trabajar_sin_credito: false
+            };
+
+            const { data, error } = await supabaseClient
+                .from('choferes')
+                .insert([nuevoChofer]);
+
+            if (error) {
+                alert("Error al guardar: " + error.message);
+            } else {
+                alert("✅ Chofer registrado correctamente");
+                window.location.href = 'choferes.html';
+            }
+        };
+    </script>
+</body>
+</html>
