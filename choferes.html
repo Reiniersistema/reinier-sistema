@@ -1,40 +1,161 @@
-<script>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Choferes - CONGO MUSUNDI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+        .logo-text { font-weight: 900; font-style: italic; text-transform: uppercase; letter-spacing: -0.05em; }
+        .chofer-card { background: white; border-radius: 1.5rem; border-bottom: 4px solid #e2e8f0; transition: all 0.2s; position: relative; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; overflow-y: auto; padding: 1rem; }
+        .modal.active { display: flex; justify-content: center; }
+        .profile-content { background: white; width: 100%; max-width: 500px; border-radius: 2.5rem; position: relative; height: fit-content; }
+        .tab-btn { font-size: 9px; font-weight: 900; text-transform: uppercase; padding: 10px; border-radius: 12px; flex: 1; text-align: center; background: #f8fafc; color: #64748b; }
+        .tab-btn.active { background: #1e5bb9; color: white; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="pb-10">
+    <header class="bg-[#1e5bb9] text-white p-4 shadow-md flex items-center sticky top-0 z-50">
+        <a href="panel.html" class="text-xl w-10"><i class="fas fa-arrow-left"></i></a>
+        <h1 class="logo-text text-lg text-center flex-1">Nuestros Choferes</h1>
+        <div class="w-10"></div>
+    </header>
+
+    <main class="p-4 max-w-2xl mx-auto space-y-3" id="lista_choferes"></main>
+
+    <div id="modal_perfil" class="modal">
+        <div class="profile-content p-6 shadow-2xl">
+            <button onclick="cerrarPerfil()" class="absolute top-4 right-4 text-slate-300 text-xl"><i class="fas fa-times-circle"></i></button>
+            <div class="text-center mt-4">
+                <img id="p_foto" src="" class="w-32 h-32 mx-auto rounded-3xl object-cover shadow-lg mb-3" alt="Foto">
+                <h2 id="p_nombre" class="logo-text text-xl text-slate-800">Nombre</h2>
+                <span id="p_grupo" class="text-[9px] font-black bg-blue-100 text-blue-700 px-3 py-1 rounded-full uppercase">Grupo: -</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 mt-6">
+                <div class="bg-slate-50 p-3 rounded-2xl text-center">
+                    <p class="text-[8px] font-black text-slate-400 uppercase">Fondo Actual</p>
+                    <p id="p_fondo" class="text-lg font-black text-blue-600">$0</p>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-2xl text-center flex items-center justify-center">
+                    <label class="text-[8px] font-black uppercase text-slate-400">Sin Crédito <input type="checkbox" id="p_sin_credito" onchange="actualizarPreferencia('trabajar_sin_credito', this.checked)"></label>
+                </div>
+            </div>
+
+            <div class="flex gap-1 mt-6 border-t pt-6">
+                <button onclick="showTab('info', this)" class="tab-btn active">Info</button>
+                <button onclick="showTab('auto', this)" class="tab-btn">Auto</button>
+                <button onclick="showTab('fondo', this)" class="tab-btn">Fondo</button>
+            </div>
+
+            <div id="tab_info" class="tab-content py-4">
+                <p id="p_full_name" class="font-bold text-slate-700 mb-2 border-b pb-2">-</p>
+                <p id="p_tel" class="font-bold text-slate-700">-</p>
+            </div>
+
+            <div id="tab_fondo" class="tab-content hidden py-4">
+                <div class="flex gap-2 mb-4">
+                    <button onclick="toggleFondoAccion('agregar')" class="flex-1 bg-green-600 text-white py-2 rounded-xl text-[9px] font-black uppercase">Recargar</button>
+                    <button onclick="toggleFondoAccion('retirar')" class="flex-1 bg-red-600 text-white py-2 rounded-xl text-[9px] font-black uppercase">Retirar</button>
+                </div>
+                <div id="form_fondo" class="hidden bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                    <input type="number" id="f_cantidad" placeholder="Cantidad $" class="w-full p-2 rounded-lg text-xs font-bold mb-2">
+                    <button onclick="procesarFondo()" class="w-full bg-[#1e5bb9] text-white p-3 rounded-xl font-black uppercase text-[10px]">Confirmar</button>
+                </div>
+            </div>
+
+            <div class="flex gap-2 mt-4">
+                <button id="p_btn_wa" class="flex-1 bg-green-500 py-3 rounded-xl text-[9px] font-black uppercase text-white">WA</button>
+                <button id="p_btn_del" class="flex-1 bg-red-100 py-3 rounded-xl text-[9px] font-black uppercase text-red-500">Borrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
         let currentChofer = null;
         let modoFondo = 'agregar';
 
-        // ... (cargarChoferes, verChofer, etc., se mantienen igual) ...
+        window.onload = cargarChoferes;
 
-        // --- CÓDIGO ACTUALIZADO PARA MOVIMIENTOS DE FONDO ---
+        async function cargarChoferes() {
+            const { data, error } = await supabaseClient.from('choferes').select('*').order('nombre');
+            document.getElementById('lista_choferes').innerHTML = data.map(c => `
+                <div class="chofer-card p-4 flex items-center justify-between">
+                    <div onclick="verChofer('${c.id}')" class="flex-1 cursor-pointer">
+                        <p class="text-xs font-black uppercase text-slate-800">${c.nombre}</p>
+                        <p class="text-sm font-black text-blue-600">$${c.fondo_actual.toFixed(2)}</p>
+                    </div>
+                    <button onclick="toggleMenuOp('${c.id}')" class="text-slate-400 p-2"><i class="fas fa-ellipsis-v"></i></button>
+                    <div id="menu_${c.id}" class="hidden absolute right-12 top-10 bg-white shadow-2xl rounded-xl border p-1 z-10 w-32">
+                        <button onclick="verChofer('${c.id}')" class="block w-full text-left px-4 py-2 text-[10px] font-bold">PERFIL</button>
+                        <button onclick="eliminarChofer('${c.id}')" class="block w-full text-left px-4 py-2 text-[10px] font-bold text-red-500">BORRAR</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function verChofer(id) {
+            const { data: c } = await supabaseClient.from('choferes').select('*').eq('id', id).single();
+            currentChofer = c;
+            document.getElementById('p_nombre').innerText = c.nombre;
+            document.getElementById('p_foto').src = c.foto_url || 'https://ui-avatars.com/api/?name=' + c.nombre;
+            document.getElementById('p_fondo').innerText = `$${c.fondo_actual.toFixed(2)}`;
+            document.getElementById('p_full_name').innerText = `${c.nombre} ${c.apellidos || ''}`;
+            document.getElementById('p_tel').innerText = c.telefono;
+            document.getElementById('p_sin_credito').checked = c.trabajar_sin_credito;
+            document.getElementById('modal_perfil').classList.add('active');
+        }
+
+        function cerrarPerfil() { document.getElementById('modal_perfil').classList.remove('active'); }
+
+        function showTab(tab, btn) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            document.getElementById(`tab_${tab}`).classList.remove('hidden');
+        }
+
+        function toggleFondoAccion(accion) {
+            modoFondo = accion;
+            document.getElementById('form_fondo').classList.remove('hidden');
+        }
+
         async function procesarFondo() {
             const cant = parseFloat(document.getElementById('f_cantidad').value);
-            if (!cant || cant <= 0) return alert("Ingrese una cantidad válida");
-
+            if (!cant || cant <= 0) return alert("Cantidad inválida");
             const variacion = modoFondo === 'agregar' ? cant : -cant;
             const nuevoSaldo = currentChofer.fondo_actual + variacion;
 
-            // 1. Actualizar saldo del chofer
-            const { error: errChofer } = await supabaseClient
-                .from('choferes')
-                .update({ fondo_actual: nuevoSaldo })
-                .eq('id', currentChofer.id);
-
+            const { error: errChofer } = await supabaseClient.from('choferes').update({ fondo_actual: nuevoSaldo }).eq('id', currentChofer.id);
             if (!errChofer) {
-                // 2. Insertar registro en movimientos_fondo
                 await supabaseClient.from('movimientos_fondo').insert([{
                     chofer_tel: currentChofer.telefono,
-                    usuario: "Administrador", // Puedes cambiarlo por el usuario logueado
+                    usuario: "Admin",
                     metodo: modoFondo === 'agregar' ? "Recarga" : "Retiro",
                     saldo_movedo: cant,
                     fondo_anterior: currentChofer.fondo_actual,
                     activo_nuevo: nuevoSaldo
                 }]);
-
-                alert("✅ Operación realizada con éxito.");
-                location.reload(); 
-            } else {
-                alert("Error al actualizar fondo: " + errChofer.message);
+                alert("✅ Éxito");
+                location.reload();
             }
         }
-        
-        // ... (resto de funciones como eliminarChofer se mantienen igual) ...
+
+        function toggleMenuOp(id) {
+            document.getElementById(`menu_${id}`).classList.toggle('hidden');
+        }
+
+        async function eliminarChofer(id) {
+            if(confirm("¿Eliminar?")) {
+                await supabaseClient.from('choferes').delete().eq('id', id);
+                location.reload();
+            }
+        }
     </script>
+</body>
+</html>
