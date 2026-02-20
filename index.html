@@ -3,104 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acceso - CONGO MUSUNDI</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>TransGestión - Login</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
-    
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #1e5bb9 0%, #0f2d5c 100%);
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             margin: 0;
-            overflow: hidden;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0047AB; /* Azul cobalto */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
-        .login-card {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 2.5rem;
-            border-radius: 3rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+
+        .login-container {
             width: 90%;
             max-width: 400px;
             text-align: center;
-            backdrop-filter: blur(10px);
         }
-        .pin-input {
-            letter-spacing: 1.5rem;
-            text-align: center;
+
+        .logo-circle {
+            background-color: white;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .logo-text {
+            color: black;
             font-size: 2rem;
-            font-weight: 900;
-            border-radius: 1.5rem;
-            border: 3px solid #e2e8f0;
-            transition: all 0.3s;
+            font-weight: bold;
+            letter-spacing: -2px;
         }
-        .pin-input:focus {
-            border-color: #1e5bb9;
-            outline: none;
-            box-shadow: 0 0 0 4px rgba(30, 91, 185, 0.2);
+
+        .brand-name {
+            color: black;
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 30px;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.2);
         }
-        .logo-font {
-            font-weight: 900;
-            font-style: italic;
-            text-transform: uppercase;
-            letter-spacing: -0.05em;
-            color: #1e5bb9;
+
+        .login-card {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: #000;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:active {
+            transform: scale(0.98);
         }
     </style>
 </head>
 <body>
 
-    <div class="login-card">
-        <div class="mb-8">
-            <div class="bg-blue-600 w-16 h-16 rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-lg">
-                <i class="fas fa-taxi text-white text-3xl"></i>
-            </div>
-            <h1 class="text-3xl logo-font">CONGO MUSUNDI</h1>
-            <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-2">Panel de Administración</p>
+    <div class="login-container">
+        <div class="logo-circle">
+            <span class="logo-text">RF</span>
         </div>
+        
+        <div class="brand-name">TransGestión</div>
 
-        <div class="space-y-6">
-            <div>
-                <label class="block text-[10px] font-black uppercase text-slate-500 mb-2">Ingresa tu PIN de acceso</label>
-                <input type="password" id="pin" maxlength="4" inputmode="numeric" placeholder="••••" class="w-full p-4 pin-input">
+        <div class="login-card">
+            <div class="input-group">
+                <input type="tel" id="telefono" placeholder="Número de teléfono" required>
             </div>
-
-            <button onclick="validarAcceso()" class="w-full bg-[#1e5bb9] text-white p-5 rounded-2xl font-black uppercase italic tracking-tighter shadow-xl active:scale-95 transition-transform">
-                Entrar al Sistema
-            </button>
+            <div class="input-group">
+                <input type="password" id="password" placeholder="Contraseña" required>
+            </div>
+            <button onclick="login()">Iniciar Sesión</button>
         </div>
-
-        <p class="mt-8 text-[9px] font-bold text-slate-400 uppercase">v2.0 • 2026 © Seguridad Privada</p>
     </div>
 
     <script>
-        // NOTA: El objeto 'supabaseClient' ya está disponible gracias a config.js
-        // Por ahora mantenemos la validación simple por PIN.
+        async function login() {
+            const telefono = document.getElementById('telefono').value;
+            const password = document.getElementById('password').value;
 
-        function validarAcceso() {
-            const pin = document.getElementById('pin').value;
+            // Aquí irá la lógica para validar con Supabase
+            console.log("Intentando conectar con:", telefono);
             
-            // Verificamos el PIN que ya descubriste que era el de acceso
-            if(pin === '2024') {
-                localStorage.setItem('auth_congo', 'true');
-                window.location.href = 'panel.html';
-            } else {
-                alert('PIN Incorrecto');
-                document.getElementById('pin').value = '';
-            }
+            // Ejemplo de redirección manual para pruebas:
+            // window.location.href = 'panel.html';
         }
-
-        document.getElementById('pin').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                validarAcceso();
-            }
-        });
     </script>
 </body>
 </html>
