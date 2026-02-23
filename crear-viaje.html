@@ -243,7 +243,50 @@
     }
 
     async function crearViaje() {
-        alert("Lógica de inserción en base de datos lista para el siguiente paso.");
+        const btn = document.querySelector('button[onclick="crearViaje()"]');
+        const textoOriginal = btn.innerText;
+        
+        // Desactivar botón mientras guarda
+        btn.innerText = "GUARDANDO...";
+        btn.disabled = true;
+
+        const paradas = Array.from(document.querySelectorAll('.parada-extra')).map(i => i.value).filter(v => v !== "");
+        
+        const datosViaje = {
+            colaboracion: document.getElementById('colaboracion').value,
+            chofer_id: choferData ? choferData.id : null,
+            cliente_tel: document.getElementById('tel-cliente').value,
+            precio: parseFloat(document.getElementById('precio-final').value) || 0,
+            pax: parseInt(document.getElementById('pax').value) || 1,
+            origen: document.getElementById('origen').value,
+            paradas: paradas.join(", "),
+            destino: document.getElementById('destino').value,
+            grupo_ws: document.getElementById('grupo').value,
+            pago_transferencia: document.getElementById('pago_transf').checked,
+            precio_cliente: document.getElementById('precio_cliente').checked,
+            aire_acondicionado: document.getElementById('aire').checked,
+            ida_vuelta: document.getElementById('ida_vuelta').checked,
+            es_reservado: document.getElementById('reservado').checked,
+            fecha_reserva: document.getElementById('fecha-reserva').value || null,
+            observaciones: document.getElementById('observacion').value
+        };
+
+        try {
+            const { data, error } = await supabaseClient
+                .from('viajes')
+                .insert([datosViaje]);
+
+            if (error) throw error;
+
+            alert("✅ ¡Viaje creado con éxito!");
+            window.location.href = "panel.html";
+
+        } catch (error) {
+            console.error("Error:", error);
+            alert("Error al guardar en la base de datos: " + error.message);
+            btn.innerText = textoOriginal;
+            btn.disabled = false;
+        }
     }
 </script>
 </body>
