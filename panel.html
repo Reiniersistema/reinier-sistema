@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel - RF TransGestión</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;700&family=Playfair+Display:ital,wght@1,900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primario: #1a1a1a;
+            --dorado: #d4af37;
+            --blanco: #ffffff;
+        }
+
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Montserrat', sans-serif;
+            background: #121212;
+            color: var(--blanco);
+        }
+
+        /* Cabecera */
+        header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .logo-pequeno {
+            font-family: 'Playfair Display', serif;
+            font-size: 30px;
+            letter-spacing: -2px;
+            color: var(--blanco);
+        }
+
+        /* Bienvenida */
+        .bienvenida {
+            padding: 30px 20px;
+            text-align: left;
+        }
+
+        .bienvenida h2 { margin: 0; font-weight: 300; font-size: 24px; }
+        .bienvenida span { color: var(--dorado); font-weight: 700; }
+
+        /* Menú de Botones */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            padding: 20px;
+        }
+
+        .menu-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 30px 10px;
+            text-align: center;
+            text-decoration: none;
+            color: white;
+            transition: 0.3s;
+        }
+
+        .menu-card:active { transform: scale(0.95); background: var(--dorado); }
+
+        .icon { font-size: 30px; margin-bottom: 10px; display: block; }
+        .titulo-card { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+
+        .btn-cerrar {
+            margin: 40px 20px;
+            padding: 15px;
+            text-align: center;
+            background: rgba(255, 0, 0, 0.2);
+            border-radius: 10px;
+            color: #ff4d4d;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-pequeno">RF <span style="font-size: 12px; letter-spacing: 3px; font-family: 'Montserrat'; color: #d4af37;">TRANSGESTIÓN</span></div>
+    </header>
+
+    <div class="bienvenida">
+        <h2 id="saludo">Cargando...</h2>
+    </div>
+
+    <div class="menu-grid">
+        <a href="nuevo-viaje.html" class="menu-card">
+            <span class="icon">➕</span>
+            <span class="titulo-card">Nuevo Viaje</span>
+        </a>
+        <a href="lista-viajes.html" class="menu-card">
+            <span class="icon">📅</span>
+            <span class="titulo-card">Historial</span>
+        </a>
+        <a href="choferes.html" class="menu-card">
+            <span class="icon">🏎️</span>
+            <span class="titulo-card">Choferes</span>
+        </a>
+        <a href="usuarios.html" class="menu-card">
+            <span class="icon">👥</span>
+            <span class="titulo-card">Equipo</span>
+        </a>
+    </div>
+
+    <div class="btn-cerrar" onclick="cerrarSesion()">Cerrar Sesión</div>
+
+    <script>
+        // Recuperar datos del usuario logueado
+        const usuario = JSON.parse(localStorage.getItem('usuario_activo'));
+
+        if (!usuario) {
+            window.location.href = "index.html"; // Si no hay usuario, fuera.
+        } else {
+            document.getElementById('saludo').innerHTML = `Hola, <span>${usuario.nombre}</span>`;
+        }
+
+        function cerrarSesion() {
+            localStorage.removeItem('usuario_activo');
+            window.location.href = "index.html";
+        }
+    </script>
+</body>
+</html>
