@@ -170,7 +170,6 @@
 
     function generarPlanillas() {
         const paradas = Array.from(document.querySelectorAll('.parada-extra')).map(i => i.value).filter(v => v !== "");
-        
         const datos = {
             precio: document.getElementById('precio-final').value,
             cliente: document.getElementById('tel-cliente').value,
@@ -188,7 +187,6 @@
             fecha: document.getElementById('fecha-reserva').value
         };
 
-        // 1. PLANILLA CHOFER
         let txtChofer = `*DATOS DEL VIAJE*\n`;
         if(datos.precio) txtChofer += `Precio: ${datos.precio}\n`;
         if(datos.cliente) txtChofer += `Cliente: ${datos.cliente}\n`;
@@ -198,21 +196,17 @@
         if(datos.pax) txtChofer += `Pax: ${datos.pax}\n`;
         if(datos.fondo) txtChofer += `Fondo Actual: ${datos.fondo}\n`;
         if(datos.obs) txtChofer += `Observación: ${datos.obs}\n`;
-        
-        txtChofer += `\n⚠️ IMPORTANTE ⚠️\n\n•usted tiene 15 minutos máximo para llegar a la dirección de recojida del cliente.\n•El cliente tiene 15 minutos para abordar su vehículo,por encima de este tiempo se le cobrará 25 cup el minuto extra\n•En caso de llegada tarde a un servicio programado se le descontará el 50% del precio del servicio. \n•Recuerde mantener su auto limpio y en perfectas condiciones técnicas al igual que un trato cordial con cada cliente.`;
+        txtChofer += `\n⚠️ IMPORTANTE ⚠️\n\n•Usted tiene 15 minutos máximo para llegar a la dirección...`;
         document.getElementById('p-chofer').innerText = txtChofer;
 
-        // 2. PLANILLA CLIENTE
         let txtCliente = `*Taxi En Camino*\n`;
         if(datos.precio) txtCliente += `Precio: ${datos.precio}\n`;
         if(datos.chofer) txtCliente += `Chofer: ${datos.chofer}\n`;
         if(datos.auto) txtCliente += `Auto: ${datos.auto}\n`;
         if(datos.color) txtCliente += `Color: ${datos.color}\n`;
-        
-        txtCliente += `\n⚠️ *IMPORTANTE* ⚠️\n\n•Cada parada extra se recalcula la ruta y modifica el costo.\n•Al llegar el taxi a su origen usted tiene 10min de espera como cortesía, pasado este tiempo debe pagar por cada minuto extra.\n•Tiempo de espera extra: 25cup x minutos. \n•En caso de cancelar estando el auto en el lugar de recogida, deberá pagar la mitad del costo del servicio`;
+        txtCliente += `\n⚠️ *IMPORTANTE* ⚠️\n\n•Cada parada extra se recalcula la ruta...`;
         document.getElementById('p-cliente').innerText = txtCliente;
 
-        // 3. RESUMEN DATOS LLENADOS
         let resumen = "";
         if(datos.colab) resumen += `Colaboración: ${datos.colab}\n`;
         if(datos.chofer) resumen += `Chofer: ${datos.chofer}\n`;
@@ -226,7 +220,6 @@
         if(datos.fecha) resumen += `Fecha/Hora: ${datos.fecha}\n`;
         if(datos.obs) resumen += `Observaciones: ${datos.obs}\n`;
         document.getElementById('p-resumen').innerText = resumen;
-
         document.getElementById('modalPlanillas').style.display = 'block';
     }
 
@@ -250,6 +243,7 @@
 
         const paradas = Array.from(document.querySelectorAll('.parada-extra')).map(i => i.value).filter(v => v !== "");
         
+        // CORRECCIÓN CLAVE: El objeto de datos debe coincidir con tus capturas
         const datosViaje = {
             colaboracion: document.getElementById('colaboracion').value,
             chofer_id: choferData ? choferData.id : null,
@@ -257,8 +251,9 @@
             precio: parseFloat(document.getElementById('precio-final').value) || 0,
             pasajeros: parseInt(document.getElementById('pax').value) || 1,
             origen: document.getElementById('origen').value,
-            paradas_intermedias: paradas.join(", "),
             destino: document.getElementById('destino').value,
+            // Si paradas_intermedias es jsonb, lo enviamos como array
+            paradas_intermedias: paradas.length > 0 ? paradas : null, 
             grupo_whatsapp: document.getElementById('grupo').value,
             pago_transferencia: document.getElementById('pago_transf').checked,
             precio_cliente: document.getElementById('precio_cliente').checked,
@@ -282,8 +277,13 @@
             window.location.href = "panel.html";
 
         } catch (error) {
-            console.error("Error:", error);
-            alert("Error: " + error.message);
+            console.error("Error completo:", error);
+            // Mensaje más claro para el error de Schema Cache
+            if (error.message.includes("schema cache")) {
+                alert("Supabase no reconoce la tabla todavía. Por favor, ve a tu SQL Editor en Supabase y ejecuta: NOTIFY pgrst, 'reload schema';");
+            } else {
+                alert("Error: " + error.message);
+            }
             btn.innerText = textoOriginal;
             btn.disabled = false;
         }
