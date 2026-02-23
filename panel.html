@@ -3,125 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel - RF TransGestión</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;700&family=Playfair+Display:ital,wght@1,900&display=swap" rel="stylesheet">
+    <title>Panel de Control - RF TransGestión</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
-            --primario: #1a1a1a;
+            --primario: #121212;
             --dorado: #d4af37;
             --blanco: #ffffff;
+            --gris-oscuro: #1e1e1e;
         }
 
         body {
-            margin: 0; padding: 0;
-            font-family: 'Montserrat', sans-serif;
-            background: #121212;
-            color: var(--blanco);
+            margin: 0; font-family: 'Montserrat', sans-serif;
+            background: var(--primario); color: var(--blanco);
+            overflow-x: hidden;
         }
 
-        /* Cabecera */
-        header {
-            padding: 20px;
-            text-align: center;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+        /* BARRA LATERAL DESLIZANTE */
+        .sidebar {
+            height: 100%; width: 0; position: fixed;
+            z-index: 1000; top: 0; left: 0;
+            background-color: var(--gris-oscuro);
+            overflow-x: hidden; transition: 0.5s;
+            padding-top: 60px; border-right: 1px solid var(--dorado);
         }
 
-        .logo-pequeno {
-            font-family: 'Playfair Display', serif;
-            font-size: 30px;
-            letter-spacing: -2px;
-            color: var(--blanco);
+        .sidebar a {
+            padding: 12px 24px; text-decoration: none;
+            font-size: 15px; color: #818181;
+            display: block; transition: 0.3s;
+            text-transform: uppercase; letter-spacing: 1px;
         }
 
-        /* Bienvenida */
-        .bienvenida {
-            padding: 30px 20px;
-            text-align: left;
+        .sidebar a:hover { color: var(--dorado); background: rgba(212, 175, 55, 0.1); }
+
+        .sidebar .closebtn {
+            position: absolute; top: 10px; right: 25px;
+            font-size: 36px; margin-left: 50px; color: var(--dorado);
         }
 
-        .bienvenida h2 { margin: 0; font-weight: 300; font-size: 24px; }
-        .bienvenida span { color: var(--dorado); font-weight: 700; }
+        /* CONTENIDO PRINCIPAL */
+        #main { transition: margin-left .5s; padding: 20px; }
 
-        /* Menú de Botones */
-        .menu-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            padding: 20px;
+        .header-panel { display: flex; align-items: center; gap: 20px; margin-bottom: 30px; }
+        .openbtn { font-size: 25px; cursor: pointer; background: none; border: none; color: var(--dorado); }
+
+        .logo-txt { font-family: 'Playfair Display', serif; font-size: 24px; }
+
+        /* TABLAS Y GRÁFICAS */
+        .dashboard-grid { display: grid; grid-template-columns: 1fr; gap: 25px; }
+        
+        @media(min-width: 768px) { .dashboard-grid { grid-template-columns: 1fr 1fr; } }
+
+        .card {
+            background: var(--gris-oscuro); padding: 20px;
+            border-radius: 15px; border: 1px solid rgba(255,255,255,0.05);
         }
 
-        .menu-card {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 15px;
-            padding: 30px 10px;
-            text-align: center;
-            text-decoration: none;
-            color: white;
-            transition: 0.3s;
-        }
+        .card h3 { margin-top: 0; color: var(--dorado); font-size: 16px; text-transform: uppercase; }
 
-        .menu-card:active { transform: scale(0.95); background: var(--dorado); }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        th { text-align: left; color: #818181; padding: 10px; border-bottom: 1px solid #333; }
+        td { padding: 12px 10px; border-bottom: 1px solid #222; }
 
-        .icon { font-size: 30px; margin-bottom: 10px; display: block; }
-        .titulo-card { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-
-        .btn-cerrar {
-            margin: 40px 20px;
-            padding: 15px;
-            text-align: center;
-            background: rgba(255, 0, 0, 0.2);
-            border-radius: 10px;
-            color: #ff4d4d;
-            cursor: pointer;
-        }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="logo-pequeno">RF <span style="font-size: 12px; letter-spacing: 3px; font-family: 'Montserrat'; color: #d4af37;">TRANSGESTIÓN</span></div>
-    </header>
-
-    <div class="bienvenida">
-        <h2 id="saludo">Cargando...</h2>
+    <div id="mySidebar" class="sidebar">
+        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+        <a href="panel.html" style="color: var(--dorado); font-weight: bold;">Panel de Control</a>
+        <a href="crear-viaje.html">Crear Viajes</a>
+        <a href="mis-viajes.html">Mis Viajes</a>
+        <a href="choferes.html">Choferes</a>
+        <a href="pagos-pendientes.html">Pagos Pendientes</a>
+        <a href="pagos-aprobar.html">Pagos por Aprobar</a>
+        <a href="tarjetas.html">Tarjetas</a>
+        <a href="transferencias.html">Transferencias</a>
+        <a href="colaboracion.html">Colaboración</a>
+        <a href="usuarios.html">Usuarios</a>
+        <a href="economia.html">Economía</a>
+        <a href="clientes.html">Clientes</a>
+        <hr style="border: 0.5px solid #333; margin: 20px;">
+        <a href="#" onclick="cerrarSesion()" style="color: #ff4d4d;">Cerrar Sesión</a>
     </div>
 
-    <div class="menu-grid">
-        <a href="nuevo-viaje.html" class="menu-card">
-            <span class="icon">➕</span>
-            <span class="titulo-card">Nuevo Viaje</span>
-        </a>
-        <a href="lista-viajes.html" class="menu-card">
-            <span class="icon">📅</span>
-            <span class="titulo-card">Historial</span>
-        </a>
-        <a href="choferes.html" class="menu-card">
-            <span class="icon">🏎️</span>
-            <span class="titulo-card">Choferes</span>
-        </a>
-        <a href="usuarios.html" class="menu-card">
-            <span class="icon">👥</span>
-            <span class="titulo-card">Equipo</span>
-        </a>
+    <div id="main">
+        <div class="header-panel">
+            <button class="openbtn" onclick="openNav()">&#9776;</button>
+            <div class="logo-txt">RF <span style="font-size: 14px; color: var(--dorado);">TransGestión</span></div>
+        </div>
+
+        <h2 style="font-weight: 300;">Bienvenido, <span id="user-name" style="font-weight: 700; color: var(--dorado);">...</span></h2>
+
+        <div class="dashboard-grid">
+            <div class="card">
+                <h3>Viajes Recientes</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Chofer</th>
+                            <th>Precio</th>
+                            <th>Origen</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-recientes">
+                        </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3>Viajes Diarios</h3>
+                <canvas id="graficaViajes"></canvas>
+            </div>
+        </div>
     </div>
 
-    <div class="btn-cerrar" onclick="cerrarSesion()">Cerrar Sesión</div>
-
+    <script src="config.js"></script>
     <script>
-        // Recuperar datos del usuario logueado
-        const usuario = JSON.parse(localStorage.getItem('usuario_activo'));
+        // Funciones del Menú
+        function openNav() { document.getElementById("mySidebar").style.width = "280px"; }
+        function closeNav() { document.getElementById("mySidebar").style.width = "0"; }
 
-        if (!usuario) {
-            window.location.href = "index.html"; // Si no hay usuario, fuera.
-        } else {
-            document.getElementById('saludo').innerHTML = `Hola, <span>${usuario.nombre}</span>`;
+        const usuario = JSON.parse(localStorage.getItem('usuario_activo'));
+        if (!usuario) window.location.href = "index.html";
+        document.getElementById('user-name').innerText = usuario.nombre;
+
+        async function cargarDatosPanel() {
+            // 1. Cargar últimos 5 viajes
+            const { data: viajes, error } = await supabaseClient
+                .from('viajes')
+                .select('precio, origen, choferes(nombre)')
+                .order('created_at', { ascending: false })
+                .limit(5);
+
+            const tbody = document.getElementById('tabla-recientes');
+            if (viajes) {
+                viajes.forEach(v => {
+                    tbody.innerHTML += `<tr>
+                        <td>${v.choferes?.nombre || 'N/A'}</td>
+                        <td>$${v.precio}</td>
+                        <td>${v.origen}</td>
+                    </tr>`;
+                });
+            }
+
+            // 2. Configurar Gráfica (Ejemplo estático, luego lo haremos real con datos)
+            const ctx = document.getElementById('graficaViajes').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'],
+                    datasets: [{
+                        label: 'Viajes',
+                        data: [12, 19, 3, 5, 2, 3, 10],
+                        borderColor: '#d4af37',
+                        tension: 0.4
+                    }]
+                },
+                options: { plugins: { legend: { display: false } } }
+            });
         }
 
         function cerrarSesion() {
             localStorage.removeItem('usuario_activo');
             window.location.href = "index.html";
         }
+
+        cargarDatosPanel();
     </script>
 </body>
 </html>
