@@ -10,26 +10,21 @@
             --primario: #1a1a1a;
             --dorado-suave: #d4af37;
             --blanco-puro: #ffffff;
-            --gris-claro: #f4f4f4;
         }
 
         body {
-            margin: 0;
-            padding: 0;
+            margin: 0; padding: 0;
             font-family: 'Montserrat', sans-serif;
             background: linear-gradient(135deg, #121212 0%, #2c2c2c 100%);
             height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            display: flex; justify-content: center; align-items: center;
             color: var(--blanco-puro);
+            overflow: hidden;
         }
 
         .login-container {
-            width: 90%;
-            max-width: 400px;
-            padding: 40px 20px;
-            text-align: center;
+            width: 90%; max-width: 400px;
+            padding: 40px 20px; text-align: center;
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(10px);
             border-radius: 20px;
@@ -37,85 +32,40 @@
             box-shadow: 0 15px 35px rgba(0,0,0,0.5);
         }
 
-        /* ESTILO DEL LOGO RF */
         .logo-rf {
             font-family: 'Playfair Display', serif;
-            font-size: 80px;
-            line-height: 1;
-            margin-bottom: 0;
+            font-size: 80px; line-height: 1; margin-bottom: 0;
             background: linear-gradient(to bottom, #ffffff 0%, #a8a8a8 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             filter: drop-shadow(0px 5px 5px rgba(0,0,0,0.3));
             letter-spacing: -5px;
-            position: relative;
-        }
-
-        .logo-rf::after {
-            content: '';
-            display: block;
-            width: 50px;
-            height: 2px;
-            background: var(--dorado-suave);
-            margin: 10px auto;
         }
 
         .phrase-transgestion {
-            font-weight: 300;
-            letter-spacing: 6px;
-            text-transform: uppercase;
-            font-size: 14px;
-            color: var(--dorado-suave);
-            margin-bottom: 40px;
-        }
-
-        /* FORMULARIO */
-        .input-group {
-            margin-bottom: 20px;
-            text-align: left;
+            font-weight: 300; letter-spacing: 6px;
+            text-transform: uppercase; font-size: 14px;
+            color: var(--dorado-suave); margin-bottom: 40px;
         }
 
         input {
-            width: 100%;
-            padding: 15px;
-            border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.2);
-            background: rgba(0,0,0,0.2);
-            color: white;
-            font-size: 16px;
-            box-sizing: border-box;
-            outline: none;
-            transition: border 0.3s;
+            width: 100%; padding: 15px; margin-bottom: 20px;
+            border-radius: 10px; border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0,0,0,0.2); color: white;
+            font-size: 16px; box-sizing: border-box; outline: none;
         }
 
-        input:focus {
-            border-color: var(--dorado-suave);
-        }
+        input:focus { border-color: var(--dorado-suave); }
 
         button {
-            width: 100%;
-            padding: 15px;
-            border-radius: 10px;
-            border: none;
-            background: var(--blanco-puro);
-            color: var(--primario);
-            font-weight: 700;
-            font-size: 16px;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: transform 0.2s, background 0.3s;
-            margin-top: 10px;
+            width: 100%; padding: 15px; border-radius: 10px; border: none;
+            background: var(--blanco-puro); color: var(--primario);
+            font-weight: 700; font-size: 16px; text-transform: uppercase;
+            cursor: pointer; transition: 0.3s;
         }
 
-        button:active {
-            transform: scale(0.98);
-        }
+        button:hover { background: var(--dorado-suave); color: white; }
 
-        button:hover {
-            background: var(--dorado-suave);
-            color: white;
-        }
-
+        #mensaje-error { color: #ff4d4d; font-size: 14px; margin-top: 15px; display: none; }
     </style>
 </head>
 <body>
@@ -125,22 +75,53 @@
         <div class="phrase-transgestion">TransGestión</div>
 
         <form id="loginForm">
-            <div class="input-group">
-                <input type="tel" id="telefono" placeholder="Número de teléfono" required>
-            </div>
-            <div class="input-group">
-                <input type="password" id="password" placeholder="Contraseña" required>
-            </div>
-            <button type="submit">Iniciar Sesión</button>
+            <input type="tel" id="telefono" placeholder="Número de teléfono" required>
+            <input type="password" id="password" placeholder="Contraseña" required>
+            <button type="submit" id="btn-login">Iniciar Sesión</button>
+            <div id="mensaje-error">Datos incorrectos. Inténtalo de nuevo.</div>
         </form>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
+
     <script>
-        // Aquí irá la lógica de Supabase más adelante
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
+        const loginForm = document.getElementById('loginForm');
+        const mensajeError = document.getElementById('mensaje-error');
+
+        loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            console.log("Intentando iniciar sesión...");
+            const tel = document.getElementById('telefono').value;
+            const pass = document.getElementById('password').value;
+            const btn = document.getElementById('btn-login');
+
+            btn.innerText = "Cargando...";
+            mensajeError.style.display = "none";
+
+            try {
+                // Buscamos al usuario en la tabla 'usuarios'
+                const { data, error } = await supabaseClient
+                    .from('usuarios')
+                    .select('*')
+                    .eq('telefono', tel)
+                    .eq('password', pass)
+                    .single();
+
+                if (error || !data) {
+                    mensajeError.style.display = "block";
+                    btn.innerText = "Iniciar Sesión";
+                } else {
+                    // Si entra, guardamos los datos del usuario en la memoria del navegador
+                    localStorage.setItem('usuario_activo', JSON.stringify(data));
+                    
+                    // ¡Éxito! Lo mandamos al panel (lo crearemos pronto)
+                    alert("¡Bienvenido, " + data.nombre + "!");
+                    window.location.href = "panel.html"; 
+                }
+            } catch (err) {
+                console.error("Error en login:", err);
+                btn.innerText = "Iniciar Sesión";
+            }
         });
     </script>
 </body>
