@@ -1,23 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Viaje - RF TransGestión</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; }
+        body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding: 20px; }
+        .form-container { max-width: 600px; margin: auto; background: var(--gris); padding: 20px; border-radius: 15px; }
+        h2 { color: var(--dorado); text-align: center; text-transform: uppercase; font-size: 18px; }
+        
+        .field { margin-bottom: 15px; }
+        label { display: block; font-size: 12px; color: var(--dorado); margin-bottom: 5px; text-transform: uppercase; }
+        input, select, textarea { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #000; color: white; box-sizing: border-box; }
+        
+        .row { display: flex; gap: 10px; align-items: flex-end; }
+        .btn-action { background: var(--dorado); border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        
+        .info-chofer { background: #000; padding: 10px; margin-top: 10px; border-radius: 8px; display: none; border-left: 3px solid var(--dorado); }
+        .calculadora { background: #252525; padding: 15px; border-radius: 8px; margin-top: 10px; }
+        
+        .checkbox-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
+        .check-item { display: flex; align-items: center; font-size: 13px; }
+        .check-item input { width: auto; margin-right: 10px; }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); overflow-y: auto; padding: 20px; box-sizing: border-box; z-index: 2000; }
+        .planilla-box { background: white; color: black; padding: 20px; border-radius: 10px; margin-bottom: 20px; white-space: pre-wrap; font-family: sans-serif; font-size: 14px; line-height: 1.4; }
+        .btn-ws { background: #25d366; color: white; padding: 12px; border: none; border-radius: 5px; width: 100%; font-weight: bold; margin-bottom: 20px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <h2>Elaborar Viaje</h2>
+
+    <div class="field">
+        <label>Colaboración</label>
+        <select id="colaboracion">
+            <option value="">Seleccionar colaboración...</option>
+            <option value="Colaboración 1">Colaboración 1</option>
+            <option value="Colaboración 2">Colaboración 2</option>
+        </select>
+    </div>
+
+    <div class="field">
+        <label>Chofer (Teléfono)</label>
+        <div class="row">
+            <input type="tel" id="tel-chofer" placeholder="Número del chofer">
+            <button class="btn-action" onclick="buscarChofer()">BUSCAR</button>
+        </div>
+        <div id="res-chofer" class="info-chofer"></div>
+    </div>
+
+    <div class="field">
+        <label>Cliente (Teléfono)</label>
+        <input type="tel" id="tel-cliente" placeholder="Número del cliente">
+    </div>
+
+    <div class="field">
+        <label>Precio</label>
+        <input type="number" id="precio-final" placeholder="Precio total">
+        <div class="calculadora">
+            <p style="font-size: 11px; margin: 0 0 10px 0; color: var(--dorado);">CALCULADORA POR KM</p>
+            <div class="row">
+                <input type="number" id="tarifa" placeholder="Tarifa">
+                <input type="number" id="distancia" placeholder="KM">
+                <button class="btn-action" onclick="calcularPrecio()">CALCULAR</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="field">
+        <label>Cantidad de Pasajeros (PAX)</label>
+        <input type="number" id="pax" value="1">
+    </div>
+
+    <div class="field">
+        <label>Origen</label>
+        <input type="text" id="origen">
+        <button class="btn-action" style="margin-top:5px; font-size:10px;" onclick="addParada()">+ AÑADIR PARADAS</button>
+        <div id="contenedor-paradas"></div>
+    </div>
+
+    <div class="field">
+        <label>Destino</label>
+        <input type="text" id="destino">
+    </div>
+
+    <div class="field">
+        <label>Grupo de WhatsApp</label>
+        <input type="text" id="grupo">
+    </div>
+
+    <div class="checkbox-group">
+        <div class="check-item"><input type="checkbox" id="pago_transf"> Pago transferencia</div>
+        <div class="check-item"><input type="checkbox" id="precio_cliente"> Precio cliente</div>
+        <div class="check-item"><input type="checkbox" id="aire"> Aire acondicionado</div>
+        <div class="check-item"><input type="checkbox" id="ida_vuelta"> Ida y vuelta</div>
+        <div class="check-item"><input type="checkbox" id="reservado" onchange="toggleReserva()"> Viaje Reservado</div>
+    </div>
+
+    <div id="seccion-reserva" style="display:none;" class="field">
+        <label>Seleccionar Fecha y Hora</label>
+        <input type="datetime-local" id="fecha-reserva">
+    </div>
+
+    <div class="field">
+        <label>Observación</label>
+        <textarea id="observacion" rows="3" placeholder="Equipajes, detalles extras..."></textarea>
+    </div>
+
+    <div class="row">
+        <button class="btn-action" style="background:#444; flex:1;" onclick="generarPlanillas()">PLANILLA</button>
+        <button class="btn-action" style="flex:1;" onclick="crearViaje()">CREAR VIAJE</button>
+    </div>
+</div>
+
+<div id="modalPlanillas" class="modal">
+    <div style="max-width:500px; margin:auto;">
+        <button onclick="document.getElementById('modalPlanillas').style.display='none'" style="color:white; background:red; border:none; padding:10px; margin-bottom:20px; border-radius:5px; cursor:pointer;">CERRAR</button>
+        
+        <h3 style="color:var(--dorado)">Planilla para el Chofer</h3>
+        <div id="p-chofer" class="planilla-box"></div>
+        <button class="btn-ws" onclick="enviarWS('chofer')">Enviar a WhatsApp Chofer</button>
+
+        <h3 style="color:var(--dorado)">Planilla para el Cliente</h3>
+        <div id="p-cliente" class="planilla-box"></div>
+        <button class="btn-ws" onclick="enviarWS('cliente')">Enviar a WhatsApp Cliente</button>
+
+        <h3 style="color:var(--dorado)">Tercera Planilla (Datos Llenados)</h3>
+        <div id="p-resumen" class="planilla-box"></div>
+        <button class="btn-ws" style="background:var(--dorado)" onclick="copiarResumen()">Copiar Planilla</button>
+    </div>
+</div>
+
+<script src="config.js"></script>
+<script>
+    let choferData = null;
+
+    async function buscarChofer() {
+        const tel = document.getElementById('tel-chofer').value;
+        const { data, error } = await supabaseClient.from('choferes').select('*').eq('telefono', tel).single();
+        if (data) {
+            choferData = data;
+            const res = document.getElementById('res-chofer');
+            res.style.display = 'block';
+            res.innerHTML = `<b>Nombre:</b> ${data.nombre}<br><b>Auto:</b> ${data.tipo_vehiculo}<br><b>Color:</b> ${data.color}<br><b>Fondo Actual:</b> ${data.fondo_actual}`;
+        } else { alert("Chofer no encontrado"); }
+    }
+
+    function calcularPrecio() {
+        const t = document.getElementById('tarifa').value;
+        const d = document.getElementById('distancia').value;
+        if(t && d) document.getElementById('precio-final').value = t * d;
+    }
+
+    function addParada() {
+        const div = document.createElement('div');
+        div.style.marginTop = "5px";
+        div.innerHTML = `<input type="text" class="parada-extra" placeholder="Parada intermedia">`;
+        document.getElementById('contenedor-paradas').appendChild(div);
+    }
+
+    function toggleReserva() {
+        document.getElementById('seccion-reserva').style.display = document.getElementById('reservado').checked ? 'block' : 'none';
+    }
+
+    function generarPlanillas() {
+        const paradas = Array.from(document.querySelectorAll('.parada-extra')).map(i => i.value).filter(v => v !== "");
+        
+        const datos = {
+            precio: document.getElementById('precio-final').value,
+            cliente: document.getElementById('tel-cliente').value,
+            origen: document.getElementById('origen').value,
+            paradas: paradas.join(", "),
+            destino: document.getElementById('destino').value,
+            pax: document.getElementById('pax').value,
+            fondo: choferData ? choferData.fondo_actual : '',
+            chofer: choferData ? choferData.nombre : '',
+            auto: choferData ? choferData.tipo_vehiculo : '',
+            color: choferData ? choferData.color : '',
+            obs: document.getElementById('observacion').value,
+            colab: document.getElementById('colaboracion').value,
+            grupo: document.getElementById('grupo').value,
+            fecha: document.getElementById('fecha-reserva').value
+        };
+
+        // 1. PLANILLA CHOFER
+        let txtChofer = `*DATOS DEL VIAJE*\n`;
+        if(datos.precio) txtChofer += `Precio: ${datos.precio}\n`;
+        if(datos.cliente) txtChofer += `Cliente: ${datos.cliente}\n`;
+        if(datos.origen) txtChofer += `Origen: ${datos.origen}\n`;
+        if(datos.paradas) txtChofer += `Paradas: ${datos.paradas}\n`;
+        if(datos.destino) txtChofer += `Destino: ${datos.destino}\n`;
+        if(datos.pax) txtChofer += `Pax: ${datos.pax}\n`;
+        if(datos.fondo) txtChofer += `Fondo Actual: ${datos.fondo}\n`;
+        if(datos.obs) txtChofer += `Observación: ${datos.obs}\n`;
+        
+        txtChofer += `\n⚠️ IMPORTANTE ⚠️\n\n•usted tiene 15 minutos máximo para llegar a la dirección de recojida del cliente.\n•El cliente tiene 15 minutos para abordar su vehículo,por encima de este tiempo se le cobrará 25 cup el minuto extra\n•En caso de llegada tarde a un servicio programado se le descontará el 50% del precio del servicio. \n•Recuerde mantener su auto limpio y en perfectas condiciones técnicas al igual que un trato cordial con cada cliente.`;
+        document.getElementById('p-chofer').innerText = txtChofer;
+
+        // 2. PLANILLA CLIENTE
+        let txtCliente = `*Taxi En Camino*\n`;
+        if(datos.precio) txtCliente += `Precio: ${datos.precio}\n`;
+        if(datos.chofer) txtCliente += `Chofer: ${datos.chofer}\n`;
+        if(datos.auto) txtCliente += `Auto: ${datos.auto}\n`;
+        if(datos.color) txtCliente += `Color: ${datos.color}\n`;
+        
+        txtCliente += `\n⚠️ *IMPORTANTE* ⚠️\n\n•Cada parada extra se recalcula la ruta y modifica el costo.\n•Al llegar el taxi a su origen usted tiene 10min de espera como cortesía, pasado este tiempo debe pagar por cada minuto extra.\n•Tiempo de espera extra: 25cup x minutos. \n•En caso de cancelar estando el auto en el lugar de recogida, deberá pagar la mitad del costo del servicio`;
+        document.getElementById('p-cliente').innerText = txtCliente;
+
+        // 3. RESUMEN DATOS LLENADOS
+        let resumen = "";
+        if(datos.colab) resumen += `Colaboración: ${datos.colab}\n`;
+        if(datos.chofer) resumen += `Chofer: ${datos.chofer}\n`;
+        if(datos.cliente) resumen += `Cliente: ${datos.cliente}\n`;
+        if(datos.precio) resumen += `Precio: ${datos.precio}\n`;
+        if(datos.pax) resumen += `Pasajeros: ${datos.pax}\n`;
+        if(datos.origen) resumen += `Origen: ${datos.origen}\n`;
+        if(datos.paradas) resumen += `Paradas: ${datos.paradas}\n`;
+        if(datos.destino) resumen += `Destino: ${datos.destino}\n`;
+        if(datos.grupo) resumen += `Grupo: ${datos.grupo}\n`;
+        if(datos.fecha) resumen += `Fecha/Hora: ${datos.fecha}\n`;
+        if(datos.obs) resumen += `Observaciones: ${datos.obs}\n`;
+        document.getElementById('p-resumen').innerText = resumen;
+
+        document.getElementById('modalPlanillas').style.display = 'block';
+    }
+
+    function enviarWS(tipo) {
+        const num = tipo === 'chofer' ? document.getElementById('tel-chofer').value : document.getElementById('tel-cliente').value;
+        if(!num) { alert("Falta el número de teléfono"); return; }
+        const msg = encodeURIComponent(document.getElementById(tipo === 'chofer' ? 'p-chofer' : 'p-cliente').innerText);
+        window.open(`https://wa.me/${num}?text=${msg}`, '_blank');
+    }
+
+    function copiarResumen() {
+        const texto = document.getElementById('p-resumen').innerText;
+        navigator.clipboard.writeText(texto).then(() => alert("Planilla copiada"));
+    }
+
     async function crearViaje() {
         const btn = document.querySelector('button[onclick="crearViaje()"]');
         const textoOriginal = btn.innerText;
-        
         btn.innerText = "GUARDANDO...";
         btn.disabled = true;
 
         const paradas = Array.from(document.querySelectorAll('.parada-extra')).map(i => i.value).filter(v => v !== "");
         
-        // Mapeo ajustado EXACTAMENTE a tus capturas de Supabase
         const datosViaje = {
             colaboracion: document.getElementById('colaboracion').value,
             chofer_id: choferData ? choferData.id : null,
-            cliente_telefono: document.getElementById('tel-cliente').value, // Ajustado
+            cliente_telefono: document.getElementById('tel-cliente').value,
             precio: parseFloat(document.getElementById('precio-final').value) || 0,
-            pasajeros: parseInt(document.getElementById('pax').value) || 1, // Ajustado de 'pax' a 'pasajeros'
+            pasajeros: parseInt(document.getElementById('pax').value) || 1,
             origen: document.getElementById('origen').value,
-            paradas_intermedias: paradas.join(", "), // Ajustado
+            paradas_intermedias: paradas.join(", "),
             destino: document.getElementById('destino').value,
-            grupo_whatsapp: document.getElementById('grupo').value, // Ajustado
+            grupo_whatsapp: document.getElementById('grupo').value,
             pago_transferencia: document.getElementById('pago_transf').checked,
             precio_cliente: document.getElementById('precio_cliente').checked,
             aire_acondicionado: document.getElementById('aire').checked,
@@ -25,7 +267,6 @@
             es_reservado: document.getElementById('reservado').checked,
             fecha_reserva: document.getElementById('fecha-reserva').value || null,
             observaciones: document.getElementById('observacion').value,
-            // Agregué estos dos que vi en tus capturas para que no den error
             distancia_km: parseFloat(document.getElementById('distancia').value) || 0,
             tarifa_km: parseFloat(document.getElementById('tarifa').value) || 0
         };
@@ -47,3 +288,6 @@
             btn.disabled = false;
         }
     }
+</script>
+</body>
+</html>
