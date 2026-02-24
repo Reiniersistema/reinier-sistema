@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Viajes - RF TransGestión</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; }
+        body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding: 20px; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        h2 { color: var(--dorado); text-transform: uppercase; font-size: 18px; margin: 0; }
+
+        /* BOTÓN EMBUDO Y FILTROS */
+        .btn-embudo { background: var(--dorado); border: none; border-radius: 50%; width: 45px; height: 45px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        
+        .panel-filtros { display: none; background: var(--gris); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--dorado); }
+        .opciones-filtro { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn-filtro { background: transparent; border: 1px solid var(--dorado); color: white; padding: 8px; border-radius: 5px; cursor: pointer; font-size: 12px; }
+        .btn-filtro:hover { background: var(--dorado); color: black; }
+        .rango-fechas { grid-column: span 2; display: none; flex-direction: column; gap: 5px; margin-top: 10px; }
+        .rango-fechas input { background: #000; border: 1px solid #333; color: white; padding: 8px; border-radius: 5px; }
+
+        /* TABLA */
+        .tabla-contenedor { overflow-x: auto; background: var(--gris); border-radius: 15px; padding: 10px; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th { color: var(--dorado); text-align: left; padding: 12px; border-bottom: 2px solid #333; font-size: 13px; text-transform: uppercase; }
+        td { padding: 12px; border-bottom: 1px solid #222; font-size: 13px; }
+        .badge-user { background: #333; padding: 4px 8px; border-radius: 4px; font-size: 11px; color: var(--dorado); }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h2>Historial de Viajes</h2>
+    <button class="btn-embudo" onclick="toggleFiltros()">⏳</button>
+</div>
+
+<div id="panelFiltros" class="panel-filtros">
+    <div class="opciones-filtro">
+        <button class="btn-filtro" onclick="aplicarFiltro('hoy')">HOY</button>
+        <button class="btn-filtro" onclick="aplicarFiltro('semana')">ESTA SEMANA</button>
+        <button class="btn-filtro" onclick="aplicarFiltro('mes')">ESTE MES</button>
+        <button class="btn-filtro" onclick="toggleRango()">PERSONALIZADO</button>
+    </div>
+    <div id="rangoFechas" class="rango-fechas">
+        <input type="date" id="fecha-inicio">
+        <input type="date" id="fecha-fin">
+        <button class="btn-filtro" style="background: var(--dorado); color: black;" onclick="aplicarFiltro('rango')">FILTRAR RANGO</button>
+    </div>
+</div>
+
+<div class="tabla-contenedor">
+    <table>
+        <thead>
+            <tr>
+                <th>Chofer</th>
+                <th>Precio</th>
+                <th>Origen / Destino</th>
+                <th>Gestor</th>
+            </tr>
+        </thead>
+        <tbody id="lista-viajes">
+            </tbody>
+    </table>
+</div>
+
+<script src="config.js"></script>
+<script>
+    function toggleFiltros() {
+        const p = document.getElementById('panelFiltros');
+        p.style.display = (p.style.display === 'block') ? 'none' : 'block';
+    }
+
+    function toggleRango() {
+        const r = document.getElementById('rangoFechas');
+        r.style.display = (r.style.display === 'flex') ? 'none' : 'flex';
+    }
+
+    async function cargarViajes(filtro = 'todos', inicio = null, fin = null) {
+        let query = supabaseClient
+            .from('viajes')
+            .select('precio, origen, destino, usuario_gestor, choferes(nombre, apellido)')
+            .order('created_at', { ascending: false });
+
+        const hoy = new Date();
+        hoy.setHours(0,0,0,0);
+
+        if (filtro === 'hoy') {
+            query = query.gte('created_at', hoy.toISOString());
+        } else if (filtro === 'semana') {
+            const semana = new Date();
+            semana.setDate(hoy.getDate() - 7);
+            query = query.gte('created_at', semana.toISOString());
+        } else if (filtro === 'mes') {
+            const mes = new Date();
+            mes.setMonth(hoy.getMonth() - 1);
+            query = query.gte('created_at', mes.toISOString());
+        } else if (filtro === 'rango' && inicio && fin) {
+            query = query.gte('created_at', inicio).lte('created_at', fin);
+        }
+
+        const { data: viajes, error } = await query;
+        const tbody = document.getElementById('lista-viajes');
+        tbody.innerHTML = "";
+
+        if (viajes) {
+            viajes.forEach(v => {
+                const chofer = v.choferes ? `${v.choferes.nombre} ${v.choferes.apellido}` : 'No asignado';
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>${chofer}</b></td>
+                        <td>$${v.precio}</td>
+                        <td>${v.origen} <br> <small style="color:#888">a ${v.destino}</small></td>
+                        <td><span class="badge-user">${v.usuario_gestor || 'Admin'}</span></td>
+                    </tr>
+                `;
+            });
+        }
+    }
+
+    function aplicarFiltro(tipo) {
+        if (tipo === 'rango') {
+            const inicio = document.getElementById('fecha-inicio').value;
+            const fin = document.getElementById('fecha-fin').value;
+            cargarViajes('rango', inicio, fin);
+        } else {
+            cargarViajes(tipo);
+        }
+        toggleFiltros(); // Cerrar al aplicar
+    }
+
+    // Carga inicial
+    cargarViajes();
+</script>
+</body>
+</html>
