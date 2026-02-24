@@ -38,7 +38,7 @@
         .stat-card span { display: block; font-size: 10px; color: var(--dorado); }
         .stat-card b { font-size: 16px; }
 
-        /* Pestañas en el detalle */
+        /* Pestañas */
         .tabs { display: flex; gap: 5px; margin-top: 20px; overflow-x: auto; }
         .tab-btn { background: #333; border: none; color: white; padding: 10px; border-radius: 5px; cursor: pointer; font-size: 11px; white-space: nowrap; flex: 1; }
         .tab-btn.active { background: var(--dorado); color: black; }
@@ -88,7 +88,7 @@
         <div class="form-group"><label>Teléfono</label><input type="tel" id="reg-tel"></div>
         
         <div style="display:flex; gap:10px; margin-bottom:15px;">
-            <label><input type="checkbox" id="reg-lic"> Lic. Operativa</label>
+            <label><input type="checkbox" id="reg-lic"> Licencia Operativa</label>
             <label><input type="checkbox" id="reg-libre"> Libre de Fondo</label>
         </div>
 
@@ -96,12 +96,12 @@
             <label>Foto del Carro</label>
             <input type="file" id="reg-foto-carro" accept="image/*">
         </div>
+        <div class="form-group"><label>Marca</label><input type="text" id="reg-marca"></div>
+        <div class="form-group"><label>Modelo</label><input type="text" id="reg-modelo"></div>
+        <div class="form-group"><label>Color</label><input type="text" id="reg-color"></div>
+        
         <div style="display:flex; gap:10px; margin-bottom:15px;">
-            <label><input type="checkbox" id="reg-aire"> Aire Acond.</label>
-        </div>
-        <div class="form-group">
-            <label>Datos del Auto (Marca, Modelo, Color)</label>
-            <input type="text" id="reg-auto-info" placeholder="Ej: Hyundai Elantra Blanco">
+            <label><input type="checkbox" id="reg-aire"> Aire Acondicionado</label>
         </div>
 
         <button class="btn-add" style="width:100%; justify-content:center;" onclick="guardarNuevoChofer()">GUARDAR CHÓFER</button>
@@ -110,8 +110,7 @@
 </div>
 
 <div id="modalVer" class="modal">
-    <div id="detalle-chofer" class="modal-content">
-        </div>
+    <div id="detalle-chofer" class="modal-content"></div>
 </div>
 
 <script src="config.js"></script>
@@ -125,7 +124,6 @@
         f.style.display = f.style.display === 'block' ? 'none' : 'block';
     }
 
-    // --- CARGAR LISTA ---
     async function cargarChoferes() {
         const { data, error } = await supabaseClient.from('choferes').select('*').order('nombre');
         const lista = document.getElementById('lista-choferes');
@@ -135,26 +133,24 @@
                 <tr>
                     <td><b>${c.nombre}</b></td>
                     <td>${c.telefono}</td>
-                    <td>${c.tiene_lice ? '✅' : '❌'}</td>
-                    <td style="color:var(--dorado)">$${c.fondo_actu}</td>
+                    <td>${c.tiene_licencia_operativa ? '✅' : '❌'}</td>
+                    <td style="color:var(--dorado)">$${c.fondo_actual}</td>
                     <td class="puntos" onclick="verChofer('${c.id}')">⋮</td>
                 </tr>
             `;
         });
     }
 
-    // --- SUBIR FOTO ---
     async function subirImagen(file, carpeta, nombre) {
         if(!file) return null;
         const ext = file.name.split('.').pop();
         const path = `${carpeta}/${nombre}.${ext}`;
         const { data, error } = await supabaseClient.storage.from('imagenes_sistema').upload(path, file, { upsert: true });
-        if(error) return null;
+        if(error) { console.error("Error subiendo imagen:", error); return null; }
         const { data: urlData } = supabaseClient.storage.from('imagenes_sistema').getPublicUrl(path);
         return urlData.publicUrl;
     }
 
-    // --- GUARDAR NUEVO ---
     async function guardarNuevoChofer() {
         const tel = document.getElementById('reg-tel').value;
         const nom = document.getElementById('reg-nom').value;
@@ -169,74 +165,57 @@
             telefono: tel,
             foto_chofer: fotoChofer,
             foto_carro: fotoCarro,
-            tiene_lice: document.getElementById('reg-lic').checked,
-            re_de_fon: document.getElementById('reg-libre').checked,
-            tiene_aire: document.getElementById('reg-aire').checked,
-            auto_desc: document.getElementById('reg-auto-info').value, // Asegúrate de tener esta columna o cámbiala
-            fondo_actu: 0
+            tiene_licencia_operativa: document.getElementById('reg-lic').checked,
+            libre_de_fondo: document.getElementById('reg-libre').checked,
+            tiene_aire_acondicionado: document.getElementById('reg-aire').checked,
+            marca_carro: document.getElementById('reg-marca').value,
+            modelo_carro: document.getElementById('reg-modelo').value,
+            color_carro: document.getElementById('reg-color').value,
+            fondo_actual: 0
         }]);
 
         if(!error) {
             alert("Chófer añadido correctamente");
             location.reload();
         } else {
-            alert("Error: " + error.message);
+            console.error(error);
+            alert("Error al guardar: " + error.message);
         }
     }
 
-    // --- VER DETALLE ---
     async function verChofer(id) {
         const { data: c } = await supabaseClient.from('choferes').select('*').eq('id', id).single();
         choferSeleccionado = c;
-        
         const content = document.getElementById('detalle-chofer');
         content.innerHTML = `
             <img src="${c.foto_chofer || 'https://via.placeholder.com/300'}" class="foto-grande">
-            <h2 style="margin:0;">${c.nombre} ${c.apellido}</h2>
-            <p style="color:var(--dorado); margin:5px 0;">● Trabajar sin créditos: ${c.re_de_fon ? 'SÍ' : 'NO'}</p>
-            
+            <h2>${c.nombre} ${c.apellido}</h2>
+            <p style="color:var(--dorado)">● Trabajar sin créditos: ${c.libre_de_fondo ? 'SÍ' : 'NO'}</p>
             <div class="stats-grid">
-                <div class="stat-card"><span>FONDO ACTUAL</span><b>$${c.fondo_actu}</b></div>
+                <div class="stat-card"><span>FONDO ACTUAL</span><b>$${c.fondo_actual}</b></div>
                 <div class="stat-card"><span>VIAJES HOY</span><b>0</b></div>
                 <div class="stat-card"><span>VIAJES MES</span><b>0</b></div>
                 <div class="stat-card"><span>TOTAL</span><b>0</b></div>
             </div>
-
-            <button class="btn-accion" style="background:var(--dorado); color:black;">FILTRAR VIAJES</button>
             <button class="btn-accion whatsapp" onclick="window.open('https://wa.me/${c.telefono}')">WHATSAPP</button>
             <button class="btn-accion eliminar" onclick="eliminarChofer('${c.id}')">ELIMINAR</button>
-
             <div class="tabs">
-                <button class="tab-btn active" onclick="switchTab(event, 'info')">INFORMACIÓN</button>
+                <button class="tab-btn active" onclick="switchTab(event, 'info')">INFO</button>
                 <button class="tab-btn" onclick="switchTab(event, 'auto')">AUTO</button>
                 <button class="tab-btn" onclick="switchTab(event, 'fondo')">FONDO</button>
             </div>
-
-            <div id="info" class="tab-content active">
-                <p><b>Teléfono:</b> ${c.telefono}</p>
-                <p><b>Nombre completo:</b> ${c.nombre} ${c.apellido}</p>
-            </div>
-
+            <div id="info" class="tab-content active"><p>Tel: ${c.telefono}</p></div>
             <div id="auto" class="tab-content">
-                <img src="${c.foto_carro || 'https://via.placeholder.com/300'}" style="width:100%; border-radius:10px;">
-                <p><b>Descripción:</b> ${c.auto_desc || 'No especificada'}</p>
-                <p><b>Aire:</b> ${c.tiene_aire ? 'Sí' : 'No'} | <b>Lic:</b> ${c.tiene_lice ? 'Sí' : 'No'}</p>
+                <img src="${c.foto_carro || ''}" style="width:100%; border-radius:10px;">
+                <p>${c.marca_carro} ${c.modelo_carro} (${c.color_carro})</p>
             </div>
-
             <div id="fondo" class="tab-content">
-                <div style="display:flex; gap:5px; margin-bottom:10px;">
-                    <button class="tab-btn" style="background:var(--verde)" onclick="modalMovimiento('agregar')">AGREGAR</button>
-                    <button class="tab-btn" style="background:var(--rojo)" onclick="modalMovimiento('retirar')">RETIRAR</button>
-                </div>
-                <button class="btn-accion" style="font-size:10px;" onclick="rectificarFondos('${c.id}')">RECTIFICAR FONDO</button>
-                <div style="font-size:11px; color:#888;">Historial reciente:</div>
-                <div id="historial-lista">Cargando...</div>
+                <button class="btn-accion" style="background:var(--verde)" onclick="modalMovimiento('agregar')">AGREGAR FONDO</button>
+                <button class="btn-accion" style="background:var(--rojo)" onclick="modalMovimiento('retirar')">RETIRAR FONDO</button>
             </div>
-
             <button onclick="cerrarModal('modalVer')" style="width:100%; background:none; color:#888; border:none; margin-top:20px;">Cerrar</button>
         `;
         abrirModal('modalVer');
-        cargarHistorial(c.id);
     }
 
     function switchTab(evt, tabId) {
@@ -246,46 +225,8 @@
         evt.currentTarget.classList.add('active');
     }
 
-    async function cargarHistorial(choferId) {
-        const { data } = await supabaseClient.from('historial_fondos').select('*').eq('chofer_id', choferId).order('fecha', {ascending:false});
-        const hLista = document.getElementById('historial-lista');
-        hLista.innerHTML = data.length ? "" : "Sin movimientos";
-        data.forEach(h => {
-            hLista.innerHTML += `<div style="border-bottom:1px solid #333; padding:5px 0;">
-                <span style="color:var(--dorado)">${h.metodo}</span>: $${h.saldo} | <small>${h.fecha.split('T')[0]}</small><br>
-                <small>Ant: $${h.fondo_anterior} | Act: $${h.activo}</small>
-            </div>`;
-        });
-    }
-
-    async function modalMovimiento(tipo) {
-        const cant = prompt(`Cantidad a ${tipo}:`);
-        if(!cant || isNaN(cant)) return;
-        
-        const metodo = tipo === 'agregar' ? prompt("Método (Efectivo/Transferencia):", "Efectivo") : "Retiro";
-        const gestor = localStorage.getItem('usuario_nombre') || "Admin"; // Usa el nombre guardado al login
-        
-        const nuevoFondo = tipo === 'agregar' ? parseFloat(choferSeleccionado.fondo_actu) + parseFloat(cant) : parseFloat(choferSeleccionado.fondo_actu) - parseFloat(cant);
-
-        // 1. Guardar en Historial
-        await supabaseClient.from('historial_fondos').insert([{
-            chofer_id: choferSeleccionado.id,
-            usuario: gestor,
-            metodo: metodo,
-            saldo: parseFloat(cant),
-            fondo_anterior: choferSeleccionado.fondo_actu,
-            activo: nuevoFondo
-        }]);
-
-        // 2. Actualizar Chofer
-        await supabaseClient.from('choferes').update({ fondo_actu: nuevoFondo }).eq('id', choferSeleccionado.id);
-        
-        alert("Operación realizada");
-        verChofer(choferSeleccionado.id);
-    }
-
     async function eliminarChofer(id) {
-        if(confirm("¿Seguro que quieres eliminar este chófer? Se borrará todo su historial.")){
+        if(confirm("¿Eliminar chófer?")){
             await supabaseClient.from('choferes').delete().eq('id', id);
             location.reload();
         }
@@ -294,9 +235,7 @@
     function filtrar() {
         const text = document.getElementById('busqueda').value.toLowerCase();
         const rows = document.querySelectorAll('#lista-choferes tr');
-        rows.forEach(r => {
-            r.style.display = r.innerText.toLowerCase().includes(text) ? '' : 'none';
-        });
+        rows.forEach(r => r.style.display = r.innerText.toLowerCase().includes(text) ? '' : 'none');
     }
 
     cargarChoferes();
