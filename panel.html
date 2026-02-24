@@ -104,7 +104,7 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Chofer</th>
+                            <th>Estado</th>
                             <th>Precio</th>
                             <th>Origen</th>
                         </tr>
@@ -132,25 +132,37 @@
         document.getElementById('user-name').innerText = usuario.nombre;
 
         async function cargarDatosPanel() {
+            // Limpiar la tabla antes de cargar para evitar duplicados
+            const tbody = document.getElementById('tabla-recientes');
+            tbody.innerHTML = ""; 
+
             // 1. Cargar últimos 5 viajes
+            // Hemos simplificado la consulta para asegurar que traiga los datos sin errores de relación
             const { data: viajes, error } = await supabaseClient
                 .from('viajes')
-                .select('precio, origen, choferes(nombre)')
+                .select('precio, origen, chofer_id')
                 .order('created_at', { ascending: false })
                 .limit(5);
 
-            const tbody = document.getElementById('tabla-recientes');
-            if (viajes) {
+            if (error) {
+                console.error("Error cargando datos:", error);
+                tbody.innerHTML = "<tr><td colspan='3'>Error al cargar datos</td></tr>";
+                return;
+            }
+
+            if (viajes && viajes.length > 0) {
                 viajes.forEach(v => {
                     tbody.innerHTML += `<tr>
-                        <td>${v.choferes?.nombre || 'N/A'}</td>
+                        <td>${v.chofer_id ? 'Asignado' : 'Pendiente'}</td>
                         <td>$${v.precio}</td>
                         <td>${v.origen}</td>
                     </tr>`;
                 });
+            } else {
+                tbody.innerHTML = "<tr><td colspan='3'>No hay viajes registrados</td></tr>";
             }
 
-            // 2. Configurar Gráfica (Ejemplo estático, luego lo haremos real con datos)
+            // 2. Configurar Gráfica
             const ctx = document.getElementById('graficaViajes').getContext('2d');
             new Chart(ctx, {
                 type: 'line',
