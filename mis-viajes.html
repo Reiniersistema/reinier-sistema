@@ -80,9 +80,10 @@
     }
 
     async function cargarViajes(filtro = 'todos', inicio = null, fin = null) {
+        // Traemos los datos de viajes sin depender de la relación directa en el select
         let query = supabaseClient
             .from('viajes')
-            .select('precio, origen, destino, usuario_gestor, choferes(nombre, apellido)')
+            .select('precio, origen, destino, usuario_gestor, chofer_id, created_at')
             .order('created_at', { ascending: false });
 
         const hoy = new Date();
@@ -106,18 +107,36 @@
         const tbody = document.getElementById('lista-viajes');
         tbody.innerHTML = "";
 
-        if (viajes) {
-            viajes.forEach(v => {
-                const chofer = v.choferes ? `${v.choferes.nombre} ${v.choferes.apellido}` : 'No asignado';
+        if (error) {
+            console.error("Error cargando viajes:", error);
+            tbody.innerHTML = "<tr><td colspan='4'>Error al cargar datos</td></tr>";
+            return;
+        }
+
+        if (viajes && viajes.length > 0) {
+            for (const v of viajes) {
+                let nombreChofer = "Cargando...";
+                
+                // Buscamos el nombre en la tabla choferes usando el id
+                const { data: choferData } = await supabaseClient
+                    .from('choferes')
+                    .select('nombre, apellido')
+                    .eq('id', v.chofer_id)
+                    .single();
+
+                nombreChofer = choferData ? `${choferData.nombre} ${choferData.apellido}` : `ID: ${v.chofer_id || 'N/A'}`;
+
                 tbody.innerHTML += `
                     <tr>
-                        <td><b>${chofer}</b></td>
+                        <td><b>${nombreChofer}</b></td>
                         <td>$${v.precio}</td>
-                        <td>${v.origen} <br> <small style="color:#888">a ${v.destino}</small></td>
+                        <td>${v.origen} <br> <small style="color:#d4af37">a ${v.destino}</small></td>
                         <td><span class="badge-user">${v.usuario_gestor || 'Admin'}</span></td>
                     </tr>
                 `;
-            });
+            }
+        } else {
+            tbody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>No se encontraron viajes</td></tr>";
         }
     }
 
