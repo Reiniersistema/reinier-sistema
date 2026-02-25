@@ -15,28 +15,16 @@
 
         .search-box { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #333; background: #000; color: white; margin-bottom: 20px; box-sizing: border-box; font-size: 16px; }
 
-        /* Tabla Principal */
         .card-lista { background: var(--gris); border-radius: 15px; border: 1px solid #333; width: 100%; border-collapse: collapse; overflow: hidden; }
         .card-lista td { padding: 15px; border-bottom: 1px solid #2a2a2a; font-size: 15px; }
         .card-lista tr:active { background: #252525; }
 
-        /* Modal y Vistas */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 1000; overflow-y: auto; }
         .modal-content { background: var(--gris); max-width: 450px; margin: 15px auto; border-radius: 20px; padding: 20px; border: 1px solid var(--dorado); }
 
-        /* Tarjetas de Viaje en Historial */
-        .viaje-item { 
-            background: #000; 
-            padding: 15px; 
-            border-radius: 12px; 
-            margin-bottom: 12px; 
-            border-left: 5px solid var(--dorado); 
-            cursor: pointer; 
-            display: block;
-        }
-        .viaje-item * { pointer-events: none; } /* Asegura el clic en el contenedor */
+        .viaje-item { background: #000; padding: 15px; border-radius: 12px; margin-bottom: 12px; border-left: 5px solid var(--dorado); cursor: pointer; display: block; }
+        .viaje-item * { pointer-events: none; }
 
-        /* Formulario Planilla */
         label { color: var(--dorado); font-size: 11px; text-transform: uppercase; display: block; margin: 12px 0 5px 0; font-weight: bold; }
         input { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #444; background: #000; color: white; box-sizing: border-box; font-size: 15px; font-family: 'Montserrat'; }
         input:disabled { color: #888; border-color: #222; }
@@ -59,7 +47,6 @@
 
 <div id="modalGlobal" class="modal">
     <div class="modal-content">
-        
         <div id="vista-historial">
             <h3 id="historial-titulo" style="color:var(--dorado); margin-top:0;">HISTORIAL</h3>
             <div id="contenedor-viajes"></div>
@@ -68,24 +55,12 @@
 
         <div id="vista-planilla" style="display:none;">
             <h3 style="color:var(--dorado); text-align:center; margin-top:0;">PLANILLA DE VIAJE</h3>
-            
-            <label>Origen</label>
-            <input type="text" id="inp-origen">
-            
-            <label>Paradas Intermedias</label>
-            <input type="text" id="inp-paradas">
-            
-            <label>Destino</label>
-            <input type="text" id="inp-destino">
-            
-            <label>Precio (CUP)</label>
-            <input type="number" id="inp-precio">
-            
-            <label>Fecha y Hora</label>
-            <input type="text" id="inp-fecha" disabled>
-            
-            <label>Usuario que registró</label>
-            <input type="text" id="inp-user" disabled>
+            <label>Origen</label><input type="text" id="inp-origen">
+            <label>Paradas Intermedias</label><input type="text" id="inp-paradas">
+            <label>Destino</label><input type="text" id="inp-destino">
+            <label>Precio (CUP)</label><input type="number" id="inp-precio">
+            <label>Fecha y Hora</label><input type="text" id="inp-fecha" disabled>
+            <label>Usuario que registró</label><input type="text" id="inp-user" disabled>
             
             <button class="btn btn-edit" onclick="actualizarViaje()">GUARDAR CAMBIOS</button>
             <button class="btn btn-del" onclick="eliminarViaje()">ELIMINAR VIAJE</button>
@@ -111,7 +86,6 @@
             const t = v.cliente_telefono || "S/N";
             conteo[t] = (conteo[t] || 0) + 1;
         });
-
         const tbody = document.getElementById('lista-clientes');
         tbody.innerHTML = Object.keys(conteo).map(tel => `
             <tr onclick="mostrarHistorial('${tel}')">
@@ -121,20 +95,12 @@
         `).join('');
     }
 
-    function filtrar() {
-        const query = document.getElementById('buscador').value.toLowerCase();
-        const filtrados = viajesCache.filter(v => (v.cliente_telefono || "").includes(query));
-        renderizarClientes(filtrados);
-    }
-
     function mostrarHistorial(tel) {
         document.getElementById('historial-titulo').innerText = "Viajes de " + tel;
         const misViajes = viajesCache.filter(v => v.cliente_telefono === tel);
         const cont = document.getElementById('contenedor-viajes');
-        
         cont.innerHTML = "";
         misViajes.forEach(v => {
-            // Lógica para formatear Fecha y Hora desde created_at
             const f = new Date(v.created_at);
             const fLegible = f.toLocaleDateString();
             const hLegible = f.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -149,7 +115,6 @@
             div.addEventListener('click', () => abrirPlanilla(v.id));
             cont.appendChild(div);
         });
-
         document.getElementById('vista-historial').style.display = 'block';
         document.getElementById('vista-planilla').style.display = 'none';
         document.getElementById('modalGlobal').style.display = 'block';
@@ -158,10 +123,8 @@
     function abrirPlanilla(id) {
         const v = viajesCache.find(x => x.id == id);
         if(!v) return;
-        
         viajeActualId = id;
 
-        // Formatear fecha/hora para la planilla
         const fechaObj = new Date(v.created_at);
         const fechaPlanilla = fechaObj.toLocaleDateString() + " " + fechaObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -171,12 +134,20 @@
         document.getElementById('inp-precio').value = v.precio;
         document.getElementById('inp-fecha').value = fechaPlanilla;
 
-        // OBTENER NOMBRE DEL USUARIO DESDE BIENVENIDA (localStorage)
-        const nombreAdmin = localStorage.getItem('usuario_nombre') || "Admin";
-        document.getElementById('inp-user').value = v.usuario_nombre || nombreAdmin;
+        // --- SOLUCIÓN PARA EL NOMBRE DEL USUARIO ---
+        const datosSesion = JSON.parse(localStorage.getItem('usuario_activo'));
+        const nombreParaMostrar = (v.usuario_nombre && v.usuario_nombre !== "undefined") ? v.usuario_nombre : (datosSesion ? datosSesion.nombre : "Admin");
+        
+        document.getElementById('inp-user').value = nombreParaMostrar;
 
         document.getElementById('vista-historial').style.display = 'none';
         document.getElementById('vista-planilla').style.display = 'block';
+    }
+
+    function filtrar() {
+        const query = document.getElementById('buscador').value.toLowerCase();
+        const filtrados = viajesCache.filter(v => (v.cliente_telefono || "").includes(query));
+        renderizarClientes(filtrados);
     }
 
     function volverAlHistorial() {
@@ -191,22 +162,18 @@
             destino: document.getElementById('inp-destino').value,
             precio: document.getElementById('inp-precio').value
         };
-        const { error } = await supabaseClient.from('viajes').update(upd).eq('id', viajeActualId);
-        if(!error) {
-            alert("Viaje actualizado");
+        await supabaseClient.from('viajes').update(upd).eq('id', viajeActualId);
+        location.reload();
+    }
+
+    async function eliminarViaje() {
+        if(confirm("¿Eliminar viaje?")) {
+            await supabaseClient.from('viajes').delete().eq('id', viajeActualId);
             location.reload();
         }
     }
 
-    async function eliminarViaje() {
-        if(confirm("¿Estás seguro de que deseas eliminar este registro de viaje permanentemente?")) {
-            const { error } = await supabaseClient.from('viajes').delete().eq('id', viajeActualId);
-            if(!error) location.reload();
-        }
-    }
-
     function cerrar() { document.getElementById('modalGlobal').style.display = 'none'; }
-    
     cargar();
 </script>
 </body>
