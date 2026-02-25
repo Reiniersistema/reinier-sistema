@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Clientes - RF TransGestión</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -16,81 +16,62 @@
         .search-box { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #333; background: #000; color: white; margin-bottom: 20px; box-sizing: border-box; }
 
         /* Tabla Principal */
-        .tabla-container { background: var(--gris); border-radius: 15px; overflow: hidden; border: 1px solid #333; }
+        .tabla-container { background: var(--gris); border-radius: 15px; border: 1px solid #333; overflow: hidden; }
         table { width: 100%; border-collapse: collapse; }
-        th { background: #252525; color: var(--dorado); padding: 15px; text-align: left; font-size: 13px; }
-        td { padding: 15px; border-bottom: 1px solid #2a2a2a; }
-
-        /* Viajes en el Historial */
-        .viaje-card { 
-            background: #0b0b0b; 
-            padding: 15px; 
-            border-radius: 12px; 
-            margin-bottom: 12px; 
-            border-left: 4px solid var(--dorado); 
-            cursor: pointer;
-            -webkit-tap-highlight-color: transparent; /* Mejora para móvil */
-        }
-        .viaje-card:active { background: #1a1a1a; }
+        td { padding: 15px; border-bottom: 1px solid #2a2a2a; font-size: 15px; }
+        tr:active { background: #252525; }
 
         /* Modales */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; overflow-y: auto; padding: 15px; box-sizing: border-box; }
-        .modal-content { background: var(--gris); max-width: 450px; margin: 10px auto; border-radius: 20px; padding: 25px; border: 1px solid var(--dorado); }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 1000; overflow-y: auto; padding: 15px; box-sizing: border-box; }
+        .modal-content { background: var(--gris); max-width: 450px; margin: 10px auto; border-radius: 20px; padding: 25px; border: 1px solid var(--dorado); position: relative; }
 
-        .btn-accion { width: 100%; padding: 15px; border-radius: 10px; font-weight: bold; border: none; margin-top: 10px; cursor: pointer; font-family: 'Montserrat'; }
+        /* Tarjetas de Viaje */
+        .viaje-card { background: #000; padding: 15px; border-radius: 12px; margin-bottom: 12px; border-left: 4px solid var(--dorado); }
+        .viaje-card:active { background: #1a1a1a; }
+
+        /* Inputs y Botones */
+        input { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #444; background: #000; color: white; box-sizing: border-box; font-family: 'Montserrat'; }
+        label { font-size: 11px; color: var(--dorado); text-transform: uppercase; display: block; margin-bottom: 4px; }
+
+        .btn { width: 100%; padding: 15px; border-radius: 10px; font-weight: bold; border: none; cursor: pointer; margin-top: 10px; font-family: 'Montserrat'; }
         .btn-edit { background: var(--azul); color: white; }
         .btn-del { background: var(--rojo); color: white; }
-        .btn-close { background: none; color: #888; }
-        
-        input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #333; background: #000; color: white; box-sizing: border-box; }
-        label { font-size: 11px; color: var(--dorado); text-transform: uppercase; font-weight: bold; display: block; margin-bottom: 4px; }
+        .btn-close { background: none; color: #888; margin-top: 15px; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h2>CLIENTES REGISTRADOS</h2>
+    <h2>CLIENTES</h2>
 </div>
 
 <input type="text" id="buscador" class="search-box" placeholder="Buscar teléfono..." onkeyup="filtrar()">
 
 <div class="tabla-container">
     <table>
-        <thead>
-            <tr><th>Teléfono</th><th style="text-align:right;">Viajes</th></tr>
-        </thead>
         <tbody id="lista-clientes"></tbody>
     </table>
 </div>
 
-<div id="modalHistorial" class="modal">
+<div id="modalUnico" class="modal">
     <div class="modal-content">
-        <h3 id="h-titulo" style="color:var(--dorado); margin-top:0;">VIAJES</h3>
-        <div id="contenedor-viajes"></div>
-        <button class="btn-accion btn-close" onclick="cerrar('modalHistorial')">VOLVER</button>
-    </div>
-</div>
+        <div id="vista-lista">
+            <h3 id="titulo-cliente" style="color:var(--dorado); margin-top:0;">VIAJES</h3>
+            <div id="cont-viajes"></div>
+            <button class="btn btn-close" onclick="cerrar()">CERRAR</button>
+        </div>
 
-<div id="modalDetalleViaje" class="modal" style="z-index: 2000;">
-    <div class="modal-content">
-        <h3 style="color:var(--dorado); text-align:center; margin-top:0;">DETALLES DEL VIAJE</h3>
-        
-        <label>Origen</label>
-        <input type="text" id="v-origen">
-        <label>Paradas Intermedias</label>
-        <input type="text" id="v-paradas">
-        <label>Destino</label>
-        <input type="text" id="v-destino">
-        <label>Precio (CUP)</label>
-        <input type="number" id="v-precio">
-        <label>Usuario</label>
-        <input type="text" id="v-usuario" disabled>
-        <label>Fecha/Hora</label>
-        <input type="text" id="v-fecha" disabled>
-
-        <button class="btn-accion btn-edit" onclick="actualizarViaje()">GUARDAR CAMBIOS</button>
-        <button class="btn-accion btn-del" onclick="eliminarViaje()">ELIMINAR VIAJE</button>
-        <button class="btn-accion btn-close" onclick="cerrar('modalDetalleViaje')">CERRAR</button>
+        <div id="vista-edicion" style="display:none;">
+            <h3 style="color:var(--dorado); text-align:center; margin-top:0;">DETALLE DEL VIAJE</h3>
+            <label>Origen</label><input type="text" id="e-origen">
+            <label>Paradas</label><input type="text" id="e-paradas">
+            <label>Destino</label><input type="text" id="e-destino">
+            <label>Precio (CUP)</label><input type="number" id="e-precio">
+            
+            <button class="btn btn-edit" onclick="actualizar()">GUARDAR CAMBIOS</button>
+            <button class="btn btn-del" onclick="eliminar()">ELIMINAR VIAJE</button>
+            <button class="btn btn-close" onclick="volverALista()">← VOLVER ATRÁS</button>
+        </div>
     </div>
 </div>
 
@@ -98,87 +79,87 @@
 <script>
     let todosLosViajes = [];
     let viajeSeleccionado = null;
+    let telActual = "";
 
     async function cargar() {
-        // Obtenemos los datos de la tabla 'viajes'
         const { data } = await supabaseClient.from('viajes').select('*').order('created_at', {ascending: false});
         todosLosViajes = data || [];
-        procesarYMostrar(todosLosViajes);
+        mostrarClientes(todosLosViajes);
     }
 
-    function procesarYMostrar(viajes) {
-        const resumen = {};
-        viajes.forEach(v => {
-            const tel = v.cliente_telefono || "Sin número";
-            resumen[tel] = (resumen[tel] || 0) + 1;
-        });
-
-        const lista = document.getElementById('lista-clientes');
-        lista.innerHTML = Object.keys(resumen).map(tel => `
+    function mostrarClientes(viajes) {
+        const counts = {};
+        viajes.forEach(v => { counts[v.cliente_telefono] = (counts[v.cliente_telefono] || 0) + 1; });
+        
+        document.getElementById('lista-clientes').innerHTML = Object.keys(counts).map(tel => `
             <tr onclick="abrirHistorial('${tel}')">
                 <td><b>${tel}</b></td>
-                <td style="text-align:right;">${resumen[tel]}</td>
+                <td style="text-align:right; color:var(--dorado)">${counts[tel]} viajes</td>
             </tr>
         `).join('');
     }
 
-    function filtrar() {
-        const val = document.getElementById('buscador').value.toLowerCase();
-        const filtrados = todosLosViajes.filter(v => (v.cliente_telefono || "").includes(val));
-        procesarYMostrar(filtrados);
-    }
-
     function abrirHistorial(tel) {
-        document.getElementById('h-titulo').innerText = "Historial: " + tel;
-        const viajesCli = todosLosViajes.filter(v => v.cliente_telefono === tel);
-        const cont = document.getElementById('contenedor-viajes');
+        telActual = tel;
+        document.getElementById('titulo-cliente').innerText = "Historial: " + tel;
+        const filtrados = todosLosViajes.filter(v => v.cliente_telefono === tel);
         
-        cont.innerHTML = viajesCli.map(v => `
-            <div class="viaje-card" onclick="abrirPlanillaViaje(${v.id})">
-                <div style="font-size:11px; color:#888;">${v.fecha || 'Sin fecha'} - ${v.hora || 'Sin hora'}</div>
+        document.getElementById('cont-viajes').innerHTML = filtrados.map(v => `
+            <div class="viaje-card" onclick="irAEdicion(${v.id})">
+                <div style="font-size:11px; color:#888;">${v.fecha} - ${v.hora}</div>
                 <div style="font-weight:bold; margin:5px 0;">${v.origen} → ${v.destino}</div>
                 <div style="color:var(--dorado); font-size:13px;">$${v.precio} CUP</div>
             </div>
         `).join('');
-        document.getElementById('modalHistorial').style.display = 'block';
+
+        document.getElementById('vista-lista').style.display = 'block';
+        document.getElementById('vista-edicion').style.display = 'none';
+        document.getElementById('modalUnico').style.display = 'block';
     }
 
-    function abrirPlanillaViaje(id) {
-        // Buscamos el viaje por su ID real de la base de datos
+    function irAEdicion(id) {
         viajeSeleccionado = todosLosViajes.find(v => v.id == id);
-        
-        if (viajeSeleccionado) {
-            document.getElementById('v-origen').value = viajeSeleccionado.origen || "";
-            document.getElementById('v-paradas').value = viajeSeleccionado.paradas_intermedias || "";
-            document.getElementById('v-destino').value = viajeSeleccionado.destino || "";
-            document.getElementById('v-precio').value = viajeSeleccionado.precio || 0;
-            document.getElementById('v-usuario').value = viajeSeleccionado.usuario_nombre || "Admin";
-            document.getElementById('v-fecha').value = `${viajeSeleccionado.fecha || ''} ${viajeSeleccionado.hora || ''}`;
-            
-            document.getElementById('modalDetalleViaje').style.display = 'block';
-        }
+        if(!viajeSeleccionado) return;
+
+        document.getElementById('e-origen').value = viajeSeleccionado.origen;
+        document.getElementById('e-paradas').value = viajeSeleccionado.paradas_intermedias || "";
+        document.getElementById('e-destino').value = viajeSeleccionado.destino;
+        document.getElementById('e-precio').value = viajeSeleccionado.precio;
+
+        document.getElementById('vista-lista').style.display = 'none';
+        document.getElementById('vista-edicion').style.display = 'block';
     }
 
-    async function actualizarViaje() {
-        const upd = {
-            origen: document.getElementById('v-origen').value,
-            paradas_intermedias: document.getElementById('v-paradas').value,
-            destino: document.getElementById('v-destino').value,
-            precio: document.getElementById('v-precio').value
+    function volverALista() {
+        document.getElementById('vista-edicion').style.display = 'none';
+        document.getElementById('vista-lista').style.display = 'block';
+    }
+
+    async function actualizar() {
+        const datos = {
+            origen: document.getElementById('e-origen').value,
+            paradas_intermedias: document.getElementById('e-paradas').value,
+            destino: document.getElementById('e-destino').value,
+            precio: document.getElementById('e-precio').value
         };
-        await supabaseClient.from('viajes').update(upd).eq('id', viajeSeleccionado.id);
+        await supabaseClient.from('viajes').update(datos).eq('id', viajeSeleccionado.id);
         location.reload();
     }
 
-    async function eliminarViaje() {
-        if(confirm("¿Seguro que quieres eliminar este viaje?")) {
+    async function eliminar() {
+        if(confirm("¿Eliminar este viaje permanentemente?")) {
             await supabaseClient.from('viajes').delete().eq('id', viajeSeleccionado.id);
             location.reload();
         }
     }
 
-    function cerrar(id) { document.getElementById(id).style.display = 'none'; }
-    
+    function filtrar() {
+        const val = document.getElementById('buscador').value;
+        const f = todosLosViajes.filter(v => v.cliente_telefono.includes(val));
+        mostrarClientes(f);
+    }
+
+    function cerrar() { document.getElementById('modalUnico').style.display = 'none'; }
     cargar();
 </script>
 </body>
