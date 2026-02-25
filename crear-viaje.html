@@ -4,13 +4,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crear Viaje - RF TransGestión</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; }
-        body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding: 15px; padding-bottom: 50px; }
+        body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding-bottom: 50px; }
+        
+        /* ESTILOS DEL MENÚ UNIVERSAL */
+        .sidebar {
+            height: 100%; width: 0; position: fixed;
+            z-index: 3000; top: 0; left: 0;
+            background-color: #1e1e1e;
+            overflow-x: hidden; transition: 0.5s;
+            padding-top: 60px; border-right: 1px solid #d4af37;
+        }
+        .sidebar a {
+            padding: 12px 24px; text-decoration: none;
+            font-size: 15px; color: #818181;
+            display: block; transition: 0.3s;
+            text-transform: uppercase;
+        }
+        .sidebar a:hover { color: #d4af37; background: rgba(212, 175, 55, 0.1); }
+        .sidebar .closebtn { position: absolute; top: 10px; right: 25px; font-size: 36px; color: #d4af37; }
+
+        .header-nav-universal { 
+            display: flex; align-items: center; gap: 15px; 
+            padding: 15px; background: #121212; 
+            border-bottom: 1px solid #d4af37; margin-bottom: 20px;
+        }
+        .openbtn { font-size: 25px; cursor: pointer; background: none; border: none; color: #d4af37; }
+        .logo-txt-universal { font-family: 'Playfair Display', serif; font-size: 20px; color: white; }
+
+        /* Estilos propios de la página */
+        .contenedor-principal { padding: 0 15px; }
         .form-container { max-width: 600px; margin: auto; background: var(--gris); padding: 20px; border-radius: 15px; border: 1px solid #333; }
-        h2 { color: var(--dorado); text-align: center; text-transform: uppercase; font-size: 18px; margin-bottom: 20px; }
+        h2 { color: var(--dorado); text-align: center; text-transform: uppercase; font-size: 18px; margin-bottom: 20px; margin-top: 0; }
         
         .field { margin-bottom: 18px; }
         label { display: block; font-size: 11px; color: var(--dorado); margin-bottom: 5px; text-transform: uppercase; font-weight: bold; }
@@ -26,101 +54,102 @@
         .check-item { display: flex; align-items: center; font-size: 12px; color: #ccc; }
         .check-item input { width: auto; margin-right: 8px; cursor: pointer; }
 
-        /* Estilo para botones Entrada/Salida */
         .tipo-colab-group { display: none; gap: 10px; margin-top: 10px; }
         .btn-tipo { flex: 1; background: #333; color: white; border: 1px solid #444; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: bold; }
         .btn-tipo.active { background: var(--dorado); color: black; border-color: var(--dorado); }
 
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); overflow-y: auto; padding: 20px; box-sizing: border-box; z-index: 2000; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); overflow-y: auto; padding: 20px; box-sizing: border-box; z-index: 4000; }
         .planilla-box { background: white; color: black; padding: 20px; border-radius: 10px; margin-bottom: 15px; white-space: pre-wrap; font-family: 'Courier New', Courier, monospace; font-size: 13px; line-height: 1.3; }
         .btn-ws { background: #25d366; color: white; padding: 14px; border: none; border-radius: 8px; width: 100%; font-weight: bold; margin-bottom: 25px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div class="form-container">
-    <h2>Elaborar Viaje</h2>
+<div class="contenedor-principal">
+    <div class="form-container">
+        <h2>Elaborar Viaje</h2>
 
-    <div class="field">
-        <label>Colaboración</label>
-        <select id="colaboracion" onchange="actualizarInterfazColab()">
-            <option value="">Cargando agencias...</option>
-        </select>
-        <div id="tipo-colab-container" class="tipo-colab-group">
-            <button id="btn-entrada" class="btn-tipo" onclick="seleccionarTipo('Entrada')">ENTRADA</button>
-            <button id="btn-salida" class="btn-tipo" onclick="seleccionarTipo('Salida')">SALIDA</button>
-        </div>
-    </div>
-
-    <div class="field" id="campo-cliente">
-        <label>Cliente (Teléfono)</label>
-        <input type="tel" id="tel-cliente" placeholder="Número del cliente">
-    </div>
-
-    <div class="field">
-        <label>Chofer (Teléfono)</label>
-        <div class="row">
-            <input type="tel" id="tel-chofer" placeholder="Número del Chófer">
-            <button class="btn-action" onclick="buscarChofer()">BUSCAR</button>
-        </div>
-        <div id="res-chofer" class="info-chofer"></div>
-    </div>
-
-    <div class="field">
-        <label>Precio</label>
-        <input type="number" id="precio-final" placeholder="Precio final">
-        <div class="calculadora">
-            <div class="row">
-                <input type="number" id="tarifa" placeholder="Tarifa">
-                <input type="number" id="distancia" placeholder="KM">
-                <button class="btn-action" onclick="calcularPrecio()">CALCULAR</button>
+        <div class="field">
+            <label>Colaboración</label>
+            <select id="colaboracion" onchange="actualizarInterfazColab()">
+                <option value="">Cargando agencias...</option>
+            </select>
+            <div id="tipo-colab-container" class="tipo-colab-group">
+                <button id="btn-entrada" class="btn-tipo" onclick="seleccionarTipo('Entrada')">ENTRADA</button>
+                <button id="btn-salida" class="btn-tipo" onclick="seleccionarTipo('Salida')">SALIDA</button>
             </div>
         </div>
-    </div>
 
-    <div class="field">
-        <label>Pasajeros (PAX)</label>
-        <input type="number" id="pax" value="1">
-    </div>
+        <div class="field" id="campo-cliente">
+            <label>Cliente (Teléfono)</label>
+            <input type="tel" id="tel-cliente" placeholder="Número del cliente">
+        </div>
 
-    <div class="field">
-        <label>Origen</label>
-        <input type="text" id="origen">
-        <button class="btn-action" style="margin-top:8px; font-size:11px; background: #333; color: var(--dorado);" onclick="addParada()">+ AÑADIR PARADA</button>
-        <div id="contenedor-paradas"></div>
-    </div>
+        <div class="field">
+            <label>Chofer (Teléfono)</label>
+            <div class="row">
+                <input type="tel" id="tel-chofer" placeholder="Número del Chófer">
+                <button class="btn-action" onclick="buscarChofer()">BUSCAR</button>
+            </div>
+            <div id="res-chofer" class="info-chofer"></div>
+        </div>
 
-    <div class="field">
-        <label>Destino</label>
-        <input type="text" id="destino">
-    </div>
+        <div class="field">
+            <label>Precio</label>
+            <input type="number" id="precio-final" placeholder="Precio final">
+            <div class="calculadora">
+                <div class="row">
+                    <input type="number" id="tarifa" placeholder="Tarifa">
+                    <input type="number" id="distancia" placeholder="KM">
+                    <button class="btn-action" onclick="calcularPrecio()">CALCULAR</button>
+                </div>
+            </div>
+        </div>
 
-    <div class="field">
-        <label>Grupo de WhatsApp</label>
-        <input type="text" id="grupo">
-    </div>
+        <div class="field">
+            <label>Pasajeros (PAX)</label>
+            <input type="number" id="pax" value="1">
+        </div>
 
-    <div class="checkbox-group">
-        <div class="check-item"><input type="checkbox" id="pago_transf"> Pago transferencia</div>
-        <div class="check-item"><input type="checkbox" id="precio_cliente"> Precio cliente</div>
-        <div class="check-item"><input type="checkbox" id="aire"> Aire acondicionado</div>
-        <div class="check-item"><input type="checkbox" id="ida_vuelta"> Ida y vuelta</div>
-        <div class="check-item"><input type="checkbox" id="reservado" onchange="toggleReserva()"> Viaje Reservado</div>
-    </div>
+        <div class="field">
+            <label>Origen</label>
+            <input type="text" id="origen">
+            <button class="btn-action" style="margin-top:8px; font-size:11px; background: #333; color: var(--dorado);" onclick="addParada()">+ AÑADIR PARADA</button>
+            <div id="contenedor-paradas"></div>
+        </div>
 
-    <div id="seccion-reserva" style="display:none;" class="field">
-        <label>Fecha y Hora</label>
-        <input type="datetime-local" id="fecha-reserva">
-    </div>
+        <div class="field">
+            <label>Destino</label>
+            <input type="text" id="destino">
+        </div>
 
-    <div class="field">
-        <label>Observación</label>
-        <textarea id="observacion" rows="3"></textarea>
-    </div>
+        <div class="field">
+            <label>Grupo de WhatsApp</label>
+            <input type="text" id="grupo">
+        </div>
 
-    <div class="row">
-        <button class="btn-action" style="background:#444; color: white; flex:1;" onclick="generarPlanillas()">PLANILLA</button>
-        <button class="btn-action" style="flex:1;" onclick="crearViaje()">CREAR VIAJE</button>
+        <div class="checkbox-group">
+            <div class="check-item"><input type="checkbox" id="pago_transf"> Pago transferencia</div>
+            <div class="check-item"><input type="checkbox" id="precio_cliente"> Precio cliente</div>
+            <div class="check-item"><input type="checkbox" id="aire"> Aire acondicionado</div>
+            <div class="check-item"><input type="checkbox" id="ida_vuelta"> Ida y vuelta</div>
+            <div class="check-item"><input type="checkbox" id="reservado" onchange="toggleReserva()"> Viaje Reservado</div>
+        </div>
+
+        <div id="seccion-reserva" style="display:none;" class="field">
+            <label>Fecha y Hora</label>
+            <input type="datetime-local" id="fecha-reserva">
+        </div>
+
+        <div class="field">
+            <label>Observación</label>
+            <textarea id="observacion" rows="3"></textarea>
+        </div>
+
+        <div class="row">
+            <button class="btn-action" style="background:#444; color: white; flex:1;" onclick="generarPlanillas()">PLANILLA</button>
+            <button class="btn-action" style="flex:1;" onclick="crearViaje()">CREAR VIAJE</button>
+        </div>
     </div>
 </div>
 
@@ -137,9 +166,10 @@
 </div>
 
 <script src="config.js"></script>
+<script src="menu.js"></script>
 <script>
     let choferData = null;
-    let tipoSeleccionado = ""; // Para guardar 'Entrada' o 'Salida'
+    let tipoSeleccionado = "";
 
     async function cargarColaboraciones() {
         const select = document.getElementById('colaboracion');
@@ -156,22 +186,19 @@
     }
     cargarColaboraciones();
 
-    // NUEVA FUNCIÓN: Controlar visibilidad de Cliente y botones Entrada/Salida
     function actualizarInterfazColab() {
         const colab = document.getElementById('colaboracion').value;
         const campoCliente = document.getElementById('campo-cliente');
         const tipoContainer = document.getElementById('tipo-colab-container');
 
         if (colab !== "" && colab !== "Directo") {
-            // Es una AGENCIA
             campoCliente.style.display = "none";
-            document.getElementById('tel-cliente').value = ""; // Limpiar el número si se oculta
+            document.getElementById('tel-cliente').value = "";
             tipoContainer.style.display = "flex";
         } else {
-            // Es DIRECTO o Vacío
             campoCliente.style.display = "block";
             tipoContainer.style.display = "none";
-            tipoSeleccionado = ""; // Resetear tipo
+            tipoSeleccionado = "";
             desmarcarBotones();
         }
     }
@@ -184,8 +211,10 @@
     }
 
     function desmarcarBotones() {
-        document.getElementById('btn-entrada').classList.remove('active');
-        document.getElementById('btn-salida').classList.remove('active');
+        const bEntrada = document.getElementById('btn-entrada');
+        const bSalida = document.getElementById('btn-salida');
+        if(bEntrada) bEntrada.classList.remove('active');
+        if(bSalida) bSalida.classList.remove('active');
     }
 
     async function buscarChofer() {
@@ -297,7 +326,7 @@
 
         const { error } = await supabaseClient.from('viajes').insert([{
             colaboracion: colabValue,
-            tipo_agencia: tipoSeleccionado, // Añadir esta columna en Supabase si deseas guardarlo
+            tipo_agencia: tipoSeleccionado,
             chofer_id: choferData.id,
             precio: precioViaje,
             cliente_telefono: document.getElementById('tel-cliente').value,
