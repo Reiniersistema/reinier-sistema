@@ -111,9 +111,10 @@
     }
 
     async function cargarViajes(filtro = 'todos', inicio = null, fin = null) {
+        // CORRECCIÓN: Se cambian los nombres de columnas para que coincidan con tu tabla real
         let query = supabaseClient
             .from('viajes')
-            .select('precio, origen, destino, usuario_nombre, chofer_id, created_at')
+            .select('precio, origen, destino, usuario_gestor, chofer_id, created_at')
             .order('created_at', { ascending: false });
 
         const hoy = new Date();
@@ -135,25 +136,24 @@
 
         const { data: viajes, error } = await query;
         const tbody = document.getElementById('lista-viajes');
-        tbody.innerHTML = "";
-
+        
         if (error) {
-            tbody.innerHTML = "<tr><td colspan='4'>Error al cargar datos</td></tr>";
+            console.error("Error Supabase:", error);
+            tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; color:red;'>Error: " + error.message + "</td></tr>";
             return;
         }
 
         if (viajes && viajes.length > 0) {
-            // Obtenemos los choferes una sola vez para no hacer peticiones infinitas en el bucle
-            const { data: choferes } = await supabaseClient.from('choferes').select('id, nombre, apellido');
+            const { data: choferes } = await supabaseClient.from('choferes').select('id, nombre');
             const choferMap = {};
-            if(choferes) choferes.forEach(c => choferMap[c.id] = `${c.nombre} ${c.apellido || ''}`);
+            if(choferes) choferes.forEach(c => choferMap[c.id] = c.nombre);
 
             tbody.innerHTML = viajes.map(v => `
                 <tr>
-                    <td><b>${choferMap[v.chofer_id] || 'ID: ' + v.chofer_id}</b></td>
+                    <td><b>${choferMap[v.chofer_id] || 'Chófer #' + v.chofer_id}</b></td>
                     <td style="color:var(--dorado); font-weight:bold;">$${v.precio}</td>
                     <td>${v.origen} <br> <small style="color:#888">→ ${v.destino}</small></td>
-                    <td><span class="badge-user">${v.usuario_nombre || 'Admin'}</span></td>
+                    <td><span class="badge-user">${v.usuario_gestor || 'Sistema'}</span></td>
                 </tr>
             `).join('');
         } else {
