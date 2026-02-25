@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarjetas - RF TransGestión</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; --rojo: #dc3545; }
+        body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding: 15px; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--dorado); padding-bottom: 10px; }
+        h2 { color: var(--dorado); font-size: 18px; text-transform: uppercase; margin: 0; }
+        
+        .btn-add { background: var(--dorado); color: black; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 12px; }
+
+        .tabla-contenedor { background: var(--gris); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.5); margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 12px 10px; color: var(--dorado); font-size: 11px; text-transform: uppercase; border-bottom: 2px solid #333; }
+        td { padding: 15px 10px; border-bottom: 1px solid #222; font-size: 14px; }
+
+        .btn-del { background: none; border: none; color: var(--rojo); cursor: pointer; font-weight: bold; font-size: 18px; }
+
+        /* Formulario Simple para añadir */
+        #formAdd { display: none; background: #252525; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid var(--dorado); }
+        input { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #444; background: #000; color: white; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h2>Tarjetas</h2>
+    <button class="btn-add" onclick="toggleForm()">+ AÑADIR</button>
+</div>
+
+<div id="formAdd">
+    <input type="text" id="num-tarjeta" placeholder="Número de Tarjeta">
+    <input type="text" id="nom-tarjeta" placeholder="Nombre del Titular / Banco">
+    <div style="display:flex; gap:10px;">
+        <button class="btn-add" onclick="guardarTarjeta()" style="flex:1;">GUARDAR</button>
+        <button class="btn-add" onclick="toggleForm()" style="flex:1; background:#444; color:white;">CANCELAR</button>
+    </div>
+</div>
+
+<div class="tabla-contenedor">
+    <table>
+        <thead>
+            <tr>
+                <th>Número</th>
+                <th>Nombre</th>
+                <th style="width: 40px;"></th>
+            </tr>
+        </thead>
+        <tbody id="lista-tarjetas">
+            </tbody>
+    </table>
+</div>
+
+<script src="config.js"></script>
+<script>
+    function toggleForm() {
+        const f = document.getElementById('formAdd');
+        f.style.display = f.style.display === 'block' ? 'none' : 'block';
+    }
+
+    async function cargarTarjetas() {
+        const { data, error } = await supabaseClient.from('tarjetas').select('*').order('created_at', { ascending: false });
+        
+        const tbody = document.getElementById('lista-tarjetas');
+        if (data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:20px; color:#888;">No hay tarjetas registradas.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = data.map(t => `
+            <tr>
+                <td style="font-family: monospace; letter-spacing: 1px;">${t.numero}</td>
+                <td>${t.nombre}</td>
+                <td><button class="btn-del" onclick="eliminarTarjeta(${t.id})">×</button></td>
+            </tr>
+        `).join('');
+    }
+
+    async function guardarTarjeta() {
+        const num = document.getElementById('num-tarjeta').value;
+        const nom = document.getElementById('nom-tarjeta').value;
+
+        if(!num || !nom) return alert("Completa ambos campos");
+
+        const { error } = await supabaseClient.from('tarjetas').insert([{ numero: num, nombre: nom }]);
+
+        if(!error) {
+            alert("Tarjeta añadida.");
+            document.getElementById('num-tarjeta').value = "";
+            document.getElementById('nom-tarjeta').value = "";
+            toggleForm();
+            cargarTarjetas();
+        } else {
+            alert("Error: " + error.message);
+        }
+    }
+
+    async function eliminarTarjeta(id) {
+        if(confirm("¿Seguro que quieres eliminar esta tarjeta?")) {
+            const { error } = await supabaseClient.from('tarjetas').delete().eq('id', id);
+            if(!error) {
+                cargarTarjetas();
+            } else {
+                alert("Error: " + error.message);
+            }
+        }
+    }
+
+    cargarTarjetas();
+</script>
+</body>
+</html>
