@@ -4,22 +4,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aprobaciones - RF TransGestión</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; --verde: #28a745; --rojo: #dc3545; }
-        body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding: 15px; }
-        h2 { color: var(--dorado); font-size: 16px; text-transform: uppercase; margin-top: 30px; border-left: 4px solid var(--dorado); padding-left: 10px; }
+        body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding-bottom: 50px; }
+        
+        /* ESTILOS DEL MENÚ UNIVERSAL */
+        .sidebar {
+            height: 100%; width: 0; position: fixed;
+            z-index: 3000; top: 0; left: 0;
+            background-color: #1e1e1e;
+            overflow-x: hidden; transition: 0.5s;
+            padding-top: 60px; border-right: 1px solid #d4af37;
+        }
+        .sidebar a {
+            padding: 12px 24px; text-decoration: none;
+            font-size: 15px; color: #818181;
+            display: block; transition: 0.3s;
+            text-transform: uppercase;
+        }
+        .sidebar a:hover { color: #d4af37; background: rgba(212, 175, 55, 0.1); }
+        .sidebar .closebtn { position: absolute; top: 10px; right: 25px; font-size: 36px; color: #d4af37; }
+
+        .header-nav-universal { 
+            display: flex; align-items: center; gap: 15px; 
+            padding: 15px; background: #121212; 
+            border-bottom: 1px solid #d4af37; margin-bottom: 20px;
+        }
+        .openbtn { font-size: 25px; cursor: pointer; background: none; border: none; color: #d4af37; }
+        .logo-txt-universal { font-family: 'Playfair Display', serif; font-size: 20px; color: white; }
+
+        /* Estilos propios de la página */
+        .contenedor-principal { padding: 0 15px; }
+        h2 { color: var(--dorado); font-size: 15px; text-transform: uppercase; margin-top: 30px; border-left: 4px solid var(--dorado); padding-left: 10px; }
+        
         .tabla-contenedor { background: var(--gris); border-radius: 12px; overflow: hidden; margin-top: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 12px 10px; color: var(--dorado); font-size: 10px; background: #1a1a1a; }
+        th { text-align: left; padding: 12px 10px; color: var(--dorado); font-size: 10px; background: #1a1a1a; text-transform: uppercase; }
         td { padding: 15px 10px; border-bottom: 1px solid #222; font-size: 12px; }
-        .btn-aprobar { background: var(--verde); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .btn-eliminar { background: var(--rojo); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-left: 5px; }
+        
+        .btn-aprobar { background: var(--verde); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-family: 'Montserrat'; font-size: 10px; }
+        .btn-eliminar { background: var(--rojo); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-left: 5px; font-family: 'Montserrat'; font-size: 10px; }
     </style>
 </head>
 <body>
 
+<div class="contenedor-principal">
     <h2>1. Nuevos Choferes (Por activar)</h2>
     <div class="tabla-contenedor">
         <table>
@@ -30,11 +61,13 @@
                     <th>Acciones</th>
                 </tr>
             </thead>
-            <tbody id="lista-choferes-pendientes"></tbody>
+            <tbody id="lista-choferes-pendientes">
+                <tr><td colspan="3" style="text-align:center; padding:15px; color:#666;">Cargando...</td></tr>
+            </tbody>
         </table>
     </div>
 
-    <h2>2. Recargas de Fondos (Dinero esperando)</h2>
+    <h2>2. Recargas de Fondos (Esperando)</h2>
     <div class="tabla-contenedor">
         <table>
             <thead>
@@ -45,11 +78,15 @@
                     <th>Acciones</th>
                 </tr>
             </thead>
-            <tbody id="lista-pagos-pendientes"></tbody>
+            <tbody id="lista-pagos-pendientes">
+                <tr><td colspan="4" style="text-align:center; padding:15px; color:#666;">Cargando...</td></tr>
+            </tbody>
         </table>
     </div>
+</div>
 
 <script src="config.js"></script>
+<script src="menu.js"></script>
 <script>
     async function cargarTodo() {
         // 1. Cargar Choferes con aprobado = false
@@ -59,16 +96,16 @@
         if (choferes && choferes.length > 0) {
             tbodyCh.innerHTML = choferes.map(c => `
                 <tr>
-                    <td>${c.nombre}</td>
+                    <td><b>${c.nombre}</b></td>
                     <td>${c.telefono}</td>
                     <td>
                         <button class="btn-aprobar" onclick="aprobarChofer(${c.id})">APROBAR</button>
-                        <button class="btn-eliminar" onclick="borrarRegistro('choferes', ${c.id})">ELIMINAR</button>
+                        <button class="btn-eliminar" onclick="borrarRegistro('choferes', ${c.id})">BORRAR</button>
                     </td>
                 </tr>
             `).join('');
         } else {
-            tbodyCh.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:15px; color:#666;">No hay nuevos choferes.</td></tr>`;
+            tbodyCh.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:20px; color:#666;">No hay nuevos choferes.</td></tr>`;
         }
 
         // 2. Cargar Transferencias con aprobado = false
@@ -80,26 +117,28 @@
                 <tr>
                     <td><b>${p.nombre_chofer}</b></td>
                     <td style="color:var(--dorado)">$${p.monto}</td>
-                    <td>${p.tipo_pago}</td>
-                    <td>
-                        <button class="btn-aprobar" onclick="aprobarPago(${p.id}, '${p.nombre_chofer}', ${p.monto})">APROBAR</button>
-                        <button class="btn-eliminar" onclick="borrarRegistro('transferencias', ${p.id})">ELIMINAR</button>
+                    <td style="font-size:10px;">${p.tipo_pago}</td>
+                    <td style="display:flex;">
+                        <button class="btn-aprobar" onclick="aprobarPago(${p.id}, '${p.nombre_chofer}', ${p.monto})">OK</button>
+                        <button class="btn-eliminar" onclick="borrarRegistro('transferencias', ${p.id})">X</button>
                     </td>
                 </tr>
             `).join('');
         } else {
-            tbodyPg.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:15px; color:#666;">No hay pagos por aprobar.</td></tr>`;
+            tbodyPg.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:#666;">No hay pagos por aprobar.</td></tr>`;
         }
     }
 
     async function aprobarChofer(id) {
-        await supabaseClient.from('choferes').update({ aprobado: true }).eq('id', id);
-        alert("Chófer activado");
-        cargarTodo();
+        const { error } = await supabaseClient.from('choferes').update({ aprobado: true }).eq('id', id);
+        if(!error) {
+            alert("✅ Chófer activado correctamente");
+            cargarTodo();
+        }
     }
 
     async function aprobarPago(pagoId, identificador, monto) {
-        // Buscar al chófer por nombre o teléfono para sumarle el dinero
+        // Buscar al chófer por nombre o teléfono
         const { data: chofer } = await supabaseClient
             .from('choferes')
             .select('*')
@@ -107,7 +146,7 @@
             .maybeSingle();
 
         if (!chofer) {
-            alert("No se encontró al chófer '" + identificador + "'. Asegúrate de escribir el nombre igual que en su registro.");
+            alert("❌ No se encontró al chófer '" + identificador + "'. Asegúrate de que el nombre coincida exactamente.");
             return;
         }
 
@@ -120,20 +159,28 @@
         const { error: errorTrans } = await supabaseClient.from('transferencias').update({ aprobado: true }).eq('id', pagoId);
 
         if (!errorFondo && !errorTrans) {
-            // 3. Opcional: Registrar en historial
+            // 3. Registrar en historial
+            const datosSesion = JSON.parse(localStorage.getItem('usuario_activo'));
+            const adminUser = datosSesion ? datosSesion.nombre : "Admin";
+
             await supabaseClient.from('historial_fondos').insert([{
-                chofer_id: chofer.id, usuario: 'Admin', metodo: 'Recarga Aprobada',
-                saldo: monto, fondo_anterior: chofer.fondo_actual, activo: nuevoFondo
+                chofer_id: chofer.id, 
+                usuario: adminUser, 
+                metodo: 'Recarga Aprobada',
+                saldo: monto, 
+                fondo_anterior: chofer.fondo_actual, 
+                activo: nuevoFondo
             }]);
-            alert("✅ Fondo de " + chofer.nombre + " actualizado a $" + nuevoFondo);
+            
+            alert("✅ Recarga exitosa. Nuevo fondo de " + chofer.nombre + ": $" + nuevoFondo);
             cargarTodo();
         } else {
-            alert("Error al procesar: " + (errorFondo?.message || errorTrans?.message));
+            alert("Error: " + (errorFondo?.message || errorTrans?.message));
         }
     }
 
     async function borrarRegistro(tabla, id) {
-        if(confirm("¿Seguro que quieres eliminar este registro definitivamente?")) {
+        if(confirm("¿Eliminar este registro definitivamente?")) {
             await supabaseClient.from(tabla).delete().eq('id', id);
             cargarTodo();
         }
