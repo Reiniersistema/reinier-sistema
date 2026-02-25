@@ -7,158 +7,180 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; --rojo: #dc3545; }
+        :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; --rojo: #dc3545; --azul: #3498db; }
         body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding: 15px; }
         
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--dorado); padding-bottom: 10px; }
         h2 { color: var(--dorado); font-size: 16px; text-transform: uppercase; margin: 0; }
 
-        .search-box { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #000; color: white; margin-bottom: 15px; box-sizing: border-box; }
+        .search-box { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #333; background: #000; color: white; margin-bottom: 20px; box-sizing: border-box; font-family: 'Montserrat'; }
 
-        /* Estilo de Tablas */
-        table { width: 100%; border-collapse: collapse; background: var(--gris); border-radius: 10px; overflow: hidden; font-size: 14px; }
-        th { background: #252525; color: var(--dorado); padding: 12px; text-align: left; border-bottom: 1px solid #333; }
-        td { padding: 12px; border-bottom: 1px solid #2a2a2a; }
+        /* Tabla de Clientes */
+        .tabla-container { background: var(--gris); border-radius: 15px; overflow: hidden; border: 1px solid #333; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #252525; color: var(--dorado); padding: 15px; text-align: left; font-size: 13px; }
+        td { padding: 15px; border-bottom: 1px solid #2a2a2a; cursor: pointer; }
         tr:active { background: #222; }
+
+        /* Listado de Viajes en Modal */
+        .viaje-card { background: #000; padding: 15px; border-radius: 12px; margin-bottom: 12px; border-left: 4px solid var(--dorado); cursor: pointer; }
+        .viaje-card:active { background: #111; transform: scale(0.98); }
 
         /* Modales */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; overflow-y: auto; padding: 15px; box-sizing: border-box; }
-        .modal-content { background: var(--gris); max-width: 500px; margin: 20px auto; border-radius: 15px; padding: 20px; border: 1px solid var(--dorado); }
+        .modal-content { background: var(--gris); max-width: 450px; margin: 20px auto; border-radius: 20px; padding: 25px; border: 1px solid var(--dorado); }
 
-        .btn-close { width: 100%; padding: 12px; background: var(--dorado); color: black; border: none; border-radius: 8px; font-weight: bold; margin-top: 15px; cursor: pointer; }
+        .btn-accion { width: 100%; padding: 15px; border-radius: 10px; font-weight: bold; border: none; margin-top: 10px; cursor: pointer; font-family: 'Montserrat'; }
+        .btn-edit { background: var(--azul); color: white; }
+        .btn-del { background: var(--rojo); color: white; }
+        .btn-close { background: none; color: #888; }
         
-        /* Menú de 3 puntos en viajes */
-        .viaje-item { background: #000; padding: 12px; border-radius: 10px; margin-bottom: 10px; position: relative; border-left: 3px solid var(--dorado); }
-        .dots { position: absolute; right: 10px; top: 10px; color: var(--dorado); cursor: pointer; font-size: 20px; }
-        .menu-viaje { display: none; background: #252525; border: 1px solid #444; border-radius: 8px; position: absolute; right: 10px; top: 35px; z-index: 10; }
-        .menu-viaje button { display: block; width: 100%; padding: 10px; border: none; background: none; color: white; text-align: left; border-bottom: 1px solid #333; }
+        input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #333; background: #000; color: white; box-sizing: border-box; }
+        label { font-size: 11px; color: var(--dorado); text-transform: uppercase; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h2>REGISTRO DE CLIENTES</h2>
+    <h2>CLIENTES REGISTRADOS</h2>
 </div>
 
-<input type="text" id="buscador" class="search-box" placeholder="🔍 Buscar por número de teléfono..." onkeyup="filtrarClientes()">
+<input type="text" id="buscador" class="search-box" placeholder="Buscar teléfono..." onkeyup="filtrar()">
 
-<table>
-    <thead>
-        <tr>
-            <th>Teléfono</th>
-            <th>Viajes</th>
-        </tr>
-    </thead>
-    <tbody id="tabla-clientes">
-        </tbody>
-</table>
+<div class="tabla-container">
+    <table>
+        <thead>
+            <tr><th>Teléfono</th><th style="text-align:right;">Viajes</th></tr>
+        </thead>
+        <tbody id="lista-clientes"></tbody>
+    </table>
+</div>
 
 <div id="modalHistorial" class="modal">
     <div class="modal-content">
-        <h3 id="titulo-cliente" style="color:var(--dorado); margin-top:0;"></h3>
-        <div id="lista-viajes">
-            </div>
-        <button class="btn-close" onclick="cerrarModal('modalHistorial')">CERRAR</button>
+        <h3 id="h-titulo" style="color:var(--dorado); margin-top:0;"></h3>
+        <div id="contenedor-viajes"></div>
+        <button class="btn-accion btn-close" onclick="cerrar('modalHistorial')">VOLVER</button>
+    </div>
+</div>
+
+<div id="modalDetalleViaje" class="modal">
+    <div class="modal-content">
+        <h3 style="color:var(--dorado); text-align:center; margin-top:0;">DATOS DEL VIAJE</h3>
+        
+        <div id="form-viaje">
+            <label>Origen</label>
+            <input type="text" id="v-origen">
+            <label>Paradas Intermedias</label>
+            <input type="text" id="v-paradas">
+            <label>Destino</label>
+            <input type="text" id="v-destino">
+            <label>Precio (CUP)</label>
+            <input type="number" id="v-precio">
+            <label>Usuario que registró</label>
+            <input type="text" id="v-usuario" disabled>
+            <label>Fecha y Hora</label>
+            <input type="text" id="v-fecha" disabled>
+        </div>
+
+        <button class="btn-accion btn-edit" onclick="actualizarViaje()">GUARDAR CAMBIOS</button>
+        <button class="btn-accion btn-del" onclick="eliminarViaje()">ELIMINAR VIAJE</button>
+        <button class="btn-accion btn-close" onclick="cerrar('modalDetalleViaje')">CANCELAR</button>
     </div>
 </div>
 
 <script src="config.js"></script>
 <script>
     let todosLosViajes = [];
-    let clientesAgrupados = {};
+    let clientesData = {};
+    let viajeSeleccionado = null;
 
-    async function cargarDatos() {
-        // Obtenemos todos los viajes de la tabla 'viajes'
-        const { data, error } = await supabaseClient.from('viajes').select('*');
-        if (error) return console.error(error);
-        
-        todosLosViajes = data;
-        procesarClientes();
+    async function cargar() {
+        const { data } = await supabaseClient.from('viajes').select('*').order('created_at', {ascending: false});
+        todosLosViajes = data || [];
+        procesar();
     }
 
-    function procesarClientes() {
-        clientesAgrupados = {};
+    function procesar() {
+        clientesData = {};
         todosLosViajes.forEach(v => {
-            const tel = v.cliente_telefono || "Sin número";
-            if (!clientesAgrupados[tel]) {
-                clientesAgrupados[tel] = 0;
-            }
-            clientesAgrupados[tel]++;
+            const tel = v.cliente_telefono || "S/N";
+            clientesData[tel] = (clientesData[tel] || 0) + 1;
         });
-
-        dibujarTabla(clientesAgrupados);
+        dibujar(clientesData);
     }
 
-    function dibujarTabla(datos) {
-        const tbody = document.getElementById('tabla-clientes');
-        tbody.innerHTML = "";
-        
-        Object.keys(datos).forEach(tel => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
+    function dibujar(datos) {
+        const lista = document.getElementById('lista-clientes');
+        lista.innerHTML = Object.keys(datos).map(tel => `
+            <tr onclick="abrirHistorial('${tel}')">
                 <td><b>${tel}</b></td>
-                <td>${datos[tel]} viajes</td>
-            `;
-            tr.onclick = () => verDetalleCliente(tel);
-            tbody.appendChild(tr);
-        });
+                <td style="text-align:right;">${datos[tel]}</td>
+            </tr>
+        `).join('');
     }
 
-    function filtrarClientes() {
-        const texto = document.getElementById('buscador').value.toLowerCase();
+    function filtrar() {
+        const buscar = document.getElementById('buscador').value;
         const filtrados = {};
-        Object.keys(clientesAgrupados).forEach(tel => {
-            if (tel.includes(texto)) filtrados[tel] = clientesAgrupados[tel];
+        Object.keys(clientesData).forEach(tel => {
+            if(tel.includes(buscar)) filtrados[tel] = clientesData[tel];
         });
-        dibujarTabla(filtrados);
+        dibujar(filtrados);
     }
 
-    function verDetalleCliente(telefono) {
-        document.getElementById('titulo-cliente').innerText = "Viajes de: " + telefono;
-        const historial = todosLosViajes.filter(v => v.cliente_telefono === telefono);
-        const contenedor = document.getElementById('lista-viajes');
+    // Al tocar un cliente, vemos todos sus viajes
+    function abrirHistorial(tel) {
+        document.getElementById('h-titulo').innerText = "Viajes: " + tel;
+        const viajesCli = todosLosViajes.filter(v => v.cliente_telefono === tel);
+        const cont = document.getElementById('contenedor-viajes');
         
-        contenedor.innerHTML = historial.map(v => `
-            <div class="viaje-item">
-                <div class="dots" onclick="toggleMenuViaje(event, ${v.id})">⋮</div>
-                <div id="menu-v-${v.id}" class="menu-viaje">
-                    <button onclick="verViaje(${v.id})">Ver</button>
-                    <button onclick="editarViaje(${v.id})">Editar</button>
-                    <button onclick="eliminarViaje(${v.id})" style="color:var(--rojo);">Eliminar</button>
-                </div>
-                <div style="font-size:12px; color:#aaa;">${v.fecha} | ${v.hora}</div>
-                <div style="font-weight:bold; color:var(--dorado); margin:5px 0;">${v.origen} → ${v.destino}</div>
-                <div style="font-size:13px;">Precio: ${v.precio} CUP</div>
+        cont.innerHTML = viajesCli.map(v => `
+            <div class="viaje-card" onclick="abrirPlanillaViaje(${v.id})">
+                <div style="font-size:11px; color:#888;">${v.fecha} - ${v.hora}</div>
+                <div style="font-weight:bold; margin:5px 0;">${v.origen} → ${v.destino}</div>
+                <div style="color:var(--dorado); font-size:13px;">$${v.precio} CUP</div>
             </div>
         `).join('');
-
         document.getElementById('modalHistorial').style.display = 'block';
     }
 
-    // Funciones de control de menú y modales
-    function toggleMenuViaje(e, id) {
-        e.stopPropagation();
-        document.querySelectorAll('.menu-viaje').forEach(m => m.style.display = 'none');
-        document.getElementById(`menu-v-${id}`).style.display = 'block';
+    // Al tocar un viaje específico, abrimos la planilla para editar/eliminar
+    function abrirPlanillaViaje(id) {
+        viajeSeleccionado = todosLosViajes.find(v => v.id === id);
+        
+        document.getElementById('v-origen').value = viajeSeleccionado.origen;
+        document.getElementById('v-paradas').value = viajeSeleccionado.paradas_intermedias || "";
+        document.getElementById('v-destino').value = viajeSeleccionado.destino;
+        document.getElementById('v-precio').value = viajeSeleccionado.precio;
+        document.getElementById('v-usuario').value = viajeSeleccionado.usuario_nombre || "Sistema";
+        document.getElementById('v-fecha').value = `${viajeSeleccionado.fecha} ${viajeSeleccionado.hora}`;
+        
+        document.getElementById('modalDetalleViaje').style.display = 'block';
     }
 
-    document.addEventListener('click', () => {
-        document.querySelectorAll('.menu-viaje').forEach(m => m.style.display = 'none');
-    });
+    async function actualizarViaje() {
+        const nuevosDatos = {
+            origen: document.getElementById('v-origen').value,
+            paradas_intermedias: document.getElementById('v-paradas').value,
+            destino: document.getElementById('v-destino').value,
+            precio: document.getElementById('v-precio').value
+        };
 
-    // Stubs para las funciones de viaje (aquí conectarías con tu lógica de viajes)
-    function verViaje(id) { alert("Abriendo detalles del viaje " + id); }
-    function editarViaje(id) { alert("Editando viaje " + id); }
-    async function eliminarViaje(id) {
-        if(confirm("¿Seguro que quieres eliminar este viaje del historial?")) {
-            await supabaseClient.from('viajes').delete().eq('id', id);
+        const { error } = await supabaseClient.from('viajes').update(nuevosDatos).eq('id', viajeSeleccionado.id);
+        if(!error) location.reload();
+    }
+
+    async function eliminarViaje() {
+        const pass = prompt("Contraseña de administrador para eliminar viaje:");
+        if(pass === "admin123") {
+            await supabaseClient.from('viajes').delete().eq('id', viajeSeleccionado.id);
             location.reload();
         }
     }
 
-    function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
-
-    cargarDatos();
+    function cerrar(id) { document.getElementById(id).style.display = 'none'; }
+    cargar();
 </script>
 </body>
 </html>
