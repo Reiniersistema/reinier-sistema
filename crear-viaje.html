@@ -142,7 +142,14 @@
             choferData = data;
             const res = document.getElementById('res-chofer');
             res.style.display = 'block';
-            res.innerHTML = `<b>Nombre:</b> ${data.nombre} ${data.apellido || ''}<br><b>Auto:</b> ${data.marca_carro} ${data.modelo_carro}<br><b>Color:</b> ${data.color_carro}<br><b>Fondo Actual:</b> $${data.fondo_actual}`;
+            
+            // Verificamos estado de bloqueo para aviso visual rápido
+            let statusHTML = "";
+            if (data.fondo_actual < 150 && !data.libre_de_fondo) {
+                statusHTML = `<br><b style="color:#ff4444;">⚠️ ESTADO: BLOQUEADO POR FONDO</b>`;
+            }
+
+            res.innerHTML = `<b>Nombre:</b> ${data.nombre} ${data.apellido || ''}<br><b>Auto:</b> ${data.marca_carro} ${data.modelo_carro}<br><b>Color:</b> ${data.color_carro}<br><b>Fondo Actual:</b> $${data.fondo_actual}${statusHTML}`;
         } else { alert("Chofer no encontrado"); }
     }
 
@@ -220,6 +227,12 @@
 
     async function crearViaje() {
         if(!choferData || !document.getElementById('precio-final').value) return alert("Faltan datos");
+        
+        // BLOQUEO POR FONDO BAJO (Menos de 150 y sin Libre de Fondo)
+        if (choferData.fondo_actual < 150 && !choferData.libre_de_fondo) {
+            return alert(`❌ Chófer Bloqueado: ${choferData.nombre} tiene un fondo de $${choferData.fondo_actual}. No puede realizar viajes hasta recargar.`);
+        }
+
         const btn = document.querySelector('button[onclick="crearViaje()"]');
         btn.innerText = "PROCESANDO...";
         btn.disabled = true;
