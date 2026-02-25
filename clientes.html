@@ -2,164 +2,182 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Clientes - RF TransGestión</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; --rojo: #dc3545; --azul: #3498db; }
-        body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding: 15px; }
+        :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; --rojo: #dc3545; }
+        body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding: 15px; -webkit-tap-highlight-color: transparent; }
         
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--dorado); padding-bottom: 10px; }
-        h2 { color: var(--dorado); font-size: 16px; text-transform: uppercase; margin: 0; }
+        .header { border-bottom: 1px solid var(--dorado); padding-bottom: 10px; margin-bottom: 20px; }
+        h2 { color: var(--dorado); font-size: 16px; margin: 0; text-transform: uppercase; }
 
-        .search-box { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #333; background: #000; color: white; margin-bottom: 20px; box-sizing: border-box; }
+        /* Buscador */
+        .search-box { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #333; background: #000; color: white; margin-bottom: 20px; box-sizing: border-box; font-size: 16px; }
 
-        /* Tabla Principal */
-        .tabla-container { background: var(--gris); border-radius: 15px; border: 1px solid #333; overflow: hidden; }
-        table { width: 100%; border-collapse: collapse; }
-        td { padding: 15px; border-bottom: 1px solid #2a2a2a; font-size: 15px; }
-        tr:active { background: #252525; }
+        /* Tabla Clientes */
+        .card-lista { background: var(--gris); border-radius: 15px; border: 1px solid #333; width: 100%; border-collapse: collapse; }
+        .card-lista td { padding: 15px; border-bottom: 1px solid #2a2a2a; }
 
-        /* Modales */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 1000; overflow-y: auto; padding: 15px; box-sizing: border-box; }
-        .modal-content { background: var(--gris); max-width: 450px; margin: 10px auto; border-radius: 20px; padding: 25px; border: 1px solid var(--dorado); position: relative; }
+        /* MODAL PRINCIPAL */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 1000; overflow-y: auto; }
+        .modal-content { background: var(--gris); max-width: 450px; margin: 15px auto; border-radius: 20px; padding: 20px; border: 1px solid var(--dorado); }
 
-        /* Tarjetas de Viaje */
-        .viaje-card { background: #000; padding: 15px; border-radius: 12px; margin-bottom: 12px; border-left: 4px solid var(--dorado); }
-        .viaje-card:active { background: #1a1a1a; }
+        /* TARJETAS DE VIAJE (HISTORIAL) */
+        .viaje-item { 
+            background: #000; 
+            padding: 15px; 
+            border-radius: 12px; 
+            margin-bottom: 12px; 
+            border-left: 5px solid var(--dorado); 
+            cursor: pointer; 
+            display: block;
+            position: relative;
+        }
+        .viaje-item * { pointer-events: none; } /* Hace que el clic siempre caiga en el padre */
 
-        /* Inputs y Botones */
-        input { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #444; background: #000; color: white; box-sizing: border-box; font-family: 'Montserrat'; }
-        label { font-size: 11px; color: var(--dorado); text-transform: uppercase; display: block; margin-bottom: 4px; }
+        /* FORMULARIO */
+        label { color: var(--dorado); font-size: 11px; text-transform: uppercase; display: block; margin: 10px 0 5px 0; }
+        input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #000; color: white; box-sizing: border-box; font-size: 15px; }
 
-        .btn { width: 100%; padding: 15px; border-radius: 10px; font-weight: bold; border: none; cursor: pointer; margin-top: 10px; font-family: 'Montserrat'; }
-        .btn-edit { background: var(--azul); color: white; }
+        .btn { width: 100%; padding: 15px; border-radius: 10px; font-weight: bold; border: none; margin-top: 10px; cursor: pointer; font-family: 'Montserrat'; font-size: 14px; }
+        .btn-edit { background: #3498db; color: white; }
         .btn-del { background: var(--rojo); color: white; }
-        .btn-close { background: none; color: #888; margin-top: 15px; }
+        .btn-back { background: none; color: #888; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <h2>CLIENTES</h2>
-</div>
+<div class="header"><h2>SECCIÓN CLIENTES</h2></div>
 
-<input type="text" id="buscador" class="search-box" placeholder="Buscar teléfono..." onkeyup="filtrar()">
+<input type="text" id="buscador" class="search-box" placeholder="Buscar por teléfono..." oninput="filtrar()">
 
-<div class="tabla-container">
-    <table>
-        <tbody id="lista-clientes"></tbody>
-    </table>
-</div>
+<table class="card-lista">
+    <tbody id="lista-clientes"></tbody>
+</table>
 
-<div id="modalUnico" class="modal">
+<div id="modalGlobal" class="modal">
     <div class="modal-content">
-        <div id="vista-lista">
-            <h3 id="titulo-cliente" style="color:var(--dorado); margin-top:0;">VIAJES</h3>
-            <div id="cont-viajes"></div>
-            <button class="btn btn-close" onclick="cerrar()">CERRAR</button>
+        <div id="vista-historial">
+            <h3 id="historial-titulo" style="color:var(--dorado); margin-top:0;"></h3>
+            <div id="contenedor-viajes"></div>
+            <button class="btn btn-back" onclick="cerrar()">CERRAR</button>
         </div>
 
-        <div id="vista-edicion" style="display:none;">
-            <h3 style="color:var(--dorado); text-align:center; margin-top:0;">DETALLE DEL VIAJE</h3>
-            <label>Origen</label><input type="text" id="e-origen">
-            <label>Paradas</label><input type="text" id="e-paradas">
-            <label>Destino</label><input type="text" id="e-destino">
-            <label>Precio (CUP)</label><input type="number" id="e-precio">
+        <div id="vista-planilla" style="display:none;">
+            <h3 style="color:var(--dorado); text-align:center;">DETALLES DEL VIAJE</h3>
+            <label>Origen</label><input type="text" id="inp-origen">
+            <label>Paradas</label><input type="text" id="inp-paradas">
+            <label>Destino</label><input type="text" id="inp-destino">
+            <label>Precio (CUP)</label><input type="number" id="inp-precio">
+            <label>Fecha/Hora</label><input type="text" id="inp-fecha" disabled>
+            <label>Usuario</label><input type="text" id="inp-user" disabled>
             
-            <button class="btn btn-edit" onclick="actualizar()">GUARDAR CAMBIOS</button>
-            <button class="btn btn-del" onclick="eliminar()">ELIMINAR VIAJE</button>
-            <button class="btn btn-close" onclick="volverALista()">← VOLVER ATRÁS</button>
+            <button class="btn btn-edit" onclick="actualizarViaje()">GUARDAR CAMBIOS</button>
+            <button class="btn btn-del" onclick="eliminarViaje()">ELIMINAR VIAJE</button>
+            <button class="btn btn-back" onclick="volverAlHistorial()">← VOLVER AL LISTADO</button>
         </div>
     </div>
 </div>
 
 <script src="config.js"></script>
 <script>
-    let todosLosViajes = [];
-    let viajeSeleccionado = null;
-    let telActual = "";
+    let viajesCache = [];
+    let viajeActualId = null;
 
     async function cargar() {
         const { data } = await supabaseClient.from('viajes').select('*').order('created_at', {ascending: false});
-        todosLosViajes = data || [];
-        mostrarClientes(todosLosViajes);
+        viajesCache = data || [];
+        renderizarClientes(viajesCache);
     }
 
-    function mostrarClientes(viajes) {
-        const counts = {};
-        viajes.forEach(v => { counts[v.cliente_telefono] = (counts[v.cliente_telefono] || 0) + 1; });
-        
-        document.getElementById('lista-clientes').innerHTML = Object.keys(counts).map(tel => `
-            <tr onclick="abrirHistorial('${tel}')">
+    function renderizarClientes(lista) {
+        const conteo = {};
+        lista.forEach(v => {
+            const t = v.cliente_telefono || "S/N";
+            conteo[t] = (conteo[t] || 0) + 1;
+        });
+
+        const tbody = document.getElementById('lista-clientes');
+        tbody.innerHTML = Object.keys(conteo).map(tel => `
+            <tr onclick="mostrarHistorial('${tel}')">
                 <td><b>${tel}</b></td>
-                <td style="text-align:right; color:var(--dorado)">${counts[tel]} viajes</td>
+                <td style="text-align:right; color:var(--dorado)">${conteo[tel]} viajes</td>
             </tr>
         `).join('');
     }
 
-    function abrirHistorial(tel) {
-        telActual = tel;
-        document.getElementById('titulo-cliente').innerText = "Historial: " + tel;
-        const filtrados = todosLosViajes.filter(v => v.cliente_telefono === tel);
+    function filtrar() {
+        const query = document.getElementById('buscador').value.toLowerCase();
+        const filtrados = viajesCache.filter(v => (v.cliente_telefono || "").includes(query));
+        renderizarClientes(filtrados);
+    }
+
+    function mostrarHistorial(tel) {
+        document.getElementById('historial-titulo').innerText = "Viajes de " + tel;
+        const misViajes = viajesCache.filter(v => v.cliente_telefono === tel);
+        const cont = document.getElementById('contenedor-viajes');
         
-        document.getElementById('cont-viajes').innerHTML = filtrados.map(v => `
-            <div class="viaje-card" onclick="irAEdicion(${v.id})">
+        cont.innerHTML = "";
+        misViajes.forEach(v => {
+            const div = document.createElement('div');
+            div.className = 'viaje-item';
+            div.innerHTML = `
                 <div style="font-size:11px; color:#888;">${v.fecha} - ${v.hora}</div>
-                <div style="font-weight:bold; margin:5px 0;">${v.origen} → ${v.destino}</div>
+                <div style="font-weight:bold; margin:4px 0;">${v.origen} → ${v.destino}</div>
                 <div style="color:var(--dorado); font-size:13px;">$${v.precio} CUP</div>
-            </div>
-        `).join('');
+            `;
+            // USAMOS ADDEVENTLISTENER DIRECTO PARA EVITAR FALLOS EN MÓVIL
+            div.addEventListener('click', () => abrirPlanilla(v.id));
+            cont.appendChild(div);
+        });
 
-        document.getElementById('vista-lista').style.display = 'block';
-        document.getElementById('vista-edicion').style.display = 'none';
-        document.getElementById('modalUnico').style.display = 'block';
+        document.getElementById('vista-historial').style.display = 'block';
+        document.getElementById('vista-planilla').style.display = 'none';
+        document.getElementById('modalGlobal').style.display = 'block';
     }
 
-    function irAEdicion(id) {
-        viajeSeleccionado = todosLosViajes.find(v => v.id == id);
-        if(!viajeSeleccionado) return;
+    function abrirPlanilla(id) {
+        const v = viajesCache.find(x => x.id == id);
+        if(!v) return;
+        
+        viajeActualId = id;
+        document.getElementById('inp-origen').value = v.origen;
+        document.getElementById('inp-paradas').value = v.paradas_intermedias || "";
+        document.getElementById('inp-destino').value = v.destino;
+        document.getElementById('inp-precio').value = v.precio;
+        document.getElementById('inp-fecha').value = v.fecha + " " + v.hora;
+        document.getElementById('inp-user').value = v.usuario_nombre || "Admin";
 
-        document.getElementById('e-origen').value = viajeSeleccionado.origen;
-        document.getElementById('e-paradas').value = viajeSeleccionado.paradas_intermedias || "";
-        document.getElementById('e-destino').value = viajeSeleccionado.destino;
-        document.getElementById('e-precio').value = viajeSeleccionado.precio;
-
-        document.getElementById('vista-lista').style.display = 'none';
-        document.getElementById('vista-edicion').style.display = 'block';
+        document.getElementById('vista-historial').style.display = 'none';
+        document.getElementById('vista-planilla').style.display = 'block';
     }
 
-    function volverALista() {
-        document.getElementById('vista-edicion').style.display = 'none';
-        document.getElementById('vista-lista').style.display = 'block';
+    function volverAlHistorial() {
+        document.getElementById('vista-planilla').style.display = 'none';
+        document.getElementById('vista-historial').style.display = 'block';
     }
 
-    async function actualizar() {
-        const datos = {
-            origen: document.getElementById('e-origen').value,
-            paradas_intermedias: document.getElementById('e-paradas').value,
-            destino: document.getElementById('e-destino').value,
-            precio: document.getElementById('e-precio').value
+    async function actualizarViaje() {
+        const upd = {
+            origen: document.getElementById('inp-origen').value,
+            paradas_intermedias: document.getElementById('inp-paradas').value,
+            destino: document.getElementById('inp-destino').value,
+            precio: document.getElementById('inp-precio').value
         };
-        await supabaseClient.from('viajes').update(datos).eq('id', viajeSeleccionado.id);
+        await supabaseClient.from('viajes').update(upd).eq('id', viajeActualId);
         location.reload();
     }
 
-    async function eliminar() {
-        if(confirm("¿Eliminar este viaje permanentemente?")) {
-            await supabaseClient.from('viajes').delete().eq('id', viajeSeleccionado.id);
+    async function eliminarViaje() {
+        if(confirm("¿Seguro que quieres borrar este viaje?")) {
+            await supabaseClient.from('viajes').delete().eq('id', viajeActualId);
             location.reload();
         }
     }
 
-    function filtrar() {
-        const val = document.getElementById('buscador').value;
-        const f = todosLosViajes.filter(v => v.cliente_telefono.includes(val));
-        mostrarClientes(f);
-    }
-
-    function cerrar() { document.getElementById('modalUnico').style.display = 'none'; }
+    function cerrar() { document.getElementById('modalGlobal').style.display = 'none'; }
     cargar();
 </script>
 </body>
