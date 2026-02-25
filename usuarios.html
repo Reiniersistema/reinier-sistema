@@ -14,221 +14,229 @@
         h2 { color: var(--dorado); font-size: 18px; text-transform: uppercase; margin: 0; }
         .btn-add { background: var(--dorado); color: black; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
-        /* Contenedor de las tarjetas */
+        /* Tarjetas de Usuario */
         .usuarios-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
-        .user-card { background: var(--gris); border-radius: 15px; padding: 20px 10px; text-align: center; position: relative; border: 1px solid #333; }
-        .user-img { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 2px solid var(--dorado); margin-bottom: 10px; }
+        .user-card { background: var(--gris); border-radius: 20px; padding: 25px 10px; text-align: center; position: relative; border: 1px solid #333; }
+        .user-img { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 2px solid var(--dorado); margin-bottom: 10px; }
         
-        /* LOS TRES PUNTOS Y SU MENÚ */
-        .options-container { position: absolute; top: 10px; right: 10px; }
-        .options-btn { cursor: pointer; font-size: 24px; color: var(--dorado); line-height: 1; padding: 5px; }
-        
-        .dropdown { 
-            display: none; 
-            position: absolute; 
-            right: 0; 
-            top: 30px; 
-            background: #252525; 
-            border: 1px solid #444; 
-            border-radius: 8px; 
-            z-index: 1000; 
-            min-width: 120px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        /* Botón de 3 puntos */
+        .dots-menu { position: absolute; top: 15px; right: 15px; color: var(--dorado); font-size: 24px; cursor: pointer; padding: 5px; line-height: 1; z-index: 10; }
+
+        /* El Menú Desplegable (Estilo de tu imagen) */
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 45px;
+            right: 10px;
+            background: #252525;
+            border: 1px solid #444;
+            border-radius: 8px;
+            z-index: 100;
+            min-width: 130px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            overflow: hidden;
         }
-        .dropdown button { 
-            display: block; 
-            width: 100%; 
-            padding: 12px; 
-            border: none; 
-            background: none; 
-            color: white; 
-            text-align: left; 
-            font-size: 14px; 
+        .dropdown-menu button {
+            display: block;
+            width: 100%;
+            padding: 12px 15px;
+            background: none;
+            border: none;
+            color: white;
+            text-align: left;
+            font-size: 14px;
+            font-family: 'Montserrat';
             cursor: pointer;
             border-bottom: 1px solid #333;
         }
-        .dropdown button:last-child { border-bottom: none; }
+        .dropdown-menu button:last-child { border-bottom: none; border-top: 1px solid var(--dorado); }
+        .dropdown-menu button:active { background: #333; }
 
-        /* MODALES */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; padding: 20px; box-sizing: border-box; overflow-y: auto; }
-        .modal-content { background: var(--gris); max-width: 400px; margin: 30px auto; border-radius: 15px; padding: 20px; border: 1px solid var(--dorado); }
+        /* Modales */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; overflow-y: auto; }
+        .modal-content { background: var(--gris); max-width: 380px; margin: 50px auto; border-radius: 20px; padding: 25px; border: 1px solid var(--dorado); }
+        input, select { width: 100%; padding: 14px; margin-bottom: 15px; border-radius: 10px; border: 1px solid #333; background: #000; color: white; box-sizing: border-box; }
         
-        input, select { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #333; background: #000; color: white; box-sizing: border-box; }
-        
-        .photo-preview { width: 120px; height: 120px; background: #000; border: 2px dashed var(--dorado); border-radius: 15px; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; }
-        .photo-preview img { width: 100%; height: 100%; object-fit: cover; }
+        .photo-area { width: 120px; height: 120px; background: #000; border: 2px dashed var(--dorado); border-radius: 15px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; }
+        .photo-area img { width: 100%; height: 100%; object-fit: cover; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h2>USUARIOS</h2>
-    <button class="btn-add" onclick="abrirParaCrear()">+ AÑADIR</button>
+    <h2 style="font-size: 16px;">USUARIOS REGISTRADOS</h2>
+    <button class="btn-add" onclick="mostrarModalAdd()">+ AÑADIR</button>
 </div>
 
-<div class="usuarios-grid" id="lista-usuarios"></div>
+<div class="usuarios-grid" id="grid-usuarios"></div>
 
-<div id="modalUsuario" class="modal">
+<div id="modalForm" class="modal">
     <div class="modal-content">
-        <h3 id="modal-titulo" style="text-align:center; color:var(--dorado);">AÑADIR USUARIO</h3>
-        
-        <div class="photo-preview" onclick="document.getElementById('inputFoto').click()">
-            <span id="label-foto" style="font-size:10px; color:#666;">SUBIR FOTO</span>
-            <img id="img-edit" style="display:none;">
+        <h3 id="titulo-modal" style="text-align:center; color:var(--dorado); margin-top:0;">USUARIO</h3>
+        <div class="photo-area" onclick="document.getElementById('inputFoto').click()">
+            <span id="txt-placeholder" style="font-size:10px; color:#666;">FOTO AQUÍ</span>
+            <img id="pre-img" style="display:none;">
         </div>
-        <input type="file" id="inputFoto" hidden accept="image/*" onchange="preview(this)">
-
-        <input type="text" id="nombre" placeholder="Nombre">
-        <input type="text" id="apellidos" placeholder="Apellidos">
-        <input type="tel" id="telefono" placeholder="Teléfono">
-        <input type="text" id="password" placeholder="Contraseña">
-        <select id="rol">
+        <input type="file" id="inputFoto" hidden accept="image/*" onchange="validarFoto(this)">
+        
+        <input type="text" id="f-nombre" placeholder="Nombre">
+        <input type="text" id="f-apellidos" placeholder="Apellidos">
+        <input type="tel" id="f-telefono" placeholder="Teléfono">
+        <input type="text" id="f-pass" placeholder="Contraseña">
+        <select id="f-rol">
             <option value="Gestor">Gestor</option>
             <option value="Administrador">Administrador</option>
         </select>
-
-        <button class="btn-add" style="width:100%; padding:15px;" onclick="guardar()">GUARDAR CAMBIOS</button>
-        <button onclick="cerrarModal('modalUsuario')" style="width:100%; background:none; color:grey; border:none; margin-top:10px;">CANCELAR</button>
+        <button class="btn-add" style="width:100%; padding:15px; margin-top:10px;" onclick="guardarDatos()">GUARDAR</button>
+        <button onclick="cerrar('modalForm')" style="width:100%; background:none; color:#777; border:none; margin-top:15px; cursor:pointer;">CANCELAR</button>
     </div>
 </div>
 
 <div id="modalVer" class="modal">
     <div class="modal-content" style="text-align:center;">
-        <img id="ver-foto" style="width:180px; height:180px; border-radius:15px; object-fit:cover; border:2px solid var(--dorado);">
-        <h2 id="ver-nombre" style="margin:10px 0;"></h2>
-        <p id="ver-rol" style="color:var(--dorado); font-weight:bold;"></p>
-        <p id="ver-tel" style="border-top:1px solid #333; padding-top:10px;"></p>
-        <button class="btn-add" style="width:100%;" onclick="cerrarModal('modalVer')">CERRAR</button>
+        <img id="v-foto" style="width:200px; height:200px; border-radius:20px; object-fit:cover; border:3px solid var(--dorado); margin-bottom:20px;">
+        <h2 id="v-nombre" style="margin:5px 0;"></h2>
+        <p id="v-rol" style="color:var(--dorado); font-weight:bold; text-transform:uppercase;"></p>
+        <div style="text-align:left; border-top:1px solid #333; margin-top:20px; padding-top:20px;">
+            <p><b>Teléfono:</b> <span id="v-tel"></span></p>
+        </div>
+        <button class="btn-add" style="width:100%; margin-top:30px;" onclick="cerrar('modalVer')">CERRAR</button>
     </div>
 </div>
 
 <script src="config.js"></script>
 <script>
-    let usuarios = [];
-    let idEditando = null;
-    let urlFotoExistente = "";
+    let todosLosUsuarios = [];
+    let idParaEditar = null;
+    let fotoActualURL = "";
 
     async function cargar() {
         const { data } = await supabaseClient.from('usuarios').select('*').order('nombre');
-        usuarios = data || [];
-        const grid = document.getElementById('lista-usuarios');
-        grid.innerHTML = usuarios.map((u, i) => `
-            <div class="user-card">
-                <div class="options-container">
-                    <div class="options-btn" onclick="toggleMenu(event, ${u.id})">⋮</div>
-                    <div id="menu-${u.id}" class="dropdown">
-                        <button onclick="ver(${i})">Ver</button>
-                        <button onclick="editar(${i})">Editar</button>
-                        <button onclick="eliminar(${u.id})" style="color:red;">Eliminar</button>
-                    </div>
+        todosLosUsuarios = data || [];
+        const grid = document.getElementById('grid-usuarios');
+        grid.innerHTML = "";
+
+        todosLosUsuarios.forEach((u, i) => {
+            const card = document.createElement('div');
+            card.className = 'user-card';
+            card.innerHTML = `
+                <div class="dots-menu" onclick="abrirMenu(event, ${u.id})">⋮</div>
+                <div id="menu-${u.id}" class="dropdown-menu">
+                    <button onclick="verPlanilla(${i})">Ver</button>
+                    <button onclick="editarUser(${i})">Editar</button>
+                    <button onclick="eliminarUser(${u.id})" style="color:var(--rojo);">Eliminar</button>
                 </div>
                 <img src="${u.foto_perfil || 'https://via.placeholder.com/150'}" class="user-img">
-                <div style="font-weight:bold;">${u.nombre}</div>
-                <div style="font-size:12px; color:var(--dorado);">${u.rol}</div>
-            </div>
-        `).join('');
+                <div style="font-weight:bold; font-size:15px;">${u.nombre}</div>
+                <div style="font-size:11px; color:var(--dorado); text-transform:uppercase; margin-top:4px;">${u.rol}</div>
+            `;
+            grid.appendChild(card);
+        });
     }
 
-    function toggleMenu(e, id) {
+    function abrirMenu(e, id) {
         e.stopPropagation();
-        document.querySelectorAll('.dropdown').forEach(d => d.style.display = 'none');
+        document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
         document.getElementById(`menu-${id}`).style.display = 'block';
     }
 
     document.addEventListener('click', () => {
-        document.querySelectorAll('.dropdown').forEach(d => d.style.display = 'none');
+        document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
     });
 
-    function preview(input) {
+    function validarFoto(input) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
             reader.onload = e => {
-                document.getElementById('img-edit').src = e.target.result;
-                document.getElementById('img-edit').style.display = 'block';
-                document.getElementById('label-foto').style.display = 'none';
-            }
+                document.getElementById('pre-img').src = e.target.result;
+                document.getElementById('pre-img').style.display = 'block';
+                document.getElementById('txt-placeholder').style.display = 'none';
+            };
             reader.readAsDataURL(input.files[0]);
         }
     }
 
-    function abrirParaCrear() {
-        idEditando = null;
-        document.getElementById('modal-titulo').innerText = "AÑADIR USUARIO";
-        document.getElementById('nombre').value = "";
-        document.getElementById('apellidos').value = "";
-        document.getElementById('telefono').value = "";
-        document.getElementById('password').value = "";
-        document.getElementById('img-edit').style.display = 'none';
-        document.getElementById('label-foto').style.display = 'block';
-        document.getElementById('modalUsuario').style.display = 'block';
+    function mostrarModalAdd() {
+        idParaEditar = null;
+        fotoActualURL = "";
+        document.getElementById('titulo-modal').innerText = "NUEVO USUARIO";
+        document.getElementById('f-nombre').value = "";
+        document.getElementById('f-apellidos').value = "";
+        document.getElementById('f-telefono').value = "";
+        document.getElementById('f-pass').value = "";
+        document.getElementById('pre-img').style.display = 'none';
+        document.getElementById('txt-placeholder').style.display = 'block';
+        document.getElementById('modalForm').style.display = 'block';
     }
 
-    function editar(index) {
-        const u = usuarios[index];
-        idEditando = u.id;
-        urlFotoExistente = u.foto_perfil;
-        document.getElementById('modal-titulo').innerText = "EDITAR USUARIO";
-        document.getElementById('nombre').value = u.nombre;
-        document.getElementById('apellidos').value = u.apellidos;
-        document.getElementById('telefono').value = u.telefono;
-        document.getElementById('password').value = u.password;
-        document.getElementById('rol').value = u.rol;
-        if(u.foto_perfil) {
-            document.getElementById('img-edit').src = u.foto_perfil;
-            document.getElementById('img-edit').style.display = 'block';
-            document.getElementById('label-foto').style.display = 'none';
-        }
-        document.getElementById('modalUsuario').style.display = 'block';
-    }
-
-    function ver(index) {
-        const u = usuarios[index];
-        document.getElementById('ver-foto').src = u.foto_perfil || 'https://via.placeholder.com/150';
-        document.getElementById('ver-nombre').innerText = u.nombre + " " + u.apellidos;
-        document.getElementById('ver-rol').innerText = u.rol;
-        document.getElementById('ver-tel').innerText = "Teléfono: " + u.telefono;
+    function verPlanilla(index) {
+        const u = todosLosUsuarios[index];
+        document.getElementById('v-foto').src = u.foto_perfil || 'https://via.placeholder.com/150';
+        document.getElementById('v-nombre').innerText = u.nombre + " " + u.apellidos;
+        document.getElementById('v-rol').innerText = u.rol;
+        document.getElementById('v-tel').innerText = u.telefono;
         document.getElementById('modalVer').style.display = 'block';
     }
 
-    async function guardar() {
+    function editarUser(index) {
+        const u = todosLosUsuarios[index];
+        idParaEditar = u.id;
+        fotoActualURL = u.foto_perfil;
+        document.getElementById('titulo-modal').innerText = "EDITAR USUARIO";
+        document.getElementById('f-nombre').value = u.nombre;
+        document.getElementById('f-apellidos').value = u.apellidos;
+        document.getElementById('f-telefono').value = u.telefono;
+        document.getElementById('f-pass').value = u.password;
+        document.getElementById('f-rol').value = u.rol;
+        if(u.foto_perfil) {
+            document.getElementById('pre-img').src = u.foto_perfil;
+            document.getElementById('pre-img').style.display = 'block';
+            document.getElementById('txt-placeholder').style.display = 'none';
+        }
+        document.getElementById('modalForm').style.display = 'block';
+    }
+
+    async function guardarDatos() {
         const file = document.getElementById('inputFoto').files[0];
-        let fotoURL = idEditando ? urlFotoExistente : "";
+        let fotoFinal = fotoActualURL;
 
         if (file) {
             const fileName = `user_${Date.now()}`;
             const { data } = await supabaseClient.storage.from('imagenes_sistema').upload(fileName, file);
             if (data) {
                 const { data: pUrl } = supabaseClient.storage.from('imagenes_sistema').getPublicUrl(fileName);
-                fotoURL = pUrl.publicUrl;
+                fotoFinal = pUrl.publicUrl;
             }
         }
 
-        const datos = {
-            nombre: document.getElementById('nombre').value,
-            apellidos: document.getElementById('apellidos').value,
-            telefono: document.getElementById('telefono').value,
-            password: document.getElementById('password').value,
-            rol: document.getElementById('rol').value,
-            foto_perfil: fotoURL
+        const obj = {
+            nombre: document.getElementById('f-nombre').value,
+            apellidos: document.getElementById('f-apellidos').value,
+            telefono: document.getElementById('f-telefono').value,
+            password: document.getElementById('f-pass').value,
+            rol: document.getElementById('f-rol').value,
+            foto_perfil: fotoFinal
         };
 
-        if (idEditando) {
-            await supabaseClient.from('usuarios').update(datos).eq('id', idEditando);
+        if (idParaEditar) {
+            await supabaseClient.from('usuarios').update(obj).eq('id', idParaEditar);
         } else {
-            await supabaseClient.from('usuarios').insert([datos]);
+            await supabaseClient.from('usuarios').insert([obj]);
         }
         location.reload();
     }
 
-    async function eliminar(id) {
-        const confirmPass = prompt("Ingresa tu contraseña de administrador para eliminar:");
-        if (confirmPass === "admin123") { // Aquí puedes poner la lógica real de tu clave
+    async function eliminarUser(id) {
+        const pass = prompt("Para eliminar, ingresa tu contraseña de administrador:");
+        if (pass === "admin123") { // CAMBIA ESTO POR LA CLAVE QUE QUIERAS
             await supabaseClient.from('usuarios').delete().eq('id', id);
             location.reload();
+        } else if(pass != null) {
+            alert("Contraseña incorrecta");
         }
     }
 
-    function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
+    function cerrar(id) { document.getElementById(id).style.display = 'none'; }
     cargar();
 </script>
 </body>
