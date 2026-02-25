@@ -44,6 +44,7 @@
         .btn-verde { background: var(--verde); color: white; }
         .btn-rojo { background: var(--rojo); color: white; }
         .btn-azul { background: var(--azul); color: white; }
+        .btn-gris { background: #555; color: white; }
     </style>
 </head>
 <body>
@@ -53,21 +54,11 @@
     <button class="btn-embudo" onclick="toggleFiltro()">⏳</button>
 </div>
 
-<div id="filtroArea">
-    <input type="text" id="busqueda" placeholder="Buscar por nombre o teléfono..." onkeyup="filtrar()">
-</div>
+<div id="filtroArea"><input type="text" id="busqueda" placeholder="Buscar..." onkeyup="filtrar()"></div>
 
 <div class="tabla-contenedor">
     <table>
-        <thead>
-            <tr>
-                <th>Nombre</th>
-                <th>Teléfono</th>
-                <th>Lic.</th>
-                <th>Fondo</th>
-                <th></th>
-            </tr>
-        </thead>
+        <thead><tr><th>Nombre</th><th>Teléfono</th><th>Lic.</th><th>Fondo</th><th></th></tr></thead>
         <tbody id="lista-choferes"></tbody>
     </table>
 </div>
@@ -79,18 +70,15 @@
         <div class="form-group"><input type="text" id="reg-nom" placeholder="Nombre"></div>
         <div class="form-group"><input type="text" id="reg-ape" placeholder="Apellido"></div>
         <div class="form-group"><input type="tel" id="reg-tel" placeholder="Teléfono"></div>
-        
         <div style="margin-bottom:15px; font-size:12px;">
-            <label><input type="checkbox" id="reg-lic"> Tiene Licencia Operativa</label><br><br>
-            <label style="color:var(--dorado)"><input type="checkbox" id="reg-libre"> TRABAJAR SIN CRÉDITOS (Sin fondos/Sin desc.)</label>
+            <label><input type="checkbox" id="reg-lic"> Licencia Operativa</label><br><br>
+            <label style="color:var(--dorado)"><input type="checkbox" id="reg-libre"> TRABAJAR SIN CRÉDITOS</label>
         </div>
-
         <div class="form-group"><label>Foto Carro</label><input type="file" id="reg-foto-carro"></div>
         <div class="form-group"><input type="text" id="reg-marca" placeholder="Marca"></div>
         <div class="form-group"><input type="text" id="reg-modelo" placeholder="Modelo"></div>
         <div class="form-group"><input type="text" id="reg-color" placeholder="Color"></div>
         <div class="form-group"><label><input type="checkbox" id="reg-aire"> Aire Acondicionado</label></div>
-
         <button class="btn-full btn-verde" onclick="guardarNuevoChofer()">PROCESAR REGISTRO</button>
         <button onclick="cerrarModal('modalRegistro')" style="width:100%; background:none; color:#888; border:none;">Cancelar</button>
     </div>
@@ -98,6 +86,27 @@
 
 <div id="modalVer" class="modal">
     <div id="detalle-chofer" class="modal-content"></div>
+</div>
+
+<div id="modalEditar" class="modal">
+    <div class="modal-content">
+        <h2 style="color:var(--dorado); margin-top:0;">Editar Chófer</h2>
+        <div class="form-group"><label>Cambiar Foto Chófer</label><input type="file" id="edit-foto-chofer"></div>
+        <div class="form-group"><label>Nombre</label><input type="text" id="edit-nom"></div>
+        <div class="form-group"><label>Apellido</label><input type="text" id="edit-ape"></div>
+        <div class="form-group"><label>Teléfono</label><input type="tel" id="edit-tel"></div>
+        <div style="margin-bottom:15px; font-size:12px;">
+            <label><input type="checkbox" id="edit-lic"> Licencia Operativa</label><br><br>
+            <label><input type="checkbox" id="edit-libre"> Trabajar sin Créditos</label>
+        </div>
+        <div class="form-group"><label>Cambiar Foto Carro</label><input type="file" id="edit-foto-carro"></div>
+        <div class="form-group"><label>Marca</label><input type="text" id="edit-marca"></div>
+        <div class="form-group"><label>Modelo</label><input type="text" id="edit-modelo"></div>
+        <div class="form-group"><label>Color</label><input type="text" id="edit-color"></div>
+        <div class="form-group"><label><input type="checkbox" id="edit-aire"> Aire Acondicionado</label></div>
+        <button class="btn-full btn-verde" onclick="actualizarChofer()">GUARDAR CAMBIOS</button>
+        <button onclick="cerrarModal('modalEditar')" style="width:100%; background:none; color:#888; border:none;">Cancelar</button>
+    </div>
 </div>
 
 <script src="config.js"></script>
@@ -132,26 +141,24 @@
         content.innerHTML = `
             <img src="${c.foto_chofer || ''}" class="foto-detalle">
             <h2 style="margin:0;">${c.nombre} ${c.apellido}</h2>
-            <p style="color:var(--dorado); font-size:12px;">● Trabajar sin créditos: ${c.libre_de_fondo ? 'ACTIVADO' : 'DESACTIVADO'}</p>
+            <p style="color:var(--dorado); font-size:12px;">● Sin créditos: ${c.libre_de_fondo ? 'SÍ' : 'NO'}</p>
             
             <div class="form-group">
-                <label>Grupo al que pertenece</label>
+                <label>Grupo</label>
                 <div style="display:flex; gap:15px;">
-                    <label><input type="radio" name="grupo" ${c.grupo === 'Motos' ? 'checked' : ''} onchange="actualizarGrupo('Motos')"> Grupo Motos</label>
-                    <label><input type="radio" name="grupo" ${c.grupo === 'Autos' ? 'checked' : ''} onchange="actualizarGrupo('Autos')"> Grupo Autos</label>
+                    <label><input type="radio" name="grupo" ${c.grupo === 'Motos' ? 'checked' : ''} onchange="actualizarGrupo('Motos')"> Motos</label>
+                    <label><input type="radio" name="grupo" ${c.grupo === 'Autos' ? 'checked' : ''} onchange="actualizarGrupo('Autos')"> Autos</label>
                 </div>
             </div>
 
             <div class="stats-grid">
-                <div class="stat-item"><span>FONDO ACTUAL</span><b>$${c.fondo_actual}</b></div>
-                <div class="stat-item"><span>VIAJES HOY</span><b>0</b></div>
-                <div class="stat-item"><span>VIAJES MES</span><b>0</b></div>
+                <div class="stat-item"><span>FONDO</span><b>$${c.fondo_actual}</b></div>
                 <div class="stat-item"><span>TOTAL</span><b>0</b></div>
             </div>
 
-            <button class="btn-full btn-azul">FILTRAR VIAJES</button>
+            <button class="btn-full btn-gris" onclick="prepararEdicion()">EDITAR DATOS</button>
             <button class="btn-full btn-verde" onclick="window.open('https://wa.me/${c.telefono}')">WHATSAPP</button>
-            <button class="btn-full btn-rojo" onclick="eliminarChofer('${c.id}')">ELIMINAR CHÓFER</button>
+            <button class="btn-full btn-rojo" onclick="eliminarChofer('${c.id}')">ELIMINAR</button>
 
             <div class="tabs-container">
                 <button class="tab-btn active" onclick="switchTab(event, 't-info')">INFO</button>
@@ -159,30 +166,17 @@
                 <button class="tab-btn" onclick="switchTab(event, 't-fondo')">FONDO</button>
             </div>
 
-            <div id="t-info" class="tab-content active">
-                <p><b>Tel:</b> ${c.telefono} | <b>Nombre:</b> ${c.nombre} ${c.apellido}</p>
-            </div>
-
+            <div id="t-info" class="tab-content active"><p>Tel: ${c.telefono}</p></div>
             <div id="t-auto" class="tab-content">
-                <img src="${c.foto_carro || ''}" style="width:100%; border-radius:10px; margin-bottom:10px;">
-                <p><b>${c.marca_carro} ${c.modelo_carro}</b> (${c.color_carro})</p>
-                <p>Aire: ${c.tiene_aire_acondicionado ? 'SÍ' : 'NO'} | Licencia: ${c.tiene_licencia_operativa ? 'SÍ' : 'NO'}</p>
+                <img src="${c.foto_carro || ''}" style="width:100%; border-radius:10px;">
+                <p>${c.marca_carro} ${c.modelo_carro} (${c.color_carro})</p>
             </div>
-
             <div id="t-fondo" class="tab-content">
-                <div style="display:flex; gap:5px; margin-bottom:10px;">
-                    <button class="tab-btn" style="background:var(--verde)" onclick="uiMov('agregar')">AGREGAR</button>
-                    <button class="tab-btn" style="background:var(--rojo)" onclick="uiMov('retirar')">RETIRAR</button>
-                    <button class="tab-btn" style="background:var(--azul)" onclick="rectificarFondos()">RECTIFICAR</button>
-                </div>
-                <div id="zona-movimiento" style="display:none; background:#000; padding:15px; border-radius:10px; border:1px solid #333;">
-                    <h4 id="mov-titulo" style="margin:0 0 10px 0"></h4>
-                    <select id="mov-metodo" style="width:100%; padding:10px; margin-bottom:10px; background:#111; color:white; border:1px solid #333; border-radius:5px;">
-                        <option value="Efectivo">Efectivo</option>
-                        <option value="Transferencia">Transferencia</option>
-                    </select>
-                    <input type="number" id="mov-cantidad" placeholder="Cantidad" style="width:100%; padding:10px; margin-bottom:10px; background:#111; color:white; border:1px solid #333; border-radius:5px;">
-                    <button class="btn-full btn-verde" onclick="procesarMovimiento()">PROCESAR</button>
+                <button class="tab-btn" style="background:var(--verde)" onclick="uiMov('agregar')">AGREGAR</button>
+                <button class="tab-btn" style="background:var(--rojo)" onclick="uiMov('retirar')">RETIRAR</button>
+                <div id="zona-movimiento" style="display:none; margin-top:10px;">
+                    <input type="number" id="mov-cantidad" placeholder="Cantidad">
+                    <button class="btn-full btn-verde" onclick="procesarMovimiento()">OK</button>
                 </div>
                 <div id="hist-list" style="font-size:10px; margin-top:10px;"></div>
             </div>
@@ -190,6 +184,37 @@
         `;
         abrirModal('modalVer');
         cargarHistorial(c.id);
+    }
+
+    function prepararEdicion() {
+        document.getElementById('edit-nom').value = choferSel.nombre;
+        document.getElementById('edit-ape').value = choferSel.apellido;
+        document.getElementById('edit-tel').value = choferSel.telefono;
+        document.getElementById('edit-lic').checked = choferSel.tiene_licencia_operativa;
+        document.getElementById('edit-libre').checked = choferSel.libre_de_fondo;
+        document.getElementById('edit-marca').value = choferSel.marca_carro;
+        document.getElementById('edit-modelo').value = choferSel.modelo_carro;
+        document.getElementById('edit-color').value = choferSel.color_carro;
+        document.getElementById('edit-aire').checked = choferSel.tiene_aire_acondicionado;
+        
+        cerrarModal('modalVer');
+        abrirModal('modalEditar');
+    }
+
+    async function actualizarChofer() {
+        const upd = {
+            nombre: document.getElementById('edit-nom').value,
+            apellido: document.getElementById('edit-ape').value,
+            telefono: document.getElementById('edit-tel').value,
+            tiene_licencia_operativa: document.getElementById('edit-lic').checked,
+            libre_de_fondo: document.getElementById('edit-libre').checked,
+            marca_carro: document.getElementById('edit-marca').value,
+            modelo_carro: document.getElementById('edit-modelo').value,
+            color_carro: document.getElementById('edit-color').value,
+            tiene_aire_acondicionado: document.getElementById('edit-aire').checked
+        };
+        const { error } = await supabaseClient.from('choferes').update(upd).eq('id', choferSel.id);
+        if(!error) location.reload(); else alert(error.message);
     }
 
     async function actualizarGrupo(grupo) {
@@ -209,11 +234,9 @@
             tiene_aire_acondicionado: document.getElementById('reg-aire').checked,
             fondo_actual: 0
         }]);
-        if(!error) location.reload();
-        else alert(error.message);
+        if(!error) location.reload(); else alert(error.message);
     }
 
-    // Funciones de utilidad (Cargar Historial, Movimiento, SwitchTab, Filtrar) se mantienen similares
     function switchTab(evt, tabId) {
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -221,50 +244,35 @@
         evt.currentTarget.classList.add('active');
     }
 
-    function uiMov(tipo) {
-        tipoMov = tipo;
-        document.getElementById('zona-movimiento').style.display = 'block';
-        document.getElementById('mov-titulo').innerText = tipo === 'agregar' ? 'Ingresar Saldo' : 'Retirar Saldo';
-    }
+    function uiMov(tipo) { tipoMov = tipo; document.getElementById('zona-movimiento').style.display = 'block'; }
 
     async function procesarMovimiento() {
         const cant = parseFloat(document.getElementById('mov-cantidad').value);
-        const fPrevio = parseFloat(choferSel.fondo_actual);
-        const fNuevo = tipoMov === 'agregar' ? fPrevio + cant : fPrevio - cant;
-        
+        const fNuevo = tipoMov === 'agregar' ? parseFloat(choferSel.fondo_actual) + cant : parseFloat(choferSel.fondo_actual) - cant;
         await supabaseClient.from('historial_fondos').insert([{
             chofer_id: choferSel.id,
-            usuario: localStorage.getItem('usuario_nombre') || 'Admin',
-            metodo: tipoMov === 'agregar' ? document.getElementById('mov-metodo').value : 'Retiro',
+            usuario: 'Admin',
+            metodo: tipoMov === 'agregar' ? 'Efectivo' : 'Retiro',
             saldo: cant,
-            fondo_anterior: fPrevio,
+            fondo_anterior: choferSel.fondo_actual,
             activo: fNuevo
         }]);
         await supabaseClient.from('choferes').update({ fondo_actual: fNuevo }).eq('id', choferSel.id);
-        verChofer(choferSel.id);
+        location.reload();
     }
 
     async function cargarHistorial(id) {
         const { data } = await supabaseClient.from('historial_fondos').select('*').eq('chofer_id', id).order('fecha', {ascending:false});
-        document.getElementById('hist-list').innerHTML = data.map(h => `
-            <div style="border-bottom:1px solid #333; padding:5px 0;">
-                <b>${h.metodo}</b>: $${h.saldo} (Antes: $${h.fondo_anterior} | Ahora: $${h.activo})
-            </div>
-        `).join('');
+        document.getElementById('hist-list').innerHTML = data.map(h => `<div>${h.metodo}: $${h.saldo} (${h.fecha.split('T')[0]})</div>`).join('');
     }
 
     function filtrar() {
         const val = document.getElementById('busqueda').value.toLowerCase();
-        document.querySelectorAll('#lista-choferes tr').forEach(r => {
-            r.style.display = r.innerText.toLowerCase().includes(val) ? '' : 'none';
-        });
+        document.querySelectorAll('#lista-choferes tr').forEach(r => r.style.display = r.innerText.toLowerCase().includes(val) ? '' : 'none');
     }
 
     async function eliminarChofer(id) {
-        if(confirm("¿Eliminar por completo?")) {
-            await supabaseClient.from('choferes').delete().eq('id', id);
-            location.reload();
-        }
+        if(confirm("¿Eliminar?")) { await supabaseClient.from('choferes').delete().eq('id', id); location.reload(); }
     }
 
     cargarChoferes();
