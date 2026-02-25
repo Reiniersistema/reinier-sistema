@@ -7,62 +7,80 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; --verde: #28a745; --rojo: #dc3545; }
+        :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; --verde: #28a745; --rojo: #dc3545; --azul: #007bff; }
         body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding: 10px; padding-bottom: 80px; }
         
+        /* HEADER Y FILTRO */
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .btn-add { background: var(--dorado); color: black; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 12px; }
-        
-        /* Ajuste de Tabla para Móvil */
-        .tabla-contenedor { background: var(--gris); border-radius: 10px; overflow: hidden; width: 100%; }
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; } /* Fixed ayuda a que no se desborde */
-        th { text-align: left; padding: 10px 5px; color: var(--dorado); font-size: 11px; text-transform: uppercase; border-bottom: 2px solid #333; }
-        td { padding: 12px 5px; border-bottom: 1px solid #222; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        
-        /* Anchos específicos para que quepa todo */
-        .col-nom { width: 35%; }
-        .col-tel { width: 30%; }
-        .col-lic { width: 10%; text-align: center; }
-        .col-fon { width: 20%; text-align: right; color: var(--dorado); }
-        .col-opc { width: 5%; text-align: center; }
+        .btn-add { background: var(--dorado); color: black; border: none; padding: 12px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-embudo { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--dorado); }
+        #filtroArea { display: none; margin-bottom: 15px; }
+        #filtroArea input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--dorado); background: var(--gris); color: white; box-sizing: border-box; }
 
-        /* Modales y otros estilos se mantienen similares pero optimizados */
+        /* TABLA PRINCIPAL ANCHA */
+        .tabla-contenedor { background: var(--gris); border-radius: 12px; overflow: hidden; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 12px 8px; color: var(--dorado); font-size: 11px; text-transform: uppercase; border-bottom: 2px solid #333; }
+        td { padding: 15px 8px; border-bottom: 1px solid #222; font-size: 13px; }
+        .puntos { color: var(--dorado); font-weight: bold; font-size: 22px; cursor: pointer; text-align: center; width: 30px; }
+
+        /* MODALES */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); overflow-y: auto; }
-        .modal-content { background: var(--gris); margin: 5% auto; padding: 15px; width: 92%; border-radius: 15px; border: 1px solid var(--dorado); box-sizing: border-box; }
-        .form-group { margin-bottom: 12px; }
-        .form-group label { display: block; margin-bottom: 4px; color: var(--dorado); font-size: 10px; }
-        .form-group input { width: 100%; padding: 10px; background: #000; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; }
+        .modal-content { background: var(--gris); margin: 2% auto; padding: 20px; width: 95%; max-width: 500px; border-radius: 15px; border: 1px solid var(--dorado); box-sizing: border-box; }
         
-        .foto-grande { width: 100%; height: 200px; border-radius: 12px; object-fit: cover; border: 1px solid var(--dorado); }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
-        .stat-card { background: #000; padding: 8px; border-radius: 8px; text-align: center; border: 1px solid #222; }
-        .stat-card span { display: block; font-size: 9px; color: var(--dorado); }
-        
-        .tab-btn { background: #333; border: none; color: white; padding: 8px; border-radius: 5px; font-size: 10px; flex: 1; }
+        /* FORMULARIOS */
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: var(--dorado); font-size: 11px; font-weight: bold; }
+        .form-group input, .form-group select { width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; }
+
+        /* VISTA "VER" DETALLE */
+        .foto-detalle { width: 100%; height: 280px; object-fit: cover; border-radius: 12px; border: 2px solid var(--dorado); margin-bottom: 15px; }
+        .punto-status { display: flex; align-items: center; gap: 8px; margin: 10px 0; font-size: 14px; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .stat-item { background: #000; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #222; }
+        .stat-item span { display: block; font-size: 10px; color: var(--dorado); margin-bottom: 5px; }
+
+        /* PESTAÑAS (5 BOTONES) */
+        .tabs-container { display: flex; background: #000; padding: 5px; border-radius: 10px; margin: 20px 0; gap: 5px; overflow-x: auto; }
+        .tab-btn { flex: 1; padding: 10px 5px; border: none; background: none; color: white; font-size: 10px; font-weight: bold; cursor: pointer; border-radius: 5px; min-width: 80px; }
         .tab-btn.active { background: var(--dorado); color: black; }
-        .btn-accion { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; margin-bottom: 8px; font-size: 13px; }
+        .tab-content { display: none; animation: fadeIn 0.3s; }
+        .tab-content.active { display: block; }
+
+        /* BOTONES ACCION */
+        .btn-full { width: 100%; padding: 14px; border-radius: 8px; border: none; font-weight: bold; margin-bottom: 10px; cursor: pointer; font-size: 14px; }
+        .btn-verde { background: var(--verde); color: white; }
+        .btn-rojo { background: var(--rojo); color: white; }
+        .btn-azul { background: var(--azul); color: white; }
+
+        /* TABLA FONDOS INTERNA */
+        .tabla-fondos { width: 100%; font-size: 10px; border-collapse: collapse; margin-top: 10px; }
+        .tabla-fondos th { padding: 5px; background: #000; }
+        .tabla-fondos td { padding: 8px 4px; border-bottom: 1px solid #333; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
 <div class="header">
     <button class="btn-add" onclick="abrirModal('modalRegistro')">+ AÑADIR CHÓFER</button>
-    <div onclick="toggleFiltro()" style="cursor:pointer; font-size: 22px;">⏳</div>
+    <button class="btn-embudo" onclick="toggleFiltro()">⏳</button>
 </div>
 
-<div id="filtroArea" style="display:none; margin-bottom:15px;">
-    <input type="text" id="busqueda" placeholder="Buscar..." onkeyup="filtrar()" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--dorado); background:var(--gris); color:white;">
+<div id="filtroArea">
+    <input type="text" id="busqueda" placeholder="Buscar por nombre o teléfono..." onkeyup="filtrar()">
 </div>
 
 <div class="tabla-contenedor">
     <table>
         <thead>
             <tr>
-                <th class="col-nom">Nombre</th>
-                <th class="col-tel">Tel</th>
-                <th class="col-lic">L.</th>
-                <th class="col-fon">Fondo</th>
-                <th class="col-opc"></th>
+                <th>Nombre</th>
+                <th>Teléfono</th>
+                <th>Lic.</th>
+                <th>Fondo</th>
+                <th></th>
             </tr>
         </thead>
         <tbody id="lista-choferes"></tbody>
@@ -71,136 +89,237 @@
 
 <div id="modalRegistro" class="modal">
     <div class="modal-content">
-        <h2 style="color:var(--dorado); margin:0 0 15px 0; font-size:18px;">Nuevo Chófer</h2>
-        <div class="form-group"><label>Foto Chófer</label><input type="file" id="reg-foto-chofer"></div>
+        <h2 style="color:var(--dorado); margin-top:0;">Registro de Chófer</h2>
+        <div class="form-group">
+            <label>Foto del Chófer</label>
+            <input type="file" id="reg-foto-chofer" accept="image/*">
+        </div>
         <div class="form-group"><input type="text" id="reg-nom" placeholder="Nombre"></div>
         <div class="form-group"><input type="text" id="reg-ape" placeholder="Apellido"></div>
-        <div class="form-group"><input type="tel" id="reg-tel" placeholder="Teléfono"></div>
-        <div style="font-size:12px; margin-bottom:10px;">
-            <label><input type="checkbox" id="reg-lic"> Licencia</label> &nbsp;
-            <label><input type="checkbox" id="reg-libre"> Libre Fondo</label>
+        <div class="form-group"><input type="tel" id="reg-tel" placeholder="Número de Teléfono"></div>
+        
+        <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+            <label><input type="checkbox" id="reg-lic"> Licencia Operativa</label>
+            <label><input type="checkbox" id="reg-libre"> Libre de Fondo</label>
         </div>
-        <div class="form-group"><label>Foto Carro</label><input type="file" id="reg-foto-carro"></div>
-        <div class="form-group"><input type="text" id="reg-marca" placeholder="Marca Auto"></div>
-        <button class="btn-add" style="width:100%" onclick="guardarNuevoChofer()">GUARDAR</button>
-        <button onclick="cerrarModal('modalRegistro')" style="width:100%; background:none; color:#888; border:none; margin-top:10px;">Cerrar</button>
+
+        <div class="form-group">
+            <label>Foto del Carro</label>
+            <input type="file" id="reg-foto-carro" accept="image/*">
+        </div>
+        <div class="form-group"><input type="text" id="reg-marca" placeholder="Marca"></div>
+        <div class="form-group"><input type="text" id="reg-modelo" placeholder="Modelo"></div>
+        <div class="form-group"><input type="text" id="reg-color" placeholder="Color"></div>
+        
+        <div class="form-group">
+            <label><input type="checkbox" id="reg-aire"> Aire Acondicionado</label>
+        </div>
+
+        <button class="btn-full btn-verde" onclick="guardarNuevoChofer()">PROCESAR REGISTRO</button>
+        <button onclick="cerrarModal('modalRegistro')" style="width:100%; background:none; color:#888; border:none;">Cancelar</button>
     </div>
 </div>
 
 <div id="modalVer" class="modal">
-    <div id="detalle-chofer" class="modal-content"></div>
+    <div id="detalle-chofer" class="modal-content">
+        </div>
 </div>
 
 <script src="config.js"></script>
 <script>
-    let choferSeleccionado = null;
+    let choferSel = null;
 
     function abrirModal(id) { document.getElementById(id).style.display = 'block'; }
     function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
     function toggleFiltro() { 
         const f = document.getElementById('filtroArea');
-        f.style.display = f.style.display === 'none' ? 'block' : 'none';
+        f.style.display = f.style.display === 'block' ? 'none' : 'block';
     }
 
+    // CARGAR LISTA PRINCIPAL
     async function cargarChoferes() {
         const { data, error } = await supabaseClient.from('choferes').select('*').order('nombre');
-        const lista = document.getElementById('lista-choferes');
-        lista.innerHTML = "";
+        const tbody = document.getElementById('lista-choferes');
+        tbody.innerHTML = "";
         data.forEach(c => {
-            lista.innerHTML += `
+            tbody.innerHTML += `
                 <tr>
-                    <td class="col-nom"><b>${c.nombre}</b></td>
-                    <td class="col-tel">${c.telefono}</td>
-                    <td class="col-lic">${c.tiene_licencia_operativa ? '✅' : '❌'}</td>
-                    <td class="col-fon">$${c.fondo_actual}</td>
-                    <td class="col-opc" onclick="verChofer('${c.id}')" style="color:var(--dorado)">⋮</td>
+                    <td><b>${c.nombre}</b></td>
+                    <td>${c.telefono}</td>
+                    <td>${c.tiene_licencia_operativa ? '✅' : '❌'}</td>
+                    <td style="color:var(--dorado)">$${c.fondo_actual}</td>
+                    <td class="puntos" onclick="verChofer('${c.id}')">⋮</td>
                 </tr>
             `;
         });
     }
 
+    // VER DETALLE DEL CHOFER
     async function verChofer(id) {
         const { data: c } = await supabaseClient.from('choferes').select('*').eq('id', id).single();
-        choferSeleccionado = c;
+        choferSel = c;
+        
         const content = document.getElementById('detalle-chofer');
         content.innerHTML = `
-            <img src="${c.foto_chofer || ''}" class="foto-grande">
-            <h2 style="margin:10px 0 5px 0;">${c.nombre} ${c.apellido}</h2>
-            <div class="stats-grid">
-                <div class="stat-card"><span>FONDO</span><b>$${c.fondo_actual}</b></div>
-                <div class="stat-card"><span>LIBRE</span><b>${c.libre_de_fondo ? 'SÍ' : 'NO'}</b></div>
+            <img src="${c.foto_chofer || ''}" class="foto-detalle">
+            <h2 style="margin:0;">${c.nombre} ${c.apellido}</h2>
+            
+            <div class="punto-status">
+                <span style="color:${c.libre_de_fondo ? 'var(--verde)' : '#555'}">●</span> 
+                Trabajar sin créditos
             </div>
-            <button class="btn-accion" style="background:var(--verde); color:white;" onclick="operacionFondo('agregar')">AGREGAR FONDO</button>
-            <button class="btn-accion" style="background:var(--rojo); color:white;" onclick="operacionFondo('retirar')">RETIRAR FONDO</button>
-            <button onclick="cerrarModal('modalVer')" style="width:100%; background:none; color:#888; border:none; margin-top:10px;">Cerrar</button>
+
+            <div class="form-group">
+                <label>Grupo al que pertenece</label>
+                <div style="display:flex; gap:15px;">
+                    <label><input type="radio" name="grupo" ${c.grupo === 'A' ? 'checked' : ''}> Grupo A</label>
+                    <label><input type="radio" name="grupo" ${c.grupo === 'B' ? 'checked' : ''}> Grupo B</label>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-item"><span>FONDO ACTUAL</span><b>$${c.fondo_actual}</b></div>
+                <div class="stat-item"><span>VIAJES HOY</span><b>0</b></div>
+                <div class="stat-item"><span>VIAJES MES</span><b>0</b></div>
+                <div class="stat-item"><span>VIAJES TOTAL</span><b>0</b></div>
+            </div>
+
+            <button class="btn-full btn-azul">FILTRAR VIAJES</button>
+            <button class="btn-full btn-verde" onclick="window.open('https://wa.me/${c.telefono}')">WHATSAPP</button>
+            <button class="btn-full btn-rojo" onclick="eliminarChofer('${c.id}')">ELIMINAR CHÓFER</button>
+
+            <div class="tabs-container">
+                <button class="tab-btn active" onclick="switchTab(event, 't-info')">INFORMACIÓN</button>
+                <button class="tab-btn" onclick="switchTab(event, 't-auto')">AUTO</button>
+                <button class="tab-btn" onclick="switchTab(event, 't-fondo')">FONDO</button>
+            </div>
+
+            <div id="t-info" class="tab-content active">
+                <p><b>Nombre:</b> ${c.nombre} ${c.apellido}</p>
+                <p><b>Teléfono:</b> ${c.telefono}</p>
+            </div>
+
+            <div id="t-auto" class="tab-content">
+                <img src="${c.foto_carro || ''}" style="width:100%; border-radius:10px; margin-bottom:10px;">
+                <p><b>Marca:</b> ${c.marca_carro}</p>
+                <p><b>Modelo:</b> ${c.modelo_carro} | <b>Color:</b> ${c.color_carro}</p>
+                <p><b>Aire:</b> ${c.tiene_aire_acondicionado ? 'SÍ' : 'NO'}</p>
+                <p><b>Licencia:</b> ${c.tiene_licencia_operativa ? 'SÍ' : 'NO'}</p>
+            </div>
+
+            <div id="t-fondo" class="tab-content">
+                <div style="display:flex; gap:5px;">
+                    <button class="tab-btn" style="background:var(--verde)" onclick="uiMov('agregar')">AGREGAR</button>
+                    <button class="tab-btn" style="background:var(--rojo)" onclick="uiMov('retirar')">RETIRAR</button>
+                    <button class="tab-btn" style="background:var(--azul)" onclick="rectificarFondos()">RECTIFICAR</button>
+                </div>
+                
+                <div id="zona-movimiento" style="display:none; background:#000; padding:15px; border-radius:10px; margin-top:10px; border:1px solid #333;">
+                    <h4 id="mov-titulo" style="margin-top:0"></h4>
+                    <div id="mov-metodo-div" class="form-group">
+                        <label>Método</label>
+                        <select id="mov-metodo">
+                            <option value="Efectivo">Efectivo</option>
+                            <option value="Transferencia">Transferencia</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Cantidad</label>
+                        <input type="number" id="mov-cantidad">
+                    </div>
+                    <button class="btn-full btn-verde" onclick="procesarMovimiento()">PROCESAR</button>
+                </div>
+
+                <table class="tabla-fondos">
+                    <thead>
+                        <tr><th>Usu</th><th>Met</th><th>Sal</th><th>Fon</th><th>Act</th><th>Fecha</th></tr>
+                    </thead>
+                    <tbody id="historial-fondos-list"></tbody>
+                </table>
+            </div>
+
+            <button onclick="cerrarModal('modalVer')" style="width:100%; background:none; color:#888; border:none; margin-top:20px;">Cerrar Vista</button>
         `;
         abrirModal('modalVer');
+        cargarHistorial(c.id);
     }
 
-    // --- FUNCIÓN DE FONDO CORREGIDA ---
-    async function operacionFondo(tipo) {
-        const cantidad = prompt(`Ingrese cantidad a ${tipo}:`);
-        if (!cantidad || isNaN(cantidad)) return;
+    function switchTab(evt, tabId) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        evt.currentTarget.classList.add('active');
+    }
 
-        const monto = parseFloat(cantidad);
-        const metodo = prompt("Método (Efectivo/Transferencia):", "Efectivo");
-        const usuarioLogueado = localStorage.getItem('usuario_nombre') || "Admin"; 
+    // LÓGICA DE FONDOS
+    let tipoMov = '';
+    function uiMov(tipo) {
+        tipoMov = tipo;
+        document.getElementById('zona-movimiento').style.display = 'block';
+        document.getElementById('mov-titulo').innerText = tipo === 'agregar' ? 'Agregar Saldo' : 'Retirar Saldo';
+        document.getElementById('mov-metodo-div').style.display = tipo === 'agregar' ? 'block' : 'none';
+    }
+
+    async function procesarMovimiento() {
+        const cant = parseFloat(document.getElementById('mov-cantidad').value);
+        if(!cant) return alert("Ingrese cantidad");
         
-        const fondoAnterior = parseFloat(choferSeleccionado.fondo_actual);
-        const nuevoFondo = tipo === 'agregar' ? fondoAnterior + monto : fondoAnterior - monto;
+        const metodo = tipoMov === 'agregar' ? document.getElementById('mov-metodo').value : 'Retiro';
+        const usuario = localStorage.getItem('usuario_nombre') || 'Admin';
+        const fondoPrevio = parseFloat(choferSel.fondo_actual);
+        const activo = tipoMov === 'agregar' ? fondoPrevio + cant : fondoPrevio - cant;
 
-        // 1. Insertar en tabla historial_fondos
-        const { error: errorHistorial } = await supabaseClient.from('historial_fondos').insert([{
-            chofer_id: choferSeleccionado.id,
-            usuario: usuarioLogueado,
+        // Guardar Historial
+        await supabaseClient.from('historial_fondos').insert([{
+            chofer_id: choferSel.id,
+            usuario: usuario,
             metodo: metodo,
-            saldo: monto,
-            fondo_anterior: fondoAnterior,
-            activo: nuevoFondo,
-            fecha: new Date().toISOString()
+            saldo: cant,
+            fondo_anterior: fondoPrevio,
+            activo: activo
         }]);
 
-        if (errorHistorial) {
-            alert("Error en historial: " + errorHistorial.message);
-            return;
-        }
-
-        // 2. Actualizar tabla choferes
-        const { error: errorChofer } = await supabaseClient.from('choferes')
-            .update({ fondo_actual: nuevoFondo })
-            .eq('id', choferSeleccionado.id);
-
-        if (!errorChofer) {
-            alert(`Fondo ${tipo === 'agregar' ? 'añadido' : 'retirado'} con éxito.`);
-            location.reload();
-        } else {
-            alert("Error actualizando fondo: " + errorChofer.message);
-        }
+        // Actualizar Chofer
+        await supabaseClient.from('choferes').update({ fondo_actual: activo }).eq('id', choferSel.id);
+        
+        alert("Operación procesada");
+        verChofer(choferSel.id);
     }
 
-    async function guardarNuevoChofer() {
-        const tel = document.getElementById('reg-tel').value;
-        const nom = document.getElementById('reg-nom').value;
-        if(!tel || !nom) return alert("Nombre y Teléfono obligatorios");
-
-        const { error } = await supabaseClient.from('choferes').insert([{
-            nombre: nom,
-            apellido: document.getElementById('reg-ape').value,
-            telefono: tel,
-            tiene_licencia_operativa: document.getElementById('reg-lic').checked,
-            libre_de_fondo: document.getElementById('reg-libre').checked,
-            marca_carro: document.getElementById('reg-marca').value,
-            fondo_actual: 0
-        }]);
-
-        if(!error) { alert("Guardado"); location.reload(); }
-        else { alert("Error: " + error.message); }
+    async function cargarHistorial(id) {
+        const { data } = await supabaseClient.from('historial_fondos').select('*').eq('chofer_id', id).order('fecha', {ascending:false});
+        const list = document.getElementById('historial-fondos-list');
+        list.innerHTML = data.map(h => `
+            <tr>
+                <td>${h.usuario}</td>
+                <td>${h.metodo}</td>
+                <td>${h.saldo}</td>
+                <td>${h.fondo_anterior}</td>
+                <td><b>${h.activo}</b></td>
+                <td>${h.fecha.split('T')[0]}</td>
+            </tr>
+        `).join('');
     }
 
+    // RECTIFICAR FONDOS (Recalcula basado en historial)
+    async function rectificarFondos() {
+        const { data } = await supabaseClient.from('historial_fondos').select('saldo, metodo').eq('chofer_id', choferSel.id);
+        let total = 0;
+        data.forEach(h => {
+            if(h.metodo === 'Retiro') total -= h.saldo;
+            else total += h.saldo;
+        });
+        await supabaseClient.from('choferes').update({ fondo_actual: total }).eq('id', choferSel.id);
+        alert("Fondo rectificado según historial: $" + total);
+        verChofer(choferSel.id);
+    }
+
+    // FILTRAR
     function filtrar() {
-        const text = document.getElementById('busqueda').value.toLowerCase();
-        const rows = document.querySelectorAll('#lista-choferes tr');
-        rows.forEach(r => r.style.display = r.innerText.toLowerCase().includes(text) ? '' : 'none');
+        const val = document.getElementById('busqueda').value.toLowerCase();
+        document.querySelectorAll('#lista-choferes tr').forEach(r => {
+            r.style.display = r.innerText.toLowerCase().includes(val) ? '' : 'none';
+        });
     }
 
     cargarChoferes();
