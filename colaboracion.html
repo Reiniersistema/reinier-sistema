@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Colaboraciones - RF TransGestión</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; --rojo: #dc3545; --azul: #3498db; }
+        body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding: 15px; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--dorado); padding-bottom: 10px; }
+        h2 { color: var(--dorado); font-size: 18px; text-transform: uppercase; margin: 0; }
+        
+        .btn-add { background: var(--dorado); color: black; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 12px; }
+
+        /* Formulario Añadir/Editar */
+        #formColab { display: none; background: #252525; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid var(--dorado); }
+        input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #444; background: #000; color: white; box-sizing: border-box; }
+
+        .tabla-contenedor { background: var(--gris); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 12px 10px; color: var(--dorado); font-size: 11px; text-transform: uppercase; border-bottom: 2px solid #333; }
+        td { padding: 15px 10px; border-bottom: 1px solid #222; font-size: 14px; }
+
+        .btn-small { border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; margin-left: 5px; }
+        .btn-edit { background: var(--azul); color: white; }
+        .btn-delete { background: var(--rojo); color: white; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h2>Colaboraciones</h2>
+    <button class="btn-add" onclick="mostrarFormulario()">+ NUEVA AGENCIA</button>
+</div>
+
+<div id="formColab">
+    <input type="text" id="nombre-agencia" placeholder="Nombre de la Agencia">
+    <div style="display:flex; gap:10px;">
+        <button class="btn-add" id="btnGuardar" onclick="guardarColab()" style="flex:1;">GUARDAR</button>
+        <button class="btn-add" onclick="ocultarFormulario()" style="flex:1; background:#444; color:white;">CANCELAR</button>
+    </div>
+</div>
+
+<div class="tabla-contenedor">
+    <table>
+        <thead>
+            <tr>
+                <th>Nombre de la Agencia</th>
+                <th style="width: 100px; text-align: center;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="lista-colab">
+            </tbody>
+    </table>
+</div>
+
+<script src="config.js"></script>
+<script>
+    let editId = null;
+
+    function mostrarFormulario(id = null, nombre = '') {
+        editId = id;
+        document.getElementById('nombre-agencia').value = nombre;
+        document.getElementById('btnGuardar').innerText = id ? "ACTUALIZAR" : "GUARDAR";
+        document.getElementById('formColab').style.display = 'block';
+    }
+
+    function ocultarFormulario() {
+        document.getElementById('formColab').style.display = 'none';
+        editId = null;
+    }
+
+    async function cargarColaboraciones() {
+        const { data, error } = await supabaseClient.from('colaboraciones').select('*').order('nombre', { ascending: true });
+        const tbody = document.getElementById('lista-colab');
+        
+        if (data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="2" style="text-align:center; padding:20px; color:#666;">No hay colaboraciones registradas.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = data.map(c => `
+            <tr>
+                <td><b>${c.nombre}</b></td>
+                <td style="text-align: center;">
+                    <button class="btn-small btn-edit" onclick="mostrarFormulario(${c.id}, '${c.nombre}')">EDITAR</button>
+                    <button class="btn-small btn-delete" onclick="eliminarColab(${c.id})">BORRAR</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    async function guardarColab() {
+        const nombre = document.getElementById('nombre-agencia').value;
+        if(!nombre) return alert("Escribe el nombre de la agencia");
+
+        if (editId) {
+            // Actualizar
+            const { error } = await supabaseClient.from('colaboraciones').update({ nombre: nombre }).eq('id', editId);
+            if(!error) alert("Agencia actualizada");
+        } else {
+            // Guardar nueva
+            const { error } = await supabaseClient.from('colaboraciones').insert([{ nombre: nombre }]);
+            if(!error) alert("Agencia guardada");
+        }
+
+        ocultarFormulario();
+        cargarColaboraciones();
+    }
+
+    async function eliminarColab(id) {
+        if(confirm("¿Estás seguro de eliminar esta colaboración?")) {
+            const { error } = await supabaseClient.from('colaboraciones').delete().eq('id', id);
+            if(!error) cargarColaboraciones();
+        }
+    }
+
+    cargarColaboraciones();
+</script>
+</body>
+</html>
