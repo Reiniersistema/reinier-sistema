@@ -4,13 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pagos Pendientes - RF TransGestión</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; --rojo: #dc3545; --verde: #28a745; }
-        body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding: 15px; }
+        body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding-bottom: 50px; }
         
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--dorado); padding-bottom: 10px; }
+        /* ESTILOS DEL MENÚ UNIVERSAL */
+        .sidebar {
+            height: 100%; width: 0; position: fixed;
+            z-index: 3000; top: 0; left: 0;
+            background-color: #1e1e1e;
+            overflow-x: hidden; transition: 0.5s;
+            padding-top: 60px; border-right: 1px solid #d4af37;
+        }
+        .sidebar a {
+            padding: 12px 24px; text-decoration: none;
+            font-size: 15px; color: #818181;
+            display: block; transition: 0.3s;
+            text-transform: uppercase;
+        }
+        .sidebar a:hover { color: #d4af37; background: rgba(212, 175, 55, 0.1); }
+        .sidebar .closebtn { position: absolute; top: 10px; right: 25px; font-size: 36px; color: #d4af37; }
+
+        .header-nav-universal { 
+            display: flex; align-items: center; gap: 15px; 
+            padding: 15px; background: #121212; 
+            border-bottom: 1px solid #d4af37; margin-bottom: 20px;
+        }
+        .openbtn { font-size: 25px; cursor: pointer; background: none; border: none; color: #d4af37; }
+        .logo-txt-universal { font-family: 'Playfair Display', serif; font-size: 20px; color: white; }
+
+        /* Estilos propios de la página */
+        .contenedor-principal { padding: 0 15px; }
+        .header-seccion { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--dorado); padding-bottom: 10px; }
         h2 { color: var(--dorado); font-size: 18px; text-transform: uppercase; margin: 0; }
         
         /* Botón Embudo */
@@ -18,7 +45,7 @@
         
         /* Área de Filtro */
         #filtroArea { display: none; margin-bottom: 15px; animation: slideDown 0.3s ease; }
-        #filtroArea input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--dorado); background: var(--gris); color: white; box-sizing: border-box; }
+        #filtroArea input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--dorado); background: var(--gris); color: white; box-sizing: border-box; font-family: 'Montserrat'; }
 
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -32,41 +59,45 @@
         .bg-rojo { background: var(--rojo); color: white; }
         .bg-verde { background: var(--verde); color: white; }
         
-        .aviso-importante { background: rgba(212, 175, 55, 0.1); border: 1px solid var(--dorado); padding: 10px; border-radius: 8px; margin-top: 20px; font-size: 11px; line-height: 1.4; color: #ccc; }
+        .aviso-importante { background: rgba(212, 175, 55, 0.1); border: 1px solid var(--dorado); padding: 15px; border-radius: 12px; margin-top: 20px; font-size: 11px; line-height: 1.5; color: #ccc; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <h2>Pagos Pendientes</h2>
-    <button class="btn-embudo" onclick="toggleFiltro()">⏳</button>
-</div>
+<div class="contenedor-principal">
+    <div class="header-seccion">
+        <h2>Pagos Pendientes</h2>
+        <button class="btn-embudo" onclick="toggleFiltro()">⏳</button>
+    </div>
 
-<div id="filtroArea">
-    <input type="text" id="busquedaNombre" placeholder="Buscar chófer por nombre..." onkeyup="filtrarNombre()">
-</div>
+    <div id="filtroArea">
+        <input type="text" id="busquedaNombre" placeholder="Buscar chófer por nombre..." onkeyup="filtrarNombre()">
+    </div>
 
-<div class="tabla-contenedor">
-    <table>
-        <thead>
-            <tr>
-                <th>Chófer</th>
-                <th>Fondo</th>
-                <th>Estado</th>
-            </tr>
-        </thead>
-        <tbody id="lista-pendientes">
+    <div class="tabla-contenedor">
+        <table>
+            <thead>
+                <tr>
+                    <th>Chófer</th>
+                    <th>Fondo</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody id="lista-pendientes">
+                <tr><td colspan="3" style="text-align:center; padding:20px;">Cargando deudores...</td></tr>
             </tbody>
-    </table>
-</div>
+        </table>
+    </div>
 
-<div class="aviso-importante">
-    <b>REGLA DE NEGOCIO:</b><br>
-    • Choferes con fondo < $150 sin "Libre de fondo" están <b>Bloqueados</b> para viajes.<br>
-    • Choferes marcados como <b>"Libre de fondo"</b> pueden operar incluso con fondo en $0.
+    <div class="aviso-importante">
+        <b style="color: var(--dorado);">REGLA DE NEGOCIO:</b><br>
+        • Chóferes con fondo <b>menor a $150</b> sin "Libre de fondo" están <b>Bloqueados</b> para recibir nuevos viajes.<br>
+        • Chóferes marcados como <b>"Libre de fondo"</b> pueden operar incluso con fondo en $0.
+    </div>
 </div>
 
 <script src="config.js"></script>
+<script src="menu.js"></script>
 <script>
     function toggleFiltro() {
         const area = document.getElementById('filtroArea');
@@ -87,23 +118,22 @@
         }
 
         const tbody = document.getElementById('lista-pendientes');
-        if (choferes.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:20px;">No hay pagos pendientes críticos.</td></tr>`;
+        if (!choferes || choferes.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:20px;">No hay chóferes en zona crítica.</td></tr>`;
             return;
         }
 
         tbody.innerHTML = choferes.map(c => {
-            // Lógica: Si es libre de fondo, puede trabajar (Verde), si no, Bloqueado (Rojo)
             const estadoTexto = c.libre_de_fondo ? 'Operativo (Libre)' : 'Bloqueado';
             const estadoClase = c.libre_de_fondo ? 'bg-verde' : 'bg-rojo';
 
             return `
                 <tr class="fila-chofer">
                     <td>
-                        <b style="display:block;">${c.nombre} ${c.apellido || ''}</b>
+                        <b style="display:block; text-transform: uppercase;">${c.nombre} ${c.apellido || ''}</b>
                         <span style="font-size:10px; color:#888;">${c.telefono}</span>
                     </td>
-                    <td style="color: var(--dorado); font-weight:bold;">$${c.fondo_actual}</td>
+                    <td style="color: var(--dorado); font-weight:bold;">$${c.fondo_actual.toFixed(2)}</td>
                     <td><span class="status-badge ${estadoClase}">${estadoTexto}</span></td>
                 </tr>
             `;
@@ -116,15 +146,10 @@
 
         filas.forEach(fila => {
             const nombre = fila.querySelector('b').innerText.toLowerCase();
-            if (nombre.includes(busqueda)) {
-                fila.style.display = '';
-            } else {
-                fila.style.display = 'none';
-            }
+            fila.style.display = nombre.includes(busqueda) ? '' : 'none';
         });
     }
 
-    // Cargar al iniciar
     cargarPagosPendientes();
 </script>
 </body>
