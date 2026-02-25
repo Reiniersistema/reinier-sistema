@@ -187,7 +187,10 @@
         if(datos.destino) txtChofer += `Destino: ${datos.destino}\n`;
         if(datos.pax) txtChofer += `Pax: ${datos.pax}\n`;
         if(datos.fondo) txtChofer += `Fondo Actual: ${datos.fondo}\n`;
-        txtChofer += `\n⚠️ IMPORTANTE ⚠️\n\n•Usted tiene 15 minutos máximo...`;
+        txtChofer += `\n⚠️ IMPORTANTE ⚠️\n\n‎•usted tiene 15 minutos máximo para llegar a la dirección de recojida del cliente.
+‎•El cliente tiene 15 minutos para abordar su vehículo,por encima de este tiempo se le cobrará 25 cup el minuto extra
+‎•En caso de llegada tarde a un servicio programado se le descontará el 50% del precio del servicio. 
+‎•Recuerde mantener su auto limpio y en perfectas condiciones técnicas al igual que un trato cordial con cada cliente.`;
         document.getElementById('p-chofer').innerText = txtChofer;
 
         let txtCliente = `*Taxi En Camino*\n`;
@@ -195,7 +198,10 @@
         if(datos.chofer) txtCliente += `Chofer: ${datos.chofer}\n`;
         if(datos.auto) txtCliente += `Auto: ${datos.auto}\n`;
         if(datos.color) txtCliente += `Color: ${datos.color}\n`;
-        txtCliente += `\n⚠️ *IMPORTANTE* ⚠️\n\n•Cada parada extra...`;
+        txtCliente += `\n⚠️ *IMPORTANTE* ⚠️\n\n‎•Cada parada extra se recalcula la ruta y modifica el costo.
+‎•Al llegar el taxi a su origen usted tiene 10min de espera como cortesía, pasado este tiempo debe pagar por cada minuto extra.
+‎•Tiempo de espera extra:  25cup x minutos. 
+‎•En caso de cancelar estando el auto en el lugar de recogida, deberá pagar la mitad del costo del servicio.`;
         document.getElementById('p-cliente').innerText = txtCliente;
 
         document.getElementById('p-resumen').innerText = `RESUMEN:\nChofer: ${datos.chofer}\nCliente: ${datos.cliente}\nPrecio: ${datos.precio}`;
