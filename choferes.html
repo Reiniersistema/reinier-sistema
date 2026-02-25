@@ -10,8 +10,8 @@
         :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; --verde: #25d366; --rojo: #ff4d4d; --azul: #3498db; }
         body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding-bottom: 80px; }
         
-        /* BARRA LATERAL (MENU UNIVERSAL) */
-        .sidebar { height: 100%; width: 0; position: fixed; z-index: 3000; top: 0; left: 0; background-color: var(--gris); overflow-x: hidden; transition: 0.5s; padding-top: 60px; border-right: 1px solid var(--dorado); }
+        /* 1. UN SOLO MENU UNIVERSAL */
+        .sidebar { height: 100%; width: 0; position: fixed; z-index: 5000; top: 0; left: 0; background-color: var(--gris); overflow-x: hidden; transition: 0.5s; padding-top: 60px; border-right: 1px solid var(--dorado); }
         .sidebar a { padding: 12px 24px; text-decoration: none; font-size: 15px; color: #818181; display: block; transition: 0.3s; text-transform: uppercase; }
         .sidebar a:hover { color: var(--dorado); background: rgba(212, 175, 55, 0.1); }
         .sidebar .closebtn { position: absolute; top: 10px; right: 25px; font-size: 36px; color: var(--dorado); }
@@ -23,22 +23,16 @@
         .contenedor-principal { padding: 20px 15px; }
         .header-acciones { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .btn-add { background: var(--dorado); color: black; border: none; padding: 12px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 11px; }
-        .btn-embudo { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--dorado); }
         
         #filtroArea { display: none; margin-bottom: 15px; }
-        #filtroArea input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--dorado); background: var(--gris); color: white; box-sizing: border-box; }
+        #filtroArea input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--dorado); background: var(--gris); color: white; box-sizing: border-box; outline: none; }
 
-        /* TABLA PRINCIPAL */
-        .tabla-contenedor { background: var(--gris); border-radius: 12px; overflow-x: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        table { width: 100%; border-collapse: collapse; min-width: 400px; }
-        th { text-align: left; padding: 12px 8px; color: var(--dorado); font-size: 10px; text-transform: uppercase; border-bottom: 2px solid #333; }
-        td { padding: 15px 8px; border-bottom: 1px solid #222; font-size: 13px; }
-        .puntos { color: var(--dorado); font-weight: bold; font-size: 22px; cursor: pointer; text-align: center; width: 40px; position: relative; }
-
-        /* MENU CONTEXTUAL */
-        .menu-contextual { display: none; position: absolute; right: 10px; background: white; color: black; border-radius: 8px; z-index: 100; box-shadow: 0 5px 15px rgba(0,0,0,0.5); width: 120px; text-align: left; }
-        .menu-contextual div { padding: 12px; font-size: 13px; border-bottom: 1px solid #eee; cursor: pointer; font-weight: 500; }
-        .menu-contextual div:last-child { border: none; color: var(--rojo); }
+        /* TABLA PRINCIPAL - AHORA TODA LA FILA ES CLICKABLE */
+        .tabla-contenedor { background: var(--gris); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 12px 10px; color: var(--dorado); font-size: 10px; text-transform: uppercase; border-bottom: 2px solid #333; }
+        td { padding: 15px 10px; border-bottom: 1px solid #222; font-size: 13px; cursor: pointer; }
+        tr:hover td { background: rgba(255,255,255,0.02); }
 
         /* MODALES */
         .modal { display: none; position: fixed; z-index: 4000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); overflow-y: auto; }
@@ -49,15 +43,21 @@
         .form-group input, .form-group select { width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: white; border-radius: 8px; box-sizing: border-box; outline: none; }
 
         .foto-detalle { width: 100%; height: 320px; object-fit: cover; border-radius: 12px; border: 2px solid var(--dorado); margin-bottom: 15px; }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
         .stat-item { background: #000; padding: 12px; border-radius: 8px; text-align: center; border: 1px solid #222; }
         .stat-item span { display: block; font-size: 9px; color: var(--dorado); margin-bottom: 5px; text-transform: uppercase; }
         
         .tabs-nav { display: flex; background: #000; padding: 5px; border-radius: 10px; margin: 15px 0; gap: 5px; overflow-x: auto; }
-        .tab-btn { flex: 1; padding: 12px 5px; border: none; background: none; color: #888; font-size: 11px; font-weight: bold; cursor: pointer; border-radius: 5px; text-transform: uppercase; min-width: 95px; }
+        .tab-btn { flex: 1; padding: 12px 5px; border: none; background: none; color: #888; font-size: 11px; font-weight: bold; cursor: pointer; border-radius: 5px; text-transform: uppercase; min-width: 90px; }
         .tab-btn.active { background: var(--dorado); color: black; }
         .tab-pane { display: none; }
         .tab-pane.active { display: block; }
+
+        /* 4. ARREGLO DE ANCHO DE TABLA DE FONDO */
+        .historial-container { width: 100%; overflow-x: auto; margin-top: 15px; }
+        .tabla-fondos { width: 100%; border-collapse: collapse; min-width: 450px; }
+        .tabla-fondos th { font-size: 9px; padding: 8px 5px; background: #000; }
+        .tabla-fondos td { font-size: 11px; padding: 10px 5px; border-bottom: 1px solid #222; text-align: center; }
 
         .btn-full { width: 100%; padding: 15px; border-radius: 8px; border: none; font-weight: bold; margin-bottom: 10px; cursor: pointer; font-size: 13px; text-transform: uppercase; }
         .btn-verde { background: var(--verde); color: white; }
@@ -88,7 +88,7 @@
 <div class="contenedor-principal">
     <div class="header-acciones">
         <button class="btn-add" onclick="abrirModal('modalRegistro')">+ Añadir Chófer</button>
-        <button class="btn-embudo" onclick="toggleFiltro()">⏳</button>
+        <button style="background:none; border:none; font-size:24px; cursor:pointer;" onclick="toggleFiltro()">⏳</button>
     </div>
 
     <div id="filtroArea"><input type="text" id="busqueda" placeholder="Buscar por teléfono o nombre..." onkeyup="filtrarChoferes()"></div>
@@ -96,7 +96,7 @@
     <div class="tabla-contenedor">
         <table>
             <thead>
-                <tr><th>Nombre</th><th>Teléfono</th><th>Lic.</th><th>Fondo</th><th></th></tr>
+                <tr><th>Nombre</th><th>Teléfono</th><th>Lic.</th><th>Fondo</th></tr>
             </thead>
             <tbody id="lista-choferes"></tbody>
         </table>
@@ -108,24 +108,21 @@
         <h2 style="color:var(--dorado); margin-top:0;">NUEVO CHÓFER</h2>
         <div class="form-group"><label>Foto del Chófer</label><input type="file" id="reg-foto-chofer" accept="image/*"></div>
         <div style="display:flex; gap:10px">
-            <div class="form-group" style="flex:1"><label>Nombre</label><input type="text" id="reg-nom"></div>
-            <div class="form-group" style="flex:1"><label>Apellido</label><input type="text" id="reg-ape"></div>
+            <div class="form-group" style="flex:1"><input type="text" id="reg-nom" placeholder="Nombre"></div>
+            <div class="form-group" style="flex:1"><input type="text" id="reg-ape" placeholder="Apellido"></div>
         </div>
-        <div class="form-group"><label>Teléfono</label><input type="tel" id="reg-tel"></div>
-        
-        <div style="background:#000; padding:15px; border-radius:10px; margin-bottom:15px;">
-            <label style="display:block;"><input type="checkbox" id="reg-lic"> Licencia Operativa</label><br>
-            <label style="display:block; color:var(--dorado)"><input type="checkbox" id="reg-libre"> TRABAJAR SIN CRÉDITOS</label>
+        <div class="form-group"><input type="tel" id="reg-tel" placeholder="Teléfono"></div>
+        <div style="background:#000; padding:15px; border-radius:10px; margin-bottom:15px; font-size: 13px;">
+            <label><input type="checkbox" id="reg-lic"> Licencia Operativa</label><br><br>
+            <label style="color:var(--dorado)"><input type="checkbox" id="reg-libre"> TRABAJAR SIN CRÉDITOS</label>
         </div>
-
         <div class="form-group"><label>Foto del Vehículo</label><input type="file" id="reg-foto-carro" accept="image/*"></div>
         <div style="display:flex; gap:10px; margin-bottom:10px">
-            <input type="text" id="reg-marca" placeholder="Marca" style="flex:1; padding:10px; background:#000; color:#fff; border:1px solid #333; border-radius:5px;">
-            <input type="text" id="reg-modelo" placeholder="Modelo" style="flex:1; padding:10px; background:#000; color:#fff; border:1px solid #333; border-radius:5px;">
+            <input type="text" id="reg-marca" placeholder="Marca" style="flex:1; padding:12px; background:#000; color:#fff; border:1px solid #333; border-radius:8px;">
+            <input type="text" id="reg-modelo" placeholder="Modelo" style="flex:1; padding:12px; background:#000; color:#fff; border:1px solid #333; border-radius:8px;">
         </div>
-        <input type="text" id="reg-color" placeholder="Color" style="width:100%; padding:10px; background:#000; color:#fff; border:1px solid #333; border-radius:5px; box-sizing:border-box;">
-        <label style="display:block; margin-top:15px;"><input type="checkbox" id="reg-aire"> Vehículo con Aire Acondicionado</label>
-
+        <input type="text" id="reg-color" placeholder="Color" style="width:100%; padding:12px; background:#000; color:#fff; border:1px solid #333; border-radius:8px; box-sizing:border-box;">
+        <label style="display:block; margin-top:15px; font-size:13px;"><input type="checkbox" id="reg-aire"> Aire Acondicionado</label>
         <button class="btn-full btn-verde" style="margin-top:20px;" onclick="guardarChofer()">PROCESAR REGISTRO</button>
         <button class="btn-full btn-gris" onclick="cerrarModal('modalRegistro')">CANCELAR</button>
     </div>
@@ -136,7 +133,6 @@
 </div>
 
 <script src="config.js"></script>
-<script src="menu.js"></script>
 <script>
     let choferSel = null;
     const userActivo = JSON.parse(localStorage.getItem('usuario_activo')) || {nombre: 'Admin'};
@@ -153,54 +149,45 @@
     async function cargarChoferes() {
         const { data } = await supabaseClient.from('choferes').select('*').order('nombre');
         const tbody = document.getElementById('lista-choferes');
+        // 2. HACER FILA CLICKABLE PARA VER DETALLE DIRECTO
         tbody.innerHTML = data.map(c => `
-            <tr>
+            <tr onclick="verChofer('${c.id}')">
                 <td><b>${c.nombre} ${c.apellido}</b></td>
                 <td>${c.telefono}</td>
                 <td>${c.tiene_licencia_operativa ? '✅' : '❌'}</td>
-                <td style="color:var(--dorado)">$${c.fondo_actual}</td>
-                <td class="puntos" onclick="toggleMenu(event, '${c.id}')">⋮
-                    <div id="menu-${c.id}" class="menu-contextual">
-                        <div onclick="verChofer('${c.id}')">Ver</div>
-                        <div onclick="eliminarChofer('${c.id}')">Eliminar</div>
-                    </div>
-                </td>
+                <td style="color:var(--dorado); font-weight:bold;">$${c.fondo_actual}</td>
             </tr>
         `).join('');
-    }
-
-    function toggleMenu(e, id) {
-        e.stopPropagation();
-        document.querySelectorAll('.menu-contextual').forEach(m => m.style.display = 'none');
-        document.getElementById('menu-'+id).style.display = 'block';
     }
 
     async function verChofer(id) {
         const { data: c } = await supabaseClient.from('choferes').select('*').eq('id', id).single();
         choferSel = c;
 
-        // CONSULTA DE VIAJES PARA CONTADORES
         const hoy = new Date().toISOString().split('T')[0];
-        const mesInicio = hoy.substring(0, 7) + "-01";
-
-        const { count: vHoy } = await supabaseClient.from('viajes').select('*', { count: 'exact', head: true }).eq('chofer_id', id).gte('created_at', hoy);
-        const { count: vMes } = await supabaseClient.from('viajes').select('*', { count: 'exact', head: true }).eq('chofer_id', id).gte('created_at', mesInicio);
-        const { count: vTotal } = await supabaseClient.from('viajes').select('*', { count: 'exact', head: true }).eq('chofer_id', id);
+        const mesIni = hoy.substring(0, 7) + "-01";
+        const { count: vH } = await supabaseClient.from('viajes').select('*', { count: 'exact', head: true }).eq('chofer_id', id).gte('created_at', hoy);
+        const { count: vM } = await supabaseClient.from('viajes').select('*', { count: 'exact', head: true }).eq('chofer_id', id).gte('created_at', mesIni);
+        const { count: vT } = await supabaseClient.from('viajes').select('*', { count: 'exact', head: true }).eq('chofer_id', id);
 
         const content = document.getElementById('detalle-chofer-content');
         content.innerHTML = `
             <img src="${c.foto_chofer || ''}" class="foto-detalle">
             <h2 style="margin:0;">${c.nombre} ${c.apellido}</h2>
-            <p style="color:var(--dorado); font-size:11px;">● Trabajar sin créditos: ${c.libre_de_fondo ? 'SÍ' : 'NO'}</p>
+            <p style="color:var(--dorado); font-size:11px; margin-bottom:15px;">● TRABAJAR SIN CRÉDITOS: ${c.libre_de_fondo ? 'SÍ' : 'NO'}</p>
 
             <div class="stats-grid">
                 <div class="stat-item"><span>Fondo</span><b>$${c.fondo_actual}</b></div>
-                <div class="stat-item"><span>Hoy</span><b>${vHoy || 0}</b></div>
-                <div class="stat-item"><span>Mes</span><b>${vMes || 0}</b></div>
-                <div class="stat-item"><span>Total</span><b>${vTotal || 0}</b></div>
+                <div class="stat-item"><span>Hoy</span><b>${vH || 0}</b></div>
+                <div class="stat-item"><span>Mes</span><b>${vM || 0}</b></div>
+                <div class="stat-item"><span>Total</span><b>${vT || 0}</b></div>
             </div>
 
             <button class="btn-full btn-verde" onclick="window.open('https://wa.me/${c.telefono}')">WHATSAPP</button>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-full btn-azul" onclick="alert('Función Editar en desarrollo')">EDITAR</button>
+                <button class="btn-full btn-rojo" onclick="eliminarChofer('${c.id}')">ELIMINAR</button>
+            </div>
 
             <div class="tabs-nav">
                 <button class="tab-btn active" onclick="showTab('info')">Info</button>
@@ -214,54 +201,99 @@
             </div>
 
             <div id="tab-auto" class="tab-pane">
-                <img src="${c.foto_carro || ''}" style="width:100%; border-radius:10px;">
-                <p>${c.marca_carro} ${c.modelo_carro} (${c.color_carro})</p>
-                <p>Aire: ${c.tiene_aire_acondicionado ? 'SÍ' : 'NO'}</p>
-                <p>Licencia: ${c.tiene_licencia_operativa ? 'SÍ' : 'NO'}</p>
+                <img src="${c.foto_carro || ''}" style="width:100%; border-radius:10px; margin-bottom:10px;">
+                <p><b>Marca:</b> ${c.marca_carro} | <b>Modelo:</b> ${c.modelo_carro}</p>
+                <p><b>Color:</b> ${c.color_carro}</p>
+                <p><b>Aire:</b> ${c.tiene_aire_acondicionado ? 'SÍ' : 'NO'} | <b>Licencia:</b> ${c.tiene_licencia_operativa ? 'SÍ' : 'NO'}</p>
             </div>
 
             <div id="tab-fondo" class="tab-pane">
                 <div style="display:flex; gap:5px;">
-                    <button class="btn-verde" style="flex:1; border:none; padding:10px; border-radius:5px;" onclick="document.getElementById('op-box').style.display='block'; window.opTipo='add'">AGREGAR</button>
-                    <button class="btn-rojo" style="flex:1; border:none; padding:10px; border-radius:5px;" onclick="document.getElementById('op-box').style.display='block'; window.opTipo='sub'">RETIRAR</button>
+                    <button class="btn-verde" style="flex:1; border:none; padding:12px; border-radius:8px; font-weight:bold;" onclick="abrirOp('add')">AGREGAR</button>
+                    <button class="btn-rojo" style="flex:1; border:none; padding:12px; border-radius:8px; font-weight:bold;" onclick="abrirOp('sub')">RETIRAR</button>
                 </div>
-                <div id="op-box" style="display:none; margin-top:15px; border:1px solid var(--dorado); padding:10px; border-radius:10px;">
-                    <select id="op-metodo" style="width:100%; padding:10px; margin-bottom:10px; background:#000; color:#fff; border:1px solid #333;"><option>Efectivo</option><option>Transferencia</option></select>
-                    <input type="number" id="op-cant" placeholder="Cantidad" style="width:100%; padding:10px; background:#000; color:#fff; border:1px solid #333; box-sizing:border-box;">
-                    <button class="btn-full btn-verde" style="margin-top:10px" onclick="procesarFondo()">PROCESAR</button>
+
+                <div id="op-box" style="display:none; margin-top:15px; border:1px solid var(--dorado); padding:15px; border-radius:10px; background:#000;">
+                    <label style="font-size:10px; color:var(--dorado); font-weight:bold;">MÉTODO</label>
+                    <select id="op-metodo" onchange="checkMetodo(this.value)" style="width:100%; padding:12px; margin:5px 0 15px 0; background:#111; color:#fff; border:1px solid #333; border-radius:8px;">
+                        <option value="Efectivo">Efectivo</option>
+                        <option value="Transferencia">Transferencia</option>
+                    </select>
+                    
+                    <div id="box-tarjeta" style="display:none; margin-bottom:15px;">
+                        <label style="font-size:10px; color:var(--dorado); font-weight:bold;">SELECCIONAR TARJETA</label>
+                        <select id="op-tarjeta" style="width:100%; padding:12px; margin-top:5px; background:#111; color:#fff; border:1px solid #333; border-radius:8px;"></select>
+                    </div>
+
+                    <label style="font-size:10px; color:var(--dorado); font-weight:bold;">CANTIDAD</label>
+                    <input type="number" id="op-cant" style="width:100%; padding:12px; margin-top:5px; background:#111; color:#fff; border:1px solid #333; border-radius:8px; box-sizing:border-box;">
+                    <button class="btn-full btn-verde" style="margin-top:15px" onclick="procesarFondo()">PROCESAR OPERACIÓN</button>
                 </div>
-                <table style="width:100%; font-size:10px; margin-top:15px;">
-                    <thead><tr><th>Usr</th><th>Met</th><th>Saldo</th><th>Fondo</th><th>Activo</th></tr></thead>
-                    <tbody id="hist-body"></tbody>
-                </table>
+
+                <div class="historial-container">
+                    <table class="tabla-fondos">
+                        <thead><tr><th>USR</th><th>MET</th><th>SALDO</th><th>FONDO</th><th>ACTIVO</th></tr></thead>
+                        <tbody id="hist-body"></tbody>
+                    </table>
+                </div>
             </div>
             <button class="btn-full btn-gris" onclick="cerrarModal('modalVer')" style="margin-top:20px">CERRAR</button>
         `;
         abrirModal('modalVer');
         cargarHistorial(id);
+        cargarTarjetas(); // Carga las tarjetas para el select
+    }
+
+    // 5. CARGAR TARJETAS DESDE LA TABLA 'tarjetas'
+    async function cargarTarjetas() {
+        const { data } = await supabaseClient.from('tarjetas').select('*');
+        const sel = document.getElementById('op-tarjeta');
+        if(sel && data) {
+            sel.innerHTML = data.map(t => `<option value="${t.nombre}">${t.nombre} (${t.numero})</option>`).join('');
+        }
+    }
+
+    function checkMetodo(val) {
+        document.getElementById('box-tarjeta').style.display = (val === 'Transferencia') ? 'block' : 'none';
+    }
+
+    function abrirOp(tipo) {
+        window.opTipo = tipo;
+        document.getElementById('op-box').style.display = 'block';
     }
 
     async function procesarFondo() {
         const cant = parseFloat(document.getElementById('op-cant').value);
+        if(!cant) return alert("Ingresa una cantidad");
         const ant = parseFloat(choferSel.fondo_actual);
         const activo = window.opTipo === 'add' ? ant + cant : ant - cant;
+        const met = document.getElementById('op-metodo').value;
+        const tarjeta = met === 'Transferencia' ? ' - ' + document.getElementById('op-tarjeta').value : '';
 
+        // GUARDAR EN HISTORIAL (Usando tus nombres de columna exactos)
         await supabaseClient.from('historial_fondos').insert([{
             chofer_id: choferSel.id,
             usuario: userActivo.nombre,
-            metodo: window.opTipo === 'add' ? document.getElementById('op-metodo').value : 'Retiro',
+            metodo: met + tarjeta,
             saldo: cant,
-            fondo: ant,
+            fondo_anterior: ant,
             activo: activo
         }]);
+
         await supabaseClient.from('choferes').update({ fondo_actual: activo }).eq('id', choferSel.id);
         verChofer(choferSel.id);
     }
 
     async function cargarHistorial(id) {
-        const { data } = await supabaseClient.from('historial_fondos').select('*').eq('chofer_id', id).order('fecha', {ascending:false});
+        const { data } = await supabaseClient.from('historial_fondos').select('*').eq('chofer_id', id).order('created_at', {ascending:false});
         document.getElementById('hist-body').innerHTML = data.map(h => `
-            <tr><td>${h.usuario}</td><td>${h.metodo}</td><td>$${h.saldo}</td><td>$${h.fondo}</td><td>$${h.activo}</td></tr>
+            <tr>
+                <td>${h.usuario}</td>
+                <td>${h.metodo}</td>
+                <td style="color:var(--verde)">$${h.saldo}</td>
+                <td>$${h.fondo_anterior}</td>
+                <td style="font-weight:bold;">$${h.activo}</td>
+            </tr>
         `).join('');
     }
 
