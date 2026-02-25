@@ -3,330 +3,205 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Choferes - RF</title>
+    <title>Choferes - RF TransGestión</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
-        :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; --verde: #25d366; --rojo: #ff4d4d; }
-        body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding: 20px; }
+        :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; --verde: #25d366; --rojo: #ff4d4d; --azul: #3498db; }
+        body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding-bottom: 80px; }
         
-        /* HEADER Y BOTONES SUPERIORES */
-        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .btn-add { background: var(--dorado); color: black; border: none; padding: 10px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; }
-        .btn-filtro { background: none; border: none; font-size: 24px; color: var(--dorado); cursor: pointer; }
-        #search-container { display: none; margin-bottom: 15px; }
-        #search-container input { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid var(--dorado); background: var(--gris); color: white; }
+        /* ESTILOS DEL MENÚ UNIVERSAL (Copiados de tu ejemplo) */
+        .sidebar { height: 100%; width: 0; position: fixed; z-index: 3000; top: 0; left: 0; background-color: #1e1e1e; overflow-x: hidden; transition: 0.5s; padding-top: 60px; border-right: 1px solid #d4af37; }
+        .sidebar a { padding: 12px 24px; text-decoration: none; font-size: 15px; color: #818181; display: block; transition: 0.3s; text-transform: uppercase; }
+        .sidebar a:hover { color: #d4af37; background: rgba(212, 175, 55, 0.1); }
+        .sidebar .closebtn { position: absolute; top: 10px; right: 25px; font-size: 36px; color: #d4af37; }
+        .header-nav-universal { display: flex; align-items: center; gap: 15px; padding: 15px; background: #121212; border-bottom: 1px solid #d4af37; margin-bottom: 20px; }
+        .openbtn { font-size: 25px; cursor: pointer; background: none; border: none; color: #d4af37; }
+        .logo-txt-universal { font-family: 'Playfair Display', serif; font-size: 20px; color: white; }
 
-        /* TABLA PRINCIPAL */
-        .tabla-principal { width: 100%; border-collapse: collapse; background: var(--gris); border-radius: 10px; overflow: hidden; }
-        .tabla-principal th { background: #000; color: var(--dorado); padding: 12px; text-align: left; font-size: 12px; }
-        .tabla-principal td { padding: 12px; border-bottom: 1px solid #333; font-size: 14px; }
-        .puntos-btn { cursor: pointer; color: var(--dorado); font-weight: bold; font-size: 20px; text-align: center; }
+        /* Estilos de la página */
+        .contenedor-principal { padding: 0 15px; }
+        .header-seccion { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .btn-add { background: var(--dorado); color: black; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 11px; }
+        
+        /* Tabla Principal */
+        .tabla-contenedor { background: var(--gris); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 12px 10px; color: var(--dorado); font-size: 10px; text-transform: uppercase; border-bottom: 2px solid #333; }
+        td { padding: 15px 10px; border-bottom: 1px solid #222; font-size: 13px; cursor: pointer; }
 
-        /* MENÚ CONTEXTUAL (Tres punticos) */
-        .menu-opciones { display: none; position: absolute; background: white; color: black; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.5); z-index: 100; }
-        .menu-opciones div { padding: 10px 20px; cursor: pointer; border-bottom: 1px solid #eee; }
-        .menu-opciones div:hover { background: #f0f0f0; }
+        /* Modales */
+        .modal { display: none; position: fixed; z-index: 4000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); overflow-y: auto; }
+        .modal-content { background: var(--gris); margin: 5% auto; padding: 20px; width: 90%; max-width: 500px; border-radius: 15px; border: 1px solid var(--dorado); }
+        
+        .foto-perfil-v { width: 100%; height: 250px; object-fit: cover; border-radius: 12px; border: 2px solid var(--dorado); margin-bottom: 15px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
+        .stat-item { background: #000; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #222; }
+        .stat-item span { display: block; font-size: 9px; color: var(--dorado); text-transform: uppercase; }
 
-        /* MODALES */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); overflow-y: auto; z-index: 1000; }
-        .modal-content { background: var(--gris); margin: 20px auto; padding: 20px; width: 90%; max-width: 600px; border-radius: 10px; border: 1px solid var(--dorado); }
-        
-        /* ESTILOS DE FORMULARIO */
-        .campo { margin-bottom: 15px; }
-        .campo label { display: block; color: var(--dorado); margin-bottom: 5px; font-size: 12px; }
-        .campo input, .campo select { width: 100%; padding: 10px; background: #000; border: 1px solid #444; color: white; border-radius: 5px; box-sizing: border-box; }
-        
-        /* VISTA DETALLE CHOFER */
-        .foto-grande { width: 100%; max-height: 300px; object-fit: cover; border-radius: 10px; border: 2px solid var(--dorado); }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
-        .stat-card { background: #000; padding: 10px; border-radius: 5px; text-align: center; border: 1px solid #333; }
-        .stat-card small { color: var(--dorado); font-size: 10px; display: block; }
-        
-        .tab-buttons { display: flex; gap: 5px; margin-top: 20px; overflow-x: auto; }
-        .tab-btn { flex: 1; padding: 10px; background: #333; border: none; color: white; cursor: pointer; font-size: 11px; white-space: nowrap; }
+        .btn-full { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; margin-bottom: 10px; cursor: pointer; text-transform: uppercase; font-size: 12px; }
+        .btn-verde { background: var(--verde); color: white; }
+        .btn-rojo { background: var(--rojo); color: white; }
+        .btn-azul { background: var(--azul); color: white; }
+
+        .tab-nav { display: flex; gap: 5px; margin: 15px 0; }
+        .tab-btn { flex: 1; padding: 10px; background: #000; color: #666; border: none; border-radius: 5px; font-size: 10px; font-weight: bold; cursor: pointer; }
         .tab-btn.active { background: var(--dorado); color: black; }
-        .tab-content { display: none; padding: 15px; background: #000; margin-top: 5px; border-radius: 0 0 10px 10px; }
-        .tab-content.active { display: block; }
-
-        .btn-accion { width: 100%; padding: 12px; margin-bottom: 10px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
-        
-        /* TABLA FONDOS */
-        .container-tabla { overflow-x: auto; }
-        .tabla-fondos { width: 100%; font-size: 11px; border-collapse: collapse; }
-        .tabla-fondos th { color: var(--dorado); border-bottom: 1px solid var(--dorado); padding: 5px; }
-        .tabla-fondos td { padding: 8px 4px; border-bottom: 1px solid #222; text-align: center; }
+        .tab-pane { display: none; padding: 10px; background: #000; border-radius: 8px; }
+        .tab-pane.active { display: block; }
     </style>
 </head>
 <body>
 
-    <div class="header-top">
-        <button class="btn-add" onclick="abrirModal('modalNuevo')">+ NUEVO CHÓFER</button>
-        <button class="btn-filtro" onclick="toggleFiltro()">⏳</button>
+<div class="header-nav-universal">
+    <button class="openbtn" onclick="openNav()">&#9776;</button>
+    <div class="logo-txt-universal">RF <span style="font-size: 14px; color: var(--dorado);">TransGestión</span></div>
+</div>
+<div class="contenedor-principal">
+    <div class="header-seccion">
+        <h2 style="color:var(--dorado); font-size:18px;">Choferes</h2>
+        <button class="btn-add" onclick="abrirModal('modalRegistro')">+ AÑADIR</button>
     </div>
 
-    <div id="search-container">
-        <input type="text" id="inputBusqueda" placeholder="Buscar por nombre o teléfono..." onkeyup="filtrarLista()">
+    <div class="tabla-contenedor">
+        <table>
+            <thead>
+                <tr><th>Nombre</th><th>Teléfono</th><th>Lic.</th><th>Fondo</th></tr>
+            </thead>
+            <tbody id="lista-choferes"></tbody>
+        </table>
     </div>
+</div>
 
-    <table class="tabla-principal">
-        <thead>
-            <tr>
-                <th>Nombre</th>
-                <th>Teléfono</th>
-                <th>Lic.</th>
-                <th>Fondo</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody id="lista-choferes"></tbody>
-    </table>
+<div id="modalVer" class="modal">
+    <div class="modal-content" id="detalle-chofer"></div>
+</div>
 
-    <div id="modalNuevo" class="modal">
-        <div class="modal-content">
-            <h2 style="color:var(--dorado)">Añadir Chófer</h2>
-            <div class="campo"><label>Foto del Chófer</label><input type="file" id="n-foto" accept="image/*"></div>
-            <div class="campo"><label>Nombre</label><input type="text" id="n-nombre"></div>
-            <div class="campo"><label>Apellido</label><input type="text" id="n-apellido"></div>
-            <div class="campo"><label>Teléfono</label><input type="tel" id="n-tel"></div>
-            <div class="campo"><label><input type="checkbox" id="n-lic"> Licencia Operativa</label></div>
-            <div class="campo"><label>Fondo Inicial</label><input type="number" id="n-fondo" value="0"></div>
-            <div class="campo"><label><input type="checkbox" id="n-libre"> Libre de Fondo (Sin % de descuento)</label></div>
-            <div class="campo"><label>Foto del Carro</label><input type="file" id="n-foto-carro" accept="image/*"></div>
-            <div class="campo"><label><input type="checkbox" id="n-aire"> Aire Acondicionado</label></div>
-            <button class="btn-accion" style="background:var(--verde)" onclick="guardarNuevoChofer()">GUARDAR CHÓFER</button>
-            <button class="btn-accion" style="background:var(--rojo)" onclick="cerrarModal('modalNuevo')">CANCELAR</button>
-        </div>
-    </div>
-
-    <div id="modalVer" class="modal">
-        <div class="modal-content" id="detalle-chofer">
+<div id="modalEditar" class="modal">
+    <div class="modal-content">
+        <h2 style="color:var(--dorado); font-size:16px;">EDITAR DATOS</h2>
+        <div id="form-editar">
             </div>
+        <button class="btn-full btn-verde" onclick="guardarEdicion()">GUARDAR CAMBIOS</button>
+        <button class="btn-full" style="background:#444;" onclick="cerrarModal('modalEditar')">CANCELAR</button>
     </div>
+</div>
 
-    <div id="menuContextual" class="menu-opciones">
-        <div onclick="accionVer()">Ver</div>
-        <div onclick="accionEliminar()" style="color:red">Eliminar</div>
-    </div>
+<script src="config.js"></script>
+<script src="menu.js"></script> <script>
+    let choferSel = null;
 
-    <script src="config.js"></script> <script>
-        let choferSeleccionadoId = null;
-        let choferDataLocal = null;
+    async function cargarChoferes() {
+        const { data } = await supabaseClient.from('choferes').select('*').order('nombre');
+        const tbody = document.getElementById('lista-choferes');
+        tbody.innerHTML = data.map(c => `
+            <tr onclick="verChofer('${c.id}')">
+                <td><b>${c.nombre}</b></td>
+                <td>${c.telefono}</td>
+                <td>${c.tiene_licencia_operativa ? '✅' : '❌'}</td>
+                <td style="color:var(--dorado);">$${c.fondo_actual}</td>
+            </tr>
+        `).join('');
+    }
 
-        // --- FUNCIONES DE NAVEGACIÓN ---
-        function abrirModal(id) { document.getElementById(id).style.display = 'block'; }
-        function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
-        function toggleFiltro() {
-            const sc = document.getElementById('search-container');
-            sc.style.display = sc.style.display === 'block' ? 'none' : 'block';
-        }
+    async function verChofer(id) {
+        const { data: c } = await supabaseClient.from('choferes').select('*').eq('id', id).single();
+        choferSel = c;
 
-        // --- CARGAR LISTA ---
-        async function cargarChoferes() {
-            const { data, error } = await supabaseClient.from('choferes').select('*').order('nombre');
-            if (error) return;
-            const lista = document.getElementById('lista-choferes');
-            lista.innerHTML = '';
-            data.forEach(c => {
-                lista.innerHTML += `
-                    <tr>
-                        <td>${c.nombre}</td>
-                        <td>${c.telefono}</td>
-                        <td>${c.tiene_licencia_operativa ? '✅' : '❌'}</td>
-                        <td style="color:var(--dorado)">$${c.fondo_actual || 0}</td>
-                        <td class="puntos-btn" onclick="abrirMenu(event, '${c.id}')">⋮</td>
-                    </tr>
-                `;
-            });
-        }
+        // Contadores
+        const hoy = new Date().toISOString().split('T')[0];
+        const { count: vHoy } = await supabaseClient.from('viajes').select('*', { count: 'exact', head: true }).eq('chofer_id', id).gte('created_at', hoy);
+        const { count: vTotal } = await supabaseClient.from('viajes').select('*', { count: 'exact', head: true }).eq('chofer_id', id);
 
-        function abrirMenu(e, id) {
-            e.stopPropagation();
-            choferSeleccionadoId = id;
-            const menu = document.getElementById('menuContextual');
-            menu.style.display = 'block';
-            menu.style.left = e.pageX - 100 + 'px';
-            menu.style.top = e.pageY + 'px';
-        }
+        const d = document.getElementById('detalle-chofer');
+        d.innerHTML = `
+            <img src="${c.foto_chofer || ''}" class="foto-perfil-v">
+            <h2 style="margin:0; font-size:20px;">${c.nombre} ${c.apellido}</h2>
+            <p style="font-size:10px; color:var(--dorado);">TRABAJAR SIN CRÉDITOS: ${c.libre_de_fondo ? 'SÍ' : 'NO'}</p>
 
-        document.addEventListener('click', () => {
-            document.getElementById('menuContextual').style.display = 'none';
-        });
+            <div class="stats-grid">
+                <div class="stat-item"><span>Fondo</span><b>$${c.fondo_actual}</b></div>
+                <div class="stat-item"><span>Hoy</span><b>${vHoy || 0}</b></div>
+                <div class="stat-item"><span>Mes</span><b>0</b></div>
+                <div class="stat-item"><span>Total</span><b>${vTotal || 0}</b></div>
+            </div>
 
-        // --- ACCIONES DEL MENÚ ---
-        async function accionVer() {
-            const { data: c } = await supabaseClient.from('choferes').select('*').eq('id', choferSeleccionadoId).single();
-            choferDataLocal = c;
+            <button class="btn-full btn-verde" onclick="window.open('https://wa.me/${c.telefono}')">WHATSAPP</button>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-full btn-azul" onclick="prepararEdicion()">EDITAR</button>
+                <button class="btn-full btn-rojo" onclick="eliminarChofer('${c.id}')">ELIMINAR</button>
+            </div>
+
+            <div class="tab-nav">
+                <button class="tab-btn active" onclick="showTab('info')">INFO</button>
+                <button class="tab-btn" onclick="showTab('auto')">AUTO</button>
+            </div>
+
+            <div id="tab-info" class="tab-pane active">
+                <p>Teléfono: ${c.telefono}</p>
+                <p>Licencia: ${c.tiene_licencia_operativa ? 'Activa' : 'No'}</p>
+            </div>
             
-            // Simular contadores (Aquí harías queries a la tabla viajes)
-            const hoy = new Date().toISOString().split('T')[0];
-            const { count: vHoy } = await supabaseClient.from('viajes').select('*', { count: 'exact', head: true }).eq('chofer_id', c.id).gte('created_at', hoy);
-            const { count: vTotal } = await supabaseClient.from('viajes').select('*', { count: 'exact', head: true }).eq('chofer_id', c.id);
+            <div id="tab-auto" class="tab-pane">
+                <p>Marca: ${c.marca_carro}</p>
+                <p>Modelo: ${c.modelo_carro}</p>
+            </div>
 
-            const detalle = document.getElementById('detalle-chofer');
-            detalle.innerHTML = `
-                <h2 style="margin:0">${c.nombre} ${c.apellido}</h2>
-                <img src="${c.foto_chofer || 'https://via.placeholder.com/150'}" class="foto-grande">
-                
-                <p style="font-size:12px;"><input type="checkbox" disabled ${c.libre_de_fondo ? 'checked' : ''}> Trabajar sin créditos</p>
-                <div class="campo"><label>Grupo al que pertenece</label>
-                    <input type="radio" name="grupo" checked> Grupo A 
-                    <input type="radio" name="grupo"> Grupo B
-                </div>
+            <button class="btn-full" style="background:#333; margin-top:15px;" onclick="cerrarModal('modalVer')">CERRAR</button>
+        `;
+        abrirModal('modalVer');
+    }
 
-                <div class="stats-grid">
-                    <div class="stat-card"><small>Fondo Actual</small><b>$${c.fondo_actual}</b></div>
-                    <div class="stat-card"><small>Viajes Hoy</small><b>${vHoy || 0}</b></div>
-                    <div class="stat-card"><small>Viajes Mes</small><b>0</b></div>
-                    <div class="stat-card"><small>Viajes Total</small><b>${vTotal || 0}</b></div>
-                </div>
+    function prepararEdicion() {
+        const c = choferSel;
+        const f = document.getElementById('form-editar');
+        f.innerHTML = `
+            <label style="color:var(--dorado); font-size:10px;">NOMBRE</label>
+            <input type="text" id="ed-nom" value="${c.nombre}" style="width:100%; padding:10px; margin-bottom:10px; background:#000; color:white; border:1px solid #333;">
+            <label style="color:var(--dorado); font-size:10px;">TELÉFONO</label>
+            <input type="text" id="ed-tel" value="${c.telefono}" style="width:100%; padding:10px; margin-bottom:10px; background:#000; color:white; border:1px solid #333;">
+            <label style="color:var(--dorado); font-size:10px;">MARCA AUTO</label>
+            <input type="text" id="ed-marca" value="${c.marca_carro || ''}" style="width:100%; padding:10px; margin-bottom:10px; background:#000; color:white; border:1px solid #333;">
+            <div style="margin-top:10px;">
+                <label><input type="checkbox" id="ed-lic" ${c.tiene_licencia_operativa ? 'checked' : ''}> Licencia Operativa</label><br>
+                <label><input type="checkbox" id="ed-libre" ${c.libre_de_fondo ? 'checked' : ''}> Trabajar sin créditos</label>
+            </div>
+        `;
+        abrirModal('modalEditar');
+    }
 
-                <button class="btn-accion" style="background:var(--azul); color:white">FILTRAR VIAJES</button>
-                <button class="btn-accion" style="background:var(--verde); color:white" onclick="window.open('https://wa.me/${c.telefono}')">WHATSAPP</button>
-                <button class="btn-accion" style="background:var(--rojo); color:white" onclick="accionEliminar()">ELIMINAR</button>
-
-                <div class="tab-buttons">
-                    <button class="tab-btn active" onclick="cambiarTab('info')">INFORMACIÓN</button>
-                    <button class="tab-btn" onclick="cambiarTab('auto')">AUTO</button>
-                    <button class="tab-btn" onclick="cambiarTab('fondo')">FONDO</button>
-                </div>
-
-                <div id="t-info" class="tab-content active">
-                    <p>Nombre: ${c.nombre} ${c.apellido}</p>
-                    <p>Teléfono: ${c.telefono}</p>
-                </div>
-
-                <div id="t-auto" class="tab-content">
-                    <img src="${c.foto_carro || 'https://via.placeholder.com/150'}" style="width:100%; border-radius:5px;">
-                    <p>Marca: ${c.marca_carro || 'N/A'}</p>
-                    <p>Modelo: ${c.modelo_carro || 'N/A'}</p>
-                    <p>Color: ${c.color_carro || 'N/A'}</p>
-                    <label><input type="checkbox" disabled ${c.tiene_aire_acondicionado ? 'checked' : ''}> Aire Acondicionado</label><br>
-                    <label><input type="checkbox" disabled ${c.tiene_licencia_operativa ? 'checked' : ''}> Lic. Operativa</label>
-                </div>
-
-                <div id="t-fondo" class="tab-content">
-                    <div style="display:flex; gap:5px; margin-bottom:10px;">
-                        <button onclick="mostrarCajaFondo('add')" style="flex:1; background:var(--verde); border:none; padding:8px; border-radius:5px;">AGREGAR</button>
-                        <button onclick="mostrarCajaFondo('sub')" style="flex:1; background:var(--rojo); border:none; padding:8px; border-radius:5px;">RETIRAR</button>
-                        <button onclick="rectificarFondos()" style="flex:1; background:var(--dorado); border:none; padding:8px; border-radius:5px; font-size:9px;">RECTIFICAR</button>
-                    </div>
-
-                    <div id="caja-operacion" style="display:none; background:#222; padding:10px; border-radius:5px; margin-bottom:10px;">
-                        <label id="lbl-metodo">Método</label>
-                        <select id="f-metodo"><option>Efectivo</option><option>Transferencia</option></select>
-                        <label>Cantidad</label>
-                        <input type="number" id="f-cantidad">
-                        <button class="btn-accion" style="background:var(--verde); margin-top:10px;" onclick="procesarOperacion()">PROCESAR</button>
-                    </div>
-
-                    <div class="container-tabla">
-                        <table class="tabla-fondos">
-                            <thead><tr><th>Usuario</th><th>Metodo</th><th>Saldo</th><th>Fondo</th><th>Activo</th><th>Fecha</th></tr></thead>
-                            <tbody id="historial-fondos"></tbody>
-                        </table>
-                    </div>
-                </div>
-                <button class="btn-accion" style="background:#555; color:white; margin-top:20px" onclick="cerrarModal('modalVer')">CERRAR</button>
-            `;
-            abrirModal('modalVer');
-            cargarHistorialFondos(c.id);
+    async function guardarEdicion() {
+        const upd = {
+            nombre: document.getElementById('ed-nom').value,
+            telefono: document.getElementById('ed-tel').value,
+            marca_carro: document.getElementById('ed-marca').value,
+            tiene_licencia_operativa: document.getElementById('ed-lic').checked,
+            libre_de_fondo: document.getElementById('ed-libre').checked
+        };
+        const { error } = await supabaseClient.from('choferes').update(upd).eq('id', choferSel.id);
+        if(!error) {
+            alert("¡Actualizado!");
+            location.reload();
         }
+    }
 
-        async function accionEliminar() {
-            if (!confirm("¿Seguro que quieres borrar este chófer?")) return;
-            const { error } = await supabaseClient.from('choferes').delete().eq('id', choferSeleccionadoId);
-            if (!error) {
-                alert("Borrado con éxito");
-                location.reload();
-            }
+    async function eliminarChofer(id) {
+        if(confirm("¿Eliminar chofer definitivamente?")) {
+            await supabaseClient.from('choferes').delete().eq('id', id);
+            location.reload();
         }
+    }
 
-        // --- LÓGICA DE FONDOS ---
-        function cambiarTab(tab) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-            document.getElementById('t-' + tab).classList.add('active');
-        }
+    function abrirModal(id) { document.getElementById(id).style.display = 'block'; }
+    function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
+    function showTab(t) {
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('tab-'+t).classList.add('active');
+        event.target.classList.add('active');
+    }
 
-        let tipoOperacion = 'add';
-        function mostrarCajaFondo(tipo) {
-            tipoOperacion = tipo;
-            document.getElementById('caja-operacion').style.display = 'block';
-            document.getElementById('f-metodo').style.display = tipo === 'add' ? 'block' : 'none';
-            document.getElementById('lbl-metodo').style.display = tipo === 'add' ? 'block' : 'none';
-        }
-
-        async function procesarOperacion() {
-            const cant = parseFloat(document.getElementById('f-cantidad').value);
-            if (!cant) return alert("Ingresa cantidad");
-
-            const fondoAnterior = parseFloat(choferDataLocal.fondo_actual) || 0;
-            let saldo = tipoOperacion === 'add' ? cant : -cant;
-            let activo = fondoAnterior + saldo;
-
-            // 1. Insertar Historial
-            const { error: err1 } = await supabaseClient.from('historial_fondos').insert({
-                chofer_id: choferDataLocal.id,
-                usuario: "Admin", // Aquí pondrías el usuario logueado
-                metodo: tipoOperacion === 'add' ? document.getElementById('f-metodo').value : 'Retiro',
-                saldo: saldo,
-                fondo_anterior: fondoAnterior,
-                activo: activo,
-                fecha: new Date()
-            });
-
-            // 2. Actualizar Chofer
-            const { error: err2 } = await supabaseClient.from('choferes').update({ fondo_actual: activo }).eq('id', choferDataLocal.id);
-
-            if (!err1 && !err2) {
-                alert("Operación completada");
-                accionVer(); // Recargar modal
-                cargarChoferes(); // Recargar lista fondo
-            }
-        }
-
-        async function cargarHistorialFondos(id) {
-            const { data } = await supabaseClient.from('historial_fondos').select('*').eq('chofer_id', id).order('fecha', {ascending: false});
-            const tbody = document.getElementById('historial-fondos');
-            tbody.innerHTML = '';
-            data.forEach(h => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${h.usuario}</td>
-                        <td>${h.metodo}</td>
-                        <td style="color:${h.saldo >= 0 ? 'var(--verde)' : 'var(--rojo)'}">${h.saldo}</td>
-                        <td>${h.fondo_anterior}</td>
-                        <td style="font-weight:bold">${h.activo}</td>
-                        <td>${new Date(h.fecha).toLocaleDateString()}</td>
-                    </tr>
-                `;
-            });
-        }
-
-        // --- GUARDAR NUEVO ---
-        async function guardarNuevoChofer() {
-            const n = {
-                nombre: document.getElementById('n-nombre').value,
-                apellido: document.getElementById('n-apellido').value,
-                telefono: document.getElementById('n-tel').value,
-                tiene_licencia_operativa: document.getElementById('n-lic').checked,
-                fondo_actual: parseFloat(document.getElementById('n-fondo').value) || 0,
-                libre_de_fondo: document.getElementById('n-libre').checked,
-                tiene_aire_acondicionado: document.getElementById('n-aire').checked
-            };
-
-            const { error } = await supabaseClient.from('choferes').insert(n);
-            if (!error) {
-                alert("Chófer guardado");
-                location.reload();
-            } else {
-                alert("Error: " + error.message);
-            }
-        }
-
-        cargarChoferes();
-    </script>
+    cargarChoferes();
+</script>
 </body>
 </html>
