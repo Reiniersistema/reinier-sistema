@@ -160,7 +160,7 @@
         <button class="btn-ws" onclick="enviarWS('chofer')">WhatsApp Chofer</button>
         <div id="p-cliente" class="planilla-box"></div>
         <button class="btn-ws" onclick="enviarWS('cliente')">WhatsApp Cliente</button>
-        <div id="p-resumen" class="planilla-box"></div>
+        <div id="p-resumen" class="planilla-box" style="font-family: 'Montserrat'; font-weight: 500;"></div>
         <button class="btn-ws" style="background:var(--dorado); color: black;" onclick="copiarResumen()">COPIAR DATOS</button>
     </div>
 </div>
@@ -174,13 +174,10 @@
     async function cargarColaboraciones() {
         const select = document.getElementById('colaboracion');
         const { data, error } = await supabaseClient.from('colaboraciones').select('nombre').order('nombre', { ascending: true });
-        
         if (!error) {
             let opciones = '<option value="">Seleccionar colaboración...</option>';
             opciones += '<option value="Directo">Directo</option>';
-            data.forEach(item => {
-                opciones += `<option value="${item.nombre}">${item.nombre}</option>`;
-            });
+            data.forEach(item => { opciones += `<option value="${item.nombre}">${item.nombre}</option>`; });
             select.innerHTML = opciones;
         }
     }
@@ -190,7 +187,6 @@
         const colab = document.getElementById('colaboracion').value;
         const campoCliente = document.getElementById('campo-cliente');
         const tipoContainer = document.getElementById('tipo-colab-container');
-
         if (colab !== "" && colab !== "Directo") {
             campoCliente.style.display = "none";
             document.getElementById('tel-cliente').value = "";
@@ -249,6 +245,12 @@
 
     function generarPlanillas() {
         const paradas = Array.from(document.querySelectorAll('.parada-extra')).map(i => i.value).filter(v => v.trim() !== "");
+        const reservado = document.getElementById('reservado').checked;
+        const fechaHoraReserva = document.getElementById('fecha-reserva').value;
+        const km = document.getElementById('distancia').value;
+        const grupo = document.getElementById('grupo').value;
+        const usuarioActual = JSON.parse(localStorage.getItem('usuario_activo'))?.nombre || 'Gestor';
+
         const datos = {
             colab: document.getElementById('colaboracion').value,
             tipo: tipoSeleccionado,
@@ -265,6 +267,7 @@
             obs: document.getElementById('observacion').value
         };
 
+        // PLANILLA CHOFER
         let txtChofer = `*DATOS DEL VIAJE*\n`;
         if(datos.colab && datos.colab !== 'Directo') txtChofer += `Agencia: ${datos.colab} (${datos.tipo})\n`;
         if(datos.precio) txtChofer += `Precio: ${datos.precio}\n`;
@@ -275,24 +278,30 @@
         if(datos.pax) txtChofer += `Pax: ${datos.pax}\n`;
         if(datos.fondo) txtChofer += `Fondo Actual: ${datos.fondo}\n`;
         if(datos.obs) txtChofer += `Obs: ${datos.obs}\n`;
-        txtChofer += `\n⚠️ IMPORTANTE ⚠️\n\n‎•usted tiene 15 minutos máximo para llegar a la dirección de recojida del cliente.
-‎•El cliente tiene 15 minutos para abordar su vehículo,por encima de este tiempo se le cobrará 25 cup el minuto extra
-‎•En caso de llegada tarde a un servicio programado se le descontará el 50% del precio del servicio. 
-‎•Recuerde mantener su auto limpio y en perfectas condiciones técnicas al igual que un trato cordial con cada cliente.`;
+        txtChofer += `\n⚠️ IMPORTANTE ⚠️\n\n‎•Usted tiene 15 minutos máximo para llegar a la dirección de recogida del cliente.\n•El cliente tiene 15 minutos para abordar su vehículo, por encima de este tiempo se le cobrará 25 cup el minuto extra.\n•En caso de llegada tarde a un servicio programado se le descontará el 50% del precio del servicio.\n•Recuerde mantener su auto limpio y en perfectas condiciones técnicas al igual que un trato cordial con cada cliente.`;
         document.getElementById('p-chofer').innerText = txtChofer;
 
+        // PLANILLA CLIENTE
         let txtCliente = `*Taxi En Camino*\n`;
         if(datos.precio) txtCliente += `Precio: ${datos.precio}\n`;
         if(datos.chofer) txtCliente += `Chofer: ${datos.chofer}\n`;
         if(datos.auto) txtCliente += `Auto: ${datos.auto}\n`;
         if(datos.color) txtCliente += `Color: ${datos.color}\n`;
-        txtCliente += `\n⚠️ *IMPORTANTE* ⚠️\n\n‎•Cada parada extra se recalcula la ruta y modifica el costo.
-‎•Al llegar el taxi a su origen usted tiene 10min de espera como cortesía, pasado este tiempo debe pagar por cada minuto extra.
-‎•Tiempo de espera extra:  25cup x minutos. 
-‎•En caso de cancelar estando el auto en el lugar de recogida, deberá pagar la mitad del costo del servicio.`;
+        txtCliente += `\n⚠️ *IMPORTANTE* ⚠️\n\n‎•Cada parada extra se recalcula la ruta y modifica el costo.\n•Al llegar el taxi a su origen usted tiene 10min de espera como cortesía, pasado este tiempo debe pagar por cada minuto extra.\n•Tiempo de espera extra: 25cup x minutos.\n•En caso de cancelar estando el auto en el lugar de recogida, deberá pagar la mitad del costo del servicio.`;
         document.getElementById('p-cliente').innerText = txtCliente;
 
-        document.getElementById('p-resumen').innerText = `RESUMEN:\nChofer: ${datos.chofer}\nCliente: ${datos.cliente || datos.colab}\nPrecio: ${datos.precio}`;
+        // NUEVO RESUMEN SOLICITADO
+        let txtResumen = `Precio: ${datos.precio || ''}\n`;
+        txtResumen += `KM: ${km || ''}\n`;
+        txtResumen += `⏰ Horario: ${reservado ? (fechaHoraReserva.replace('T', ' ')) : 'Ahora'}\n`;
+        txtResumen += `👥 Pasajeros: ${datos.pax}\n\n`;
+        txtResumen += `📍Origen: ${datos.origen}\n`;
+        txtResumen += `📍Paradas: ${datos.paradas || 'Ninguna'}\n`;
+        txtResumen += `📍 Destino: ${datos.destino}\n\n`;
+        if(datos.obs) txtResumen += `⚠️ Observación: ${datos.obs}\n\n`;
+        txtResumen += `#LEGION # ${usuarioActual} #${grupo || 'G'}`;
+        
+        document.getElementById('p-resumen').innerText = txtResumen;
         document.getElementById('modalPlanillas').style.display = 'block';
     }
 
@@ -304,17 +313,17 @@
     }
 
     function copiarResumen() {
-        navigator.clipboard.writeText(document.getElementById('p-resumen').innerText).then(() => alert("Copiado"));
+        const texto = document.getElementById('p-resumen').innerText;
+        navigator.clipboard.writeText(texto).then(() => alert("Copiado al portapapeles"));
     }
 
     async function crearViaje() {
         const colabValue = document.getElementById('colaboracion').value;
+        const usuarioActual = JSON.parse(localStorage.getItem('usuario_activo'))?.nombre || 'Gestor';
+        
         if(!choferData || !document.getElementById('precio-final').value) return alert("Faltan datos");
         if(colabValue !== "" && colabValue !== "Directo" && !tipoSeleccionado) return alert("Seleccione si es Entrada o Salida");
-        
-        if (choferData.fondo_actual < 150 && !choferData.libre_de_fondo) {
-            return alert(`❌ Chófer Bloqueado: Fondo insuficiente.`);
-        }
+        if (choferData.fondo_actual < 150 && !choferData.libre_de_fondo) return alert(`❌ Chófer Bloqueado: Fondo insuficiente.`);
 
         const btn = document.querySelector('button[onclick="crearViaje()"]');
         btn.innerText = "PROCESANDO...";
@@ -331,8 +340,15 @@
             precio: precioViaje,
             cliente_telefono: document.getElementById('tel-cliente').value,
             origen: document.getElementById('origen').value,
+            paradas_intermedias: Array.from(document.querySelectorAll('.parada-extra')).map(i => i.value).filter(v => v.trim() !== "").join(", "),
             destino: document.getElementById('destino').value,
-            grupo_whatsapp: document.getElementById('grupo').value
+            grupo_whatsapp: document.getElementById('grupo').value,
+            usuario_gestor: usuarioActual,
+            distancia_km: parseFloat(document.getElementById('distancia').value) || 0,
+            pasajeros: parseInt(document.getElementById('pax').value) || 1,
+            es_reservado: document.getElementById('reservado').checked,
+            fecha_reserva: document.getElementById('fecha-reserva').value || null,
+            observaciones: document.getElementById('observacion').value
         }]);
 
         if (!error) {
