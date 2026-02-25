@@ -34,7 +34,7 @@
         </table>
     </div>
 
-    <h2>2. Recargas de Fondos (Transferencias/Efectivo)</h2>
+    <h2>2. Recargas de Fondos (Dinero esperando)</h2>
     <div class="tabla-contenedor">
         <table>
             <thead>
@@ -52,32 +52,44 @@
 <script src="config.js"></script>
 <script>
     async function cargarTodo() {
-        // Cargar Choferes no aprobados
+        // 1. Cargar Choferes con aprobado = false
         const { data: choferes } = await supabaseClient.from('choferes').select('*').eq('aprobado', false);
-        document.getElementById('lista-choferes-pendientes').innerHTML = choferes.map(c => `
-            <tr>
-                <td>${c.nombre}</td>
-                <td>${c.telefono}</td>
-                <td>
-                    <button class="btn-aprobar" onclick="aprobarChofer(${c.id})">APROBAR</button>
-                    <button class="btn-eliminar" onclick="borrarRegistro('choferes', ${c.id})">ELIMINAR</button>
-                </td>
-            </tr>
-        `).join('');
+        const tbodyCh = document.getElementById('lista-choferes-pendientes');
+        
+        if (choferes && choferes.length > 0) {
+            tbodyCh.innerHTML = choferes.map(c => `
+                <tr>
+                    <td>${c.nombre}</td>
+                    <td>${c.telefono}</td>
+                    <td>
+                        <button class="btn-aprobar" onclick="aprobarChofer(${c.id})">APROBAR</button>
+                        <button class="btn-eliminar" onclick="borrarRegistro('choferes', ${c.id})">ELIMINAR</button>
+                    </td>
+                </tr>
+            `).join('');
+        } else {
+            tbodyCh.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:15px; color:#666;">No hay nuevos choferes.</td></tr>`;
+        }
 
-        // Cargar Transferencias no aprobadas
-        const { data: pagos } = await supabaseClient.from('transferencias').select('*').eq('aprobado', false);
-        document.getElementById('lista-pagos-pendientes').innerHTML = pagos.map(p => `
-            <tr>
-                <td><b>${p.nombre_chofer}</b></td>
-                <td style="color:var(--dorado)">$${p.monto}</td>
-                <td>${p.tipo_pago}</td>
-                <td>
-                    <button class="btn-aprobar" onclick="aprobarPago(${p.id}, '${p.nombre_chofer}', ${p.monto})">APROBAR</button>
-                    <button class="btn-eliminar" onclick="borrarRegistro('transferencias', ${p.id})">ELIMINAR</button>
-                </td>
-            </tr>
-        `).join('');
+        // 2. Cargar Transferencias con aprobado = false
+        const { data: pagos, error: errPagos } = await supabaseClient.from('transferencias').select('*').eq('aprobado', false);
+        const tbodyPg = document.getElementById('lista-pagos-pendientes');
+
+        if (pagos && pagos.length > 0) {
+            tbodyPg.innerHTML = pagos.map(p => `
+                <tr>
+                    <td><b>${p.nombre_chofer}</b></td>
+                    <td style="color:var(--dorado)">$${p.monto}</td>
+                    <td>${p.tipo_pago}</td>
+                    <td>
+                        <button class="btn-aprobar" onclick="aprobarPago(${p.id}, '${p.nombre_chofer}', ${p.monto})">APROBAR</button>
+                        <button class="btn-eliminar" onclick="borrarRegistro('transferencias', ${p.id})">ELIMINAR</button>
+                    </td>
+                </tr>
+            `).join('');
+        } else {
+            tbodyPg.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:15px; color:#666;">No hay pagos por aprobar.</td></tr>`;
+        }
     }
 
     async function aprobarChofer(id) {
@@ -87,34 +99,41 @@
     }
 
     async function aprobarPago(pagoId, identificador, monto) {
-        // 1. Buscar al chófer por nombre o teléfono
+        // Buscar al chófer por nombre o teléfono para sumarle el dinero
         const { data: chofer } = await supabaseClient
             .from('choferes')
             .select('*')
-            .or(`nombre.eq.${identificador},telefono.eq.${identificador}`)
-            .single();
+            .or(`nombre.eq."${identificador}",telefono.eq."${identificador}"`)
+            .maybeSingle();
 
-        if (!chofer) return alert("No se encontró al chófer en la base de datos para sumar el fondo.");
+        if (!chofer) {
+            alert("No se encontró al chófer '" + identificador + "'. Asegúrate de escribir el nombre igual que en su registro.");
+            return;
+        }
 
-        // 2. Sumar fondo
-        const nuevoFondo = chofer.fondo_actual + monto;
-        await supabaseClient.from('choferes').update({ fondo_actual: nuevoFondo }).eq('id', chofer.id);
+        const nuevoFondo = (chofer.fondo_actual || 0) + monto;
+        
+        // 1. Actualizar fondo del chófer
+        const { error: errorFondo } = await supabaseClient.from('choferes').update({ fondo_actual: nuevoFondo }).eq('id', chofer.id);
+        
+        // 2. Marcar la transferencia como aprobada
+        const { error: errorTrans } = await supabaseClient.from('transferencias').update({ aprobado: true }).eq('id', pagoId);
 
-        // 3. Marcar pago como aprobado
-        await supabaseClient.from('transferencias').update({ aprobado: true }).eq('id', pagoId);
-
-        // 4. Historial
-        await supabaseClient.from('historial_fondos').insert([{
-            chofer_id: chofer.id, usuario: 'Admin', metodo: 'Recarga Aprobada',
-            saldo: monto, fondo_anterior: chofer.fondo_actual, activo: nuevoFondo
-        }]);
-
-        alert("✅ Fondo actualizado con éxito");
-        cargarTodo();
+        if (!errorFondo && !errorTrans) {
+            // 3. Opcional: Registrar en historial
+            await supabaseClient.from('historial_fondos').insert([{
+                chofer_id: chofer.id, usuario: 'Admin', metodo: 'Recarga Aprobada',
+                saldo: monto, fondo_anterior: chofer.fondo_actual, activo: nuevoFondo
+            }]);
+            alert("✅ Fondo de " + chofer.nombre + " actualizado a $" + nuevoFondo);
+            cargarTodo();
+        } else {
+            alert("Error al procesar: " + (errorFondo?.message || errorTrans?.message));
+        }
     }
 
     async function borrarRegistro(tabla, id) {
-        if(confirm("¿Seguro que quieres eliminar este registro?")) {
+        if(confirm("¿Seguro que quieres eliminar este registro definitivamente?")) {
             await supabaseClient.from(tabla).delete().eq('id', id);
             cargarTodo();
         }
