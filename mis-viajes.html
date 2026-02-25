@@ -87,7 +87,7 @@
                     <th>Chofer</th>
                     <th>Precio</th>
                     <th>Ruta</th>
-                    <th>Gestor</th>
+                    <th>Usuario</th>
                 </tr>
             </thead>
             <tbody id="lista-viajes">
@@ -111,7 +111,6 @@
     }
 
     async function cargarViajes(filtro = 'todos', inicio = null, fin = null) {
-        // CORRECCIÓN: Se cambian los nombres de columnas para que coincidan con tu tabla real
         let query = supabaseClient
             .from('viajes')
             .select('precio, origen, destino, usuario_gestor, chofer_id, created_at')
@@ -153,7 +152,7 @@
                     <td><b>${choferMap[v.chofer_id] || 'Chófer #' + v.chofer_id}</b></td>
                     <td style="color:var(--dorado); font-weight:bold;">$${v.precio}</td>
                     <td>${v.origen} <br> <small style="color:#888">→ ${v.destino}</small></td>
-                    <td><span class="badge-user">${v.usuario_gestor || 'Sistema'}</span></td>
+                    <td><span class="badge-user">${v.usuario_gestor || 'Admin'}</span></td>
                 </tr>
             `).join('');
         } else {
