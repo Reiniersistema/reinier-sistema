@@ -7,57 +7,40 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; --rojo: #dc3545; }
+        :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; --rojo: #dc3545; --verde: #28a745; }
         body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding: 15px; }
-        
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--dorado); padding-bottom: 10px; }
         h2 { color: var(--dorado); font-size: 18px; text-transform: uppercase; margin: 0; }
-        
-        .btn-group { display: flex; gap: 10px; }
         .btn-action { background: var(--dorado); color: black; border: none; padding: 10px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 11px; }
-        .btn-embudo { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--dorado); }
-
-        /* Filtro de Fecha */
-        #filtroFecha { display: none; background: #252525; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid var(--dorado); }
-
-        /* Formulario Añadir */
         #formAdd { display: none; background: #252525; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--dorado); }
         input, select { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #333; background: #000; color: white; box-sizing: border-box; }
-
         .tabla-contenedor { background: var(--gris); border-radius: 12px; overflow-x: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         table { width: 100%; border-collapse: collapse; min-width: 600px; }
         th { text-align: left; padding: 12px 10px; color: var(--dorado); font-size: 10px; text-transform: uppercase; border-bottom: 2px solid #333; }
         td { padding: 15px 10px; border-bottom: 1px solid #222; font-size: 12px; }
-        
-        .btn-del { color: var(--rojo); background: none; border: none; font-weight: bold; cursor: pointer; font-size: 16px; }
+        .status { font-size: 10px; font-weight: bold; text-transform: uppercase; padding: 3px 6px; border-radius: 4px; }
+        .pendiente { background: #555; color: white; }
+        .aprobado { background: var(--verde); color: white; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h2>Transferencias</h2>
-    <div class="btn-group">
-        <button class="btn-embudo" onclick="toggleElement('filtroFecha')">⏳</button>
-        <button class="btn-action" onclick="toggleElement('formAdd')">+ AÑADIR</button>
-    </div>
-</div>
-
-<div id="filtroFecha">
-    <label style="font-size: 11px; color: var(--dorado);">FILTRAR POR FECHA:</label>
-    <input type="date" id="inputFiltroFecha" onchange="filtrarPorFecha()">
-    <button class="btn-action" onclick="cargarTransferencias()" style="width:100%; background:#444; color:white;">VER TODOS</button>
+    <h2>Registro de Pagos</h2>
+    <button class="btn-action" onclick="toggleForm()">+ AÑADIR PAGO</button>
 </div>
 
 <div id="formAdd">
-    <input type="text" id="chofer-nombre" placeholder="Nombre del Chófer">
-    <input type="text" id="usuario-nombre" placeholder="Nombre del Usuario (Gestor)">
+    <label style="font-size:10px; color:var(--dorado)">CHÓFER (NOMBRE O TELÉFONO)</label>
+    <input type="text" id="chofer-id" placeholder="Ej: Juan Perez o 52345678">
+    <input type="text" id="usuario-nombre" placeholder="Tu nombre (Gestor)">
     <select id="tipo-pago">
         <option value="Transferencia">Transferencia</option>
         <option value="Efectivo">Efectivo</option>
     </select>
-    <input type="number" id="monto-pago" placeholder="Monto del Pago">
+    <input type="number" id="monto-pago" placeholder="Monto $">
     <input type="date" id="fecha-pago">
-    <button class="btn-action" onclick="guardarTransferencia()" style="width:100%; padding:15px;">REGISTRAR PAGO</button>
+    <button class="btn-action" onclick="guardarTransferencia()" style="width:100%; padding:15px;">ENVIAR A APROBACIÓN</button>
 </div>
 
 <div class="tabla-contenedor">
@@ -65,86 +48,55 @@
         <thead>
             <tr>
                 <th>Fecha</th>
-                <th>Chófer</th>
-                <th>Usuario</th>
-                <th>Método</th>
+                <th>Identificador</th>
                 <th>Monto</th>
-                <th>Acción</th>
+                <th>Método</th>
+                <th>Estado</th>
             </tr>
         </thead>
-        <tbody id="lista-transferencias">
-            </tbody>
+        <tbody id="lista-transferencias"></tbody>
     </table>
 </div>
 
 <script src="config.js"></script>
 <script>
-    function toggleElement(id) {
-        const el = document.getElementById(id);
-        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    function toggleForm() {
+        const f = document.getElementById('formAdd');
+        f.style.display = f.style.display === 'block' ? 'none' : 'block';
     }
 
-    async function cargarTransferencias(fechaFiltro = null) {
-        let query = supabaseClient.from('transferencias').select('*').order('fecha', { ascending: false });
-        
-        if (fechaFiltro) {
-            query = query.eq('fecha', fechaFiltro);
-        }
-
-        const { data, error } = await query;
+    async function cargarTransferencias() {
+        const { data } = await supabaseClient.from('transferencias').select('*').order('created_at', { ascending: false });
         const tbody = document.getElementById('lista-transferencias');
-        
-        if (data.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px;">No hay registros.</td></tr>`;
-            return;
-        }
-
         tbody.innerHTML = data.map(t => `
             <tr>
                 <td>${t.fecha}</td>
                 <td><b>${t.nombre_chofer}</b></td>
-                <td>${t.nombre_usuario}</td>
+                <td style="color:var(--dorado)">$${t.monto}</td>
                 <td>${t.tipo_pago}</td>
-                <td style="color:var(--dorado); font-weight:bold;">$${t.monto}</td>
-                <td><button class="btn-del" onclick="eliminarTransferencia(${t.id})">ELIMINAR</button></td>
+                <td><span class="status ${t.aprobado ? 'aprobado' : 'pendiente'}">${t.aprobado ? 'Aprobado' : 'En Espera'}</span></td>
             </tr>
         `).join('');
     }
 
     async function guardarTransferencia() {
         const datos = {
-            nombre_chofer: document.getElementById('chofer-nombre').value,
+            nombre_chofer: document.getElementById('chofer-id').value,
             nombre_usuario: document.getElementById('usuario-nombre').value,
             tipo_pago: document.getElementById('tipo-pago').value,
             monto: parseFloat(document.getElementById('monto-pago').value),
-            fecha: document.getElementById('fecha-pago').value || new Date().toISOString().split('T')[0]
+            fecha: document.getElementById('fecha-pago').value || new Date().toISOString().split('T')[0],
+            aprobado: false
         };
 
-        if(!datos.nombre_chofer || !datos.monto) return alert("Nombre y Monto son obligatorios");
+        if(!datos.nombre_chofer || !datos.monto) return alert("Faltan datos");
 
         const { error } = await supabaseClient.from('transferencias').insert([datos]);
-
         if(!error) {
-            alert("Pago registrado con éxito");
+            alert("✅ Pago registrado. Pendiente de aprobación en el Panel.");
             location.reload();
-        } else {
-            alert("Error: " + error.message);
         }
     }
-
-    async function eliminarTransferencia(id) {
-        if(confirm("¿Eliminar este registro de pago?")) {
-            const { error } = await supabaseClient.from('transferencias').delete().eq('id', id);
-            if(!error) cargarTransferencias();
-        }
-    }
-
-    function filtrarPorFecha() {
-        const fecha = document.getElementById('inputFiltroFecha').value;
-        if(fecha) cargarTransferencias(fecha);
-    }
-
-    // Cargar al iniciar
     cargarTransferencias();
 </script>
 </body>
