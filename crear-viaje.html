@@ -26,6 +26,11 @@
         .check-item { display: flex; align-items: center; font-size: 12px; color: #ccc; }
         .check-item input { width: auto; margin-right: 8px; cursor: pointer; }
 
+        /* Estilo para botones Entrada/Salida */
+        .tipo-colab-group { display: none; gap: 10px; margin-top: 10px; }
+        .btn-tipo { flex: 1; background: #333; color: white; border: 1px solid #444; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: bold; }
+        .btn-tipo.active { background: var(--dorado); color: black; border-color: var(--dorado); }
+
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); overflow-y: auto; padding: 20px; box-sizing: border-box; z-index: 2000; }
         .planilla-box { background: white; color: black; padding: 20px; border-radius: 10px; margin-bottom: 15px; white-space: pre-wrap; font-family: 'Courier New', Courier, monospace; font-size: 13px; line-height: 1.3; }
         .btn-ws { background: #25d366; color: white; padding: 14px; border: none; border-radius: 8px; width: 100%; font-weight: bold; margin-bottom: 25px; cursor: pointer; }
@@ -38,9 +43,18 @@
 
     <div class="field">
         <label>Colaboración</label>
-        <select id="colaboracion">
+        <select id="colaboracion" onchange="actualizarInterfazColab()">
             <option value="">Cargando agencias...</option>
         </select>
+        <div id="tipo-colab-container" class="tipo-colab-group">
+            <button id="btn-entrada" class="btn-tipo" onclick="seleccionarTipo('Entrada')">ENTRADA</button>
+            <button id="btn-salida" class="btn-tipo" onclick="seleccionarTipo('Salida')">SALIDA</button>
+        </div>
+    </div>
+
+    <div class="field" id="campo-cliente">
+        <label>Cliente (Teléfono)</label>
+        <input type="tel" id="tel-cliente" placeholder="Número del cliente">
     </div>
 
     <div class="field">
@@ -50,11 +64,6 @@
             <button class="btn-action" onclick="buscarChofer()">BUSCAR</button>
         </div>
         <div id="res-chofer" class="info-chofer"></div>
-    </div>
-
-    <div class="field">
-        <label>Cliente (Teléfono)</label>
-        <input type="tel" id="tel-cliente" placeholder="Número del cliente">
     </div>
 
     <div class="field">
@@ -130,25 +139,54 @@
 <script src="config.js"></script>
 <script>
     let choferData = null;
+    let tipoSeleccionado = ""; // Para guardar 'Entrada' o 'Salida'
 
-    // --- NUEVO: CARGAR COLABORACIONES DESDE LA TABLA ---
     async function cargarColaboraciones() {
         const select = document.getElementById('colaboracion');
         const { data, error } = await supabaseClient.from('colaboraciones').select('nombre').order('nombre', { ascending: true });
         
         if (!error) {
             let opciones = '<option value="">Seleccionar colaboración...</option>';
-            opciones += '<option value="Directo">Directo</option>'; // Opción por defecto
+            opciones += '<option value="Directo">Directo</option>';
             data.forEach(item => {
                 opciones += `<option value="${item.nombre}">${item.nombre}</option>`;
             });
             select.innerHTML = opciones;
-        } else {
-            select.innerHTML = '<option value="">Error al cargar agencias</option>';
         }
     }
-    cargarColaboraciones(); // Ejecutar al cargar la página
-    // --------------------------------------------------
+    cargarColaboraciones();
+
+    // NUEVA FUNCIÓN: Controlar visibilidad de Cliente y botones Entrada/Salida
+    function actualizarInterfazColab() {
+        const colab = document.getElementById('colaboracion').value;
+        const campoCliente = document.getElementById('campo-cliente');
+        const tipoContainer = document.getElementById('tipo-colab-container');
+
+        if (colab !== "" && colab !== "Directo") {
+            // Es una AGENCIA
+            campoCliente.style.display = "none";
+            document.getElementById('tel-cliente').value = ""; // Limpiar el número si se oculta
+            tipoContainer.style.display = "flex";
+        } else {
+            // Es DIRECTO o Vacío
+            campoCliente.style.display = "block";
+            tipoContainer.style.display = "none";
+            tipoSeleccionado = ""; // Resetear tipo
+            desmarcarBotones();
+        }
+    }
+
+    function seleccionarTipo(tipo) {
+        tipoSeleccionado = tipo;
+        desmarcarBotones();
+        if (tipo === 'Entrada') document.getElementById('btn-entrada').classList.add('active');
+        if (tipo === 'Salida') document.getElementById('btn-salida').classList.add('active');
+    }
+
+    function desmarcarBotones() {
+        document.getElementById('btn-entrada').classList.remove('active');
+        document.getElementById('btn-salida').classList.remove('active');
+    }
 
     async function buscarChofer() {
         const tel = document.getElementById('tel-chofer').value;
@@ -158,12 +196,7 @@
             choferData = data;
             const res = document.getElementById('res-chofer');
             res.style.display = 'block';
-            
-            let statusHTML = "";
-            if (data.fondo_actual < 150 && !data.libre_de_fondo) {
-                statusHTML = `<br><b style="color:#ff4444;">⚠️ ESTADO: BLOQUEADO POR FONDO</b>`;
-            }
-
+            let statusHTML = (data.fondo_actual < 150 && !data.libre_de_fondo) ? `<br><b style="color:#ff4444;">⚠️ ESTADO: BLOQUEADO POR FONDO</b>` : "";
             res.innerHTML = `<b>Nombre:</b> ${data.nombre} ${data.apellido || ''}<br><b>Auto:</b> ${data.marca_carro} ${data.modelo_carro}<br><b>Color:</b> ${data.color_carro}<br><b>Fondo Actual:</b> $${data.fondo_actual}${statusHTML}`;
         } else { alert("Chofer no encontrado"); }
     }
@@ -188,6 +221,8 @@
     function generarPlanillas() {
         const paradas = Array.from(document.querySelectorAll('.parada-extra')).map(i => i.value).filter(v => v.trim() !== "");
         const datos = {
+            colab: document.getElementById('colaboracion').value,
+            tipo: tipoSeleccionado,
             precio: document.getElementById('precio-final').value,
             cliente: document.getElementById('tel-cliente').value,
             origen: document.getElementById('origen').value,
@@ -202,6 +237,7 @@
         };
 
         let txtChofer = `*DATOS DEL VIAJE*\n`;
+        if(datos.colab && datos.colab !== 'Directo') txtChofer += `Agencia: ${datos.colab} (${datos.tipo})\n`;
         if(datos.precio) txtChofer += `Precio: ${datos.precio}\n`;
         if(datos.cliente) txtChofer += `Cliente: ${datos.cliente}\n`;
         if(datos.origen) txtChofer += `Origen: ${datos.origen}\n`;
@@ -209,7 +245,8 @@
         if(datos.destino) txtChofer += `Destino: ${datos.destino}\n`;
         if(datos.pax) txtChofer += `Pax: ${datos.pax}\n`;
         if(datos.fondo) txtChofer += `Fondo Actual: ${datos.fondo}\n`;
-        txtChofer += `\n⚠️ IMPORTANTE ⚠️\n\n‎•usted tiene 15 minutos máximo para llegar a la dirección de recojida del cliente.\n‎•El cliente tiene 15 minutos para abordar su vehículo,por encima de este tiempo se le cobrará 25 cup el minuto extra\n‎•En caso de llegada tarde a un servicio programado se le descontará el 50% del precio del servicio. \n‎•Recuerde mantener su auto limpio y en perfectas condiciones técnicas al igual que un trato cordial con cada cliente.`;
+        if(datos.obs) txtChofer += `Obs: ${datos.obs}\n`;
+        txtChofer += `\n⚠️ IMPORTANTE ⚠️\n\n•usted tiene 15 minutos máximo para llegar a la dirección de recojida del cliente.\n•El cliente tiene 15 minutos para abordar su vehículo...\n•Recuerde mantener su auto limpio...`;
         document.getElementById('p-chofer').innerText = txtChofer;
 
         let txtCliente = `*Taxi En Camino*\n`;
@@ -217,15 +254,16 @@
         if(datos.chofer) txtCliente += `Chofer: ${datos.chofer}\n`;
         if(datos.auto) txtCliente += `Auto: ${datos.auto}\n`;
         if(datos.color) txtCliente += `Color: ${datos.color}\n`;
-        txtCliente += `\n⚠️ *IMPORTANTE* ⚠️\n\n‎•Cada parada extra se recalcula la ruta y modifica el costo.\n‎•Al llegar el taxi a su origen usted tiene 10min de espera como cortesía, pasado este tiempo debe pagar por cada minuto extra.\n‎•Tiempo de espera extra: 25cup x minutos. \n‎•En caso de cancelar estando el auto en el lugar de recogida, deberá pagar la mitad del costo del servicio.`;
+        txtCliente += `\n⚠️ *IMPORTANTE* ⚠️\n\n•Cada parada extra recalcula la ruta...`;
         document.getElementById('p-cliente').innerText = txtCliente;
 
-        document.getElementById('p-resumen').innerText = `RESUMEN:\nChofer: ${datos.chofer}\nCliente: ${datos.cliente}\nPrecio: ${datos.precio}`;
+        document.getElementById('p-resumen').innerText = `RESUMEN:\nChofer: ${datos.chofer}\nCliente: ${datos.cliente || datos.colab}\nPrecio: ${datos.precio}`;
         document.getElementById('modalPlanillas').style.display = 'block';
     }
 
     function enviarWS(tipo) {
         const num = tipo === 'chofer' ? document.getElementById('tel-chofer').value : document.getElementById('tel-cliente').value;
+        if(tipo === 'cliente' && !num) return alert("No hay número de cliente para enviar.");
         const msg = encodeURIComponent(document.getElementById(tipo === 'chofer' ? 'p-chofer' : 'p-cliente').innerText);
         window.open(`https://wa.me/${num}?text=${msg}`, '_blank');
     }
@@ -235,10 +273,12 @@
     }
 
     async function crearViaje() {
+        const colabValue = document.getElementById('colaboracion').value;
         if(!choferData || !document.getElementById('precio-final').value) return alert("Faltan datos");
+        if(colabValue !== "" && colabValue !== "Directo" && !tipoSeleccionado) return alert("Seleccione si es Entrada o Salida");
         
         if (choferData.fondo_actual < 150 && !choferData.libre_de_fondo) {
-            return alert(`❌ Chófer Bloqueado: ${choferData.nombre} tiene un fondo de $${choferData.fondo_actual}. No puede realizar viajes hasta recargar.`);
+            return alert(`❌ Chófer Bloqueado: Fondo insuficiente.`);
         }
 
         const btn = document.querySelector('button[onclick="crearViaje()"]');
@@ -246,14 +286,12 @@
         btn.disabled = true;
 
         const precioViaje = parseFloat(document.getElementById('precio-final').value);
-        let descuento = 0;
-        if (!choferData.libre_de_fondo) {
-            descuento = precioViaje * (choferData.tiene_licencia_operativa ? 0.12 : 0.15);
-        }
+        let descuento = (!choferData.libre_de_fondo) ? precioViaje * (choferData.tiene_licencia_operativa ? 0.12 : 0.15) : 0;
         const nuevoFondo = choferData.fondo_actual - descuento;
 
         const { error } = await supabaseClient.from('viajes').insert([{
-            colaboracion: document.getElementById('colaboracion').value,
+            colaboracion: colabValue,
+            tipo_agencia: tipoSeleccionado, // Añadir esta columna en Supabase si deseas guardarlo
             chofer_id: choferData.id,
             precio: precioViaje,
             cliente_telefono: document.getElementById('tel-cliente').value,
@@ -264,13 +302,6 @@
 
         if (!error) {
             await supabaseClient.from('choferes').update({ fondo_actual: nuevoFondo }).eq('id', choferData.id);
-            if(descuento > 0) {
-                await supabaseClient.from('historial_fondos').insert([{
-                    chofer_id: choferData.id, usuario: 'Sistema', metodo: 'Descuento Viaje',
-                    saldo: descuento, fondo_anterior: choferData.fondo_actual, activo: nuevoFondo
-                }]);
-            }
-            alert("Viaje creado. Descuento: $" + descuento.toFixed(2));
             location.reload();
         } else {
             alert("Error: " + error.message);
