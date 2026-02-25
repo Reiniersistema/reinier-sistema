@@ -11,232 +11,189 @@
         body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding: 15px; }
         
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--dorado); padding-bottom: 10px; }
-        h2 { color: var(--dorado); font-size: 18px; text-transform: uppercase; margin: 0; }
+        h2 { color: var(--dorado); font-size: 16px; text-transform: uppercase; margin: 0; }
         .btn-add { background: var(--dorado); color: black; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
         /* Tarjetas de Usuario */
         .usuarios-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
-        .user-card { background: var(--gris); border-radius: 20px; padding: 25px 10px; text-align: center; position: relative; border: 1px solid #333; }
+        .user-card { background: var(--gris); border-radius: 20px; padding: 25px 10px; text-align: center; border: 1px solid #333; cursor: pointer; transition: 0.3s; }
+        .user-card:active { transform: scale(0.95); background: #252525; }
         .user-img { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 2px solid var(--dorado); margin-bottom: 10px; }
         
-        /* Botón de 3 puntos */
-        .dots-menu { position: absolute; top: 15px; right: 15px; color: var(--dorado); font-size: 24px; cursor: pointer; padding: 5px; line-height: 1; z-index: 10; }
-
-        /* El Menú Desplegable (Estilo de tu imagen) */
-        .dropdown-menu {
-            display: none;
-            position: absolute;
-            top: 45px;
-            right: 10px;
-            background: #252525;
-            border: 1px solid #444;
-            border-radius: 8px;
-            z-index: 100;
-            min-width: 130px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            overflow: hidden;
-        }
-        .dropdown-menu button {
-            display: block;
-            width: 100%;
-            padding: 12px 15px;
-            background: none;
-            border: none;
-            color: white;
-            text-align: left;
-            font-size: 14px;
-            font-family: 'Montserrat';
-            cursor: pointer;
-            border-bottom: 1px solid #333;
-        }
-        .dropdown-menu button:last-child { border-bottom: none; border-top: 1px solid var(--dorado); }
-        .dropdown-menu button:active { background: #333; }
-
         /* Modales */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; overflow-y: auto; }
-        .modal-content { background: var(--gris); max-width: 380px; margin: 50px auto; border-radius: 20px; padding: 25px; border: 1px solid var(--dorado); }
-        input, select { width: 100%; padding: 14px; margin-bottom: 15px; border-radius: 10px; border: 1px solid #333; background: #000; color: white; box-sizing: border-box; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; overflow-y: auto; }
+        .modal-content { background: var(--gris); max-width: 400px; margin: 30px auto; border-radius: 20px; padding: 25px; border: 1px solid var(--dorado); box-sizing: border-box; }
         
-        .photo-area { width: 120px; height: 120px; background: #000; border: 2px dashed var(--dorado); border-radius: 15px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; }
+        input, select { width: 100%; padding: 14px; margin-bottom: 12px; border-radius: 10px; border: 1px solid #333; background: #000; color: white; box-sizing: border-box; font-family: 'Montserrat'; }
+        
+        .photo-area { width: 150px; height: 150px; background: #000; border: 2px dashed var(--dorado); border-radius: 15px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; }
         .photo-area img { width: 100%; height: 100%; object-fit: cover; }
+
+        .btn-accion { width: 100%; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; border: none; margin-top: 10px; font-family: 'Montserrat'; }
+        .btn-editar { background: #3498db; color: white; }
+        .btn-eliminar { background: var(--rojo); color: white; }
+        .btn-cancelar { background: none; color: #888; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h2 style="font-size: 16px;">USUARIOS REGISTRADOS</h2>
-    <button class="btn-add" onclick="mostrarModalAdd()">+ AÑADIR</button>
+    <h2>USUARIOS REGISTRADOS</h2>
+    <button class="btn-add" onclick="abrirParaCrear()">+ AÑADIR</button>
 </div>
 
 <div class="usuarios-grid" id="grid-usuarios"></div>
 
-<div id="modalForm" class="modal">
+<div id="modalPlanilla" class="modal">
     <div class="modal-content">
-        <h3 id="titulo-modal" style="text-align:center; color:var(--dorado); margin-top:0;">USUARIO</h3>
-        <div class="photo-area" onclick="document.getElementById('inputFoto').click()">
-            <span id="txt-placeholder" style="font-size:10px; color:#666;">FOTO AQUÍ</span>
-            <img id="pre-img" style="display:none;">
-        </div>
-        <input type="file" id="inputFoto" hidden accept="image/*" onchange="validarFoto(this)">
+        <h3 id="modal-titulo" style="text-align:center; color:var(--dorado); margin-top:0;">PLANILLA DE USUARIO</h3>
         
-        <input type="text" id="f-nombre" placeholder="Nombre">
-        <input type="text" id="f-apellidos" placeholder="Apellidos">
-        <input type="tel" id="f-telefono" placeholder="Teléfono">
-        <input type="text" id="f-pass" placeholder="Contraseña">
-        <select id="f-rol">
-            <option value="Gestor">Gestor</option>
-            <option value="Administrador">Administrador</option>
-        </select>
-        <button class="btn-add" style="width:100%; padding:15px; margin-top:10px;" onclick="guardarDatos()">GUARDAR</button>
-        <button onclick="cerrar('modalForm')" style="width:100%; background:none; color:#777; border:none; margin-top:15px; cursor:pointer;">CANCELAR</button>
-    </div>
-</div>
-
-<div id="modalVer" class="modal">
-    <div class="modal-content" style="text-align:center;">
-        <img id="v-foto" style="width:200px; height:200px; border-radius:20px; object-fit:cover; border:3px solid var(--dorado); margin-bottom:20px;">
-        <h2 id="v-nombre" style="margin:5px 0;"></h2>
-        <p id="v-rol" style="color:var(--dorado); font-weight:bold; text-transform:uppercase;"></p>
-        <div style="text-align:left; border-top:1px solid #333; margin-top:20px; padding-top:20px;">
-            <p><b>Teléfono:</b> <span id="v-tel"></span></p>
+        <div id="area-foto" class="photo-area" onclick="document.getElementById('inputFoto').click()">
+            <img id="p-img" src="" style="width:100%; height:100%; object-fit:cover;">
+            <span id="p-txt" style="display:none; font-size:10px; color:#666;">TOCA PARA FOTO</span>
         </div>
-        <button class="btn-add" style="width:100%; margin-top:30px;" onclick="cerrar('modalVer')">CERRAR</button>
+        <input type="file" id="inputFoto" hidden accept="image/*" onchange="previewFoto(this)">
+
+        <div id="campos-datos">
+            <input type="text" id="p-nombre" placeholder="Nombre">
+            <input type="text" id="p-apellidos" placeholder="Apellidos">
+            <input type="tel" id="p-telefono" placeholder="Teléfono">
+            <input type="text" id="p-pass" placeholder="Contraseña">
+            <select id="p-rol">
+                <option value="Gestor">Gestor</option>
+                <option value="Administrador">Administrador</option>
+            </select>
+        </div>
+
+        <div id="controles-ver">
+            <button class="btn-accion btn-editar" onclick="modoEdicion()">EDITAR DATOS</button>
+            <button class="btn-accion btn-eliminar" onclick="eliminarActual()">ELIMINAR USUARIO</button>
+        </div>
+
+        <div id="controles-edit" style="display:none;">
+            <button class="btn-add" style="width:100%; padding:15px;" onclick="guardar()">GUARDAR CAMBIOS</button>
+        </div>
+        
+        <button class="btn-accion btn-cancelar" onclick="cerrarModal()">CERRAR</button>
     </div>
 </div>
 
 <script src="config.js"></script>
 <script>
-    let todosLosUsuarios = [];
-    let idParaEditar = null;
-    let fotoActualURL = "";
+    let listaUsuarios = [];
+    let usuarioActivo = null;
+    let fotoTempURL = "";
 
     async function cargar() {
         const { data } = await supabaseClient.from('usuarios').select('*').order('nombre');
-        todosLosUsuarios = data || [];
+        listaUsuarios = data || [];
         const grid = document.getElementById('grid-usuarios');
-        grid.innerHTML = "";
-
-        todosLosUsuarios.forEach((u, i) => {
-            const card = document.createElement('div');
-            card.className = 'user-card';
-            card.innerHTML = `
-                <div class="dots-menu" onclick="abrirMenu(event, ${u.id})">⋮</div>
-                <div id="menu-${u.id}" class="dropdown-menu">
-                    <button onclick="verPlanilla(${i})">Ver</button>
-                    <button onclick="editarUser(${i})">Editar</button>
-                    <button onclick="eliminarUser(${u.id})" style="color:var(--rojo);">Eliminar</button>
-                </div>
+        grid.innerHTML = listaUsuarios.map((u, i) => `
+            <div class="user-card" onclick="verUsuario(${i})">
                 <img src="${u.foto_perfil || 'https://via.placeholder.com/150'}" class="user-img">
                 <div style="font-weight:bold; font-size:15px;">${u.nombre}</div>
-                <div style="font-size:11px; color:var(--dorado); text-transform:uppercase; margin-top:4px;">${u.rol}</div>
-            `;
-            grid.appendChild(card);
-        });
+                <div style="font-size:11px; color:var(--dorado); text-transform:uppercase;">${u.rol}</div>
+            </div>
+        `).join('');
     }
 
-    function abrirMenu(e, id) {
-        e.stopPropagation();
-        document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
-        document.getElementById(`menu-${id}`).style.display = 'block';
+    function verUsuario(index) {
+        usuarioActivo = listaUsuarios[index];
+        fotoTempURL = usuarioActivo.foto_perfil;
+        
+        // Configurar Vista
+        document.getElementById('modal-titulo').innerText = "PLANILLA DE USUARIO";
+        document.getElementById('p-img').src = usuarioActivo.foto_perfil || 'https://via.placeholder.com/150';
+        document.getElementById('p-nombre').value = usuarioActivo.nombre;
+        document.getElementById('p-apellidos').value = usuarioActivo.apellidos;
+        document.getElementById('p-telefono').value = usuarioActivo.telefono;
+        document.getElementById('p-pass').value = usuarioActivo.password;
+        document.getElementById('p-rol').value = usuarioActivo.rol;
+
+        // Bloquear inputs para "Solo Ver"
+        alternarInputs(true);
+        document.getElementById('controles-ver').style.display = 'block';
+        document.getElementById('controles-edit').style.display = 'none';
+        document.getElementById('modalPlanilla').style.display = 'block';
     }
 
-    document.addEventListener('click', () => {
-        document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
-    });
+    function modoEdicion() {
+        document.getElementById('modal-titulo').innerText = "EDITANDO DATOS";
+        alternarInputs(false);
+        document.getElementById('controles-ver').style.display = 'none';
+        document.getElementById('controles-edit').style.display = 'block';
+    }
 
-    function validarFoto(input) {
+    function abrirParaCrear() {
+        usuarioActivo = null;
+        fotoTempURL = "";
+        document.getElementById('modal-titulo').innerText = "NUEVO USUARIO";
+        document.getElementById('p-nombre').value = "";
+        document.getElementById('p-apellidos').value = "";
+        document.getElementById('p-telefono').value = "";
+        document.getElementById('p-pass').value = "";
+        document.getElementById('p-img').src = "https://via.placeholder.com/150";
+        
+        alternarInputs(false);
+        document.getElementById('controles-ver').style.display = 'none';
+        document.getElementById('controles-edit').style.display = 'block';
+        document.getElementById('modalPlanilla').style.display = 'block';
+    }
+
+    function alternarInputs(estado) {
+        const ids = ['p-nombre', 'p-apellidos', 'p-telefono', 'p-pass', 'p-rol'];
+        ids.forEach(id => document.getElementById(id).disabled = estado);
+        document.getElementById('area-foto').style.pointerEvents = estado ? 'none' : 'auto';
+    }
+
+    function previewFoto(input) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
-            reader.onload = e => {
-                document.getElementById('pre-img').src = e.target.result;
-                document.getElementById('pre-img').style.display = 'block';
-                document.getElementById('txt-placeholder').style.display = 'none';
-            };
+            reader.onload = e => document.getElementById('p-img').src = e.target.result;
             reader.readAsDataURL(input.files[0]);
         }
     }
 
-    function mostrarModalAdd() {
-        idParaEditar = null;
-        fotoActualURL = "";
-        document.getElementById('titulo-modal').innerText = "NUEVO USUARIO";
-        document.getElementById('f-nombre').value = "";
-        document.getElementById('f-apellidos').value = "";
-        document.getElementById('f-telefono').value = "";
-        document.getElementById('f-pass').value = "";
-        document.getElementById('pre-img').style.display = 'none';
-        document.getElementById('txt-placeholder').style.display = 'block';
-        document.getElementById('modalForm').style.display = 'block';
-    }
-
-    function verPlanilla(index) {
-        const u = todosLosUsuarios[index];
-        document.getElementById('v-foto').src = u.foto_perfil || 'https://via.placeholder.com/150';
-        document.getElementById('v-nombre').innerText = u.nombre + " " + u.apellidos;
-        document.getElementById('v-rol').innerText = u.rol;
-        document.getElementById('v-tel').innerText = u.telefono;
-        document.getElementById('modalVer').style.display = 'block';
-    }
-
-    function editarUser(index) {
-        const u = todosLosUsuarios[index];
-        idParaEditar = u.id;
-        fotoActualURL = u.foto_perfil;
-        document.getElementById('titulo-modal').innerText = "EDITAR USUARIO";
-        document.getElementById('f-nombre').value = u.nombre;
-        document.getElementById('f-apellidos').value = u.apellidos;
-        document.getElementById('f-telefono').value = u.telefono;
-        document.getElementById('f-pass').value = u.password;
-        document.getElementById('f-rol').value = u.rol;
-        if(u.foto_perfil) {
-            document.getElementById('pre-img').src = u.foto_perfil;
-            document.getElementById('pre-img').style.display = 'block';
-            document.getElementById('txt-placeholder').style.display = 'none';
-        }
-        document.getElementById('modalForm').style.display = 'block';
-    }
-
-    async function guardarDatos() {
+    async function guardar() {
         const file = document.getElementById('inputFoto').files[0];
-        let fotoFinal = fotoActualURL;
+        let urlFinal = fotoTempURL;
 
         if (file) {
             const fileName = `user_${Date.now()}`;
             const { data } = await supabaseClient.storage.from('imagenes_sistema').upload(fileName, file);
             if (data) {
                 const { data: pUrl } = supabaseClient.storage.from('imagenes_sistema').getPublicUrl(fileName);
-                fotoFinal = pUrl.publicUrl;
+                urlFinal = pUrl.publicUrl;
             }
         }
 
-        const obj = {
-            nombre: document.getElementById('f-nombre').value,
-            apellidos: document.getElementById('f-apellidos').value,
-            telefono: document.getElementById('f-telefono').value,
-            password: document.getElementById('f-pass').value,
-            rol: document.getElementById('f-rol').value,
-            foto_perfil: fotoFinal
+        const datos = {
+            nombre: document.getElementById('p-nombre').value,
+            apellidos: document.getElementById('p-apellidos').value,
+            telefono: document.getElementById('p-telefono').value,
+            password: document.getElementById('p-pass').value,
+            rol: document.getElementById('p-rol').value,
+            foto_perfil: urlFinal
         };
 
-        if (idParaEditar) {
-            await supabaseClient.from('usuarios').update(obj).eq('id', idParaEditar);
+        if (usuarioActivo) {
+            await supabaseClient.from('usuarios').update(datos).eq('id', usuarioActivo.id);
         } else {
-            await supabaseClient.from('usuarios').insert([obj]);
+            await supabaseClient.from('usuarios').insert([datos]);
         }
         location.reload();
     }
 
-    async function eliminarUser(id) {
-        const pass = prompt("Para eliminar, ingresa tu contraseña de administrador:");
-        if (pass === "admin123") { // CAMBIA ESTO POR LA CLAVE QUE QUIERAS
-            await supabaseClient.from('usuarios').delete().eq('id', id);
+    async function eliminarActual() {
+        const pass = prompt("Confirma con tu contraseña de administrador para eliminar:");
+        if (pass === "admin123") {
+            await supabaseClient.from('usuarios').delete().eq('id', usuarioActivo.id);
             location.reload();
-        } else if(pass != null) {
-            alert("Contraseña incorrecta");
         }
     }
 
-    function cerrar(id) { document.getElementById(id).style.display = 'none'; }
+    function cerrarModal() { document.getElementById('modalPlanilla').style.display = 'none'; }
+
     cargar();
 </script>
 </body>
