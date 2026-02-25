@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagos Pendientes - RF TransGestión</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; --rojo: #dc3545; --verde: #28a745; }
+        body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding: 15px; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--dorado); padding-bottom: 10px; }
+        h2 { color: var(--dorado); font-size: 18px; text-transform: uppercase; margin: 0; }
+        
+        /* Botón Embudo */
+        .btn-embudo { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--dorado); }
+        
+        /* Área de Filtro */
+        #filtroArea { display: none; margin-bottom: 15px; animation: slideDown 0.3s ease; }
+        #filtroArea input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--dorado); background: var(--gris); color: white; box-sizing: border-box; }
+
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Tabla Estilo RF */
+        .tabla-contenedor { background: var(--gris); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 12px 10px; color: var(--dorado); font-size: 11px; text-transform: uppercase; border-bottom: 2px solid #333; }
+        td { padding: 15px 10px; border-bottom: 1px solid #222; font-size: 13px; }
+        
+        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
+        .bg-rojo { background: var(--rojo); color: white; }
+        .bg-verde { background: var(--verde); color: white; }
+        
+        .aviso-importante { background: rgba(212, 175, 55, 0.1); border: 1px solid var(--dorado); padding: 10px; border-radius: 8px; margin-top: 20px; font-size: 11px; line-height: 1.4; color: #ccc; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h2>Pagos Pendientes</h2>
+    <button class="btn-embudo" onclick="toggleFiltro()">⏳</button>
+</div>
+
+<div id="filtroArea">
+    <input type="text" id="busquedaNombre" placeholder="Buscar chófer por nombre..." onkeyup="filtrarNombre()">
+</div>
+
+<div class="tabla-contenedor">
+    <table>
+        <thead>
+            <tr>
+                <th>Chófer</th>
+                <th>Fondo</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody id="lista-pendientes">
+            </tbody>
+    </table>
+</div>
+
+<div class="aviso-importante">
+    <b>REGLA DE NEGOCIO:</b><br>
+    • Choferes con fondo < $150 sin "Libre de fondo" están <b>Bloqueados</b> para viajes.<br>
+    • Choferes marcados como <b>"Libre de fondo"</b> pueden operar incluso con fondo en $0.
+</div>
+
+<script src="config.js"></script>
+<script>
+    function toggleFiltro() {
+        const area = document.getElementById('filtroArea');
+        area.style.display = area.style.display === 'block' ? 'none' : 'block';
+    }
+
+    async function cargarPagosPendientes() {
+        // Obtenemos todos los choferes cuyo fondo sea menor a 150
+        const { data: choferes, error } = await supabaseClient
+            .from('choferes')
+            .select('*')
+            .lt('fondo_actual', 150)
+            .order('nombre', { ascending: true });
+
+        if (error) {
+            console.error("Error cargando pagos:", error);
+            return;
+        }
+
+        const tbody = document.getElementById('lista-pendientes');
+        if (choferes.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:20px;">No hay pagos pendientes críticos.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = choferes.map(c => {
+            // Lógica: Si es libre de fondo, puede trabajar (Verde), si no, Bloqueado (Rojo)
+            const estadoTexto = c.libre_de_fondo ? 'Operativo (Libre)' : 'Bloqueado';
+            const estadoClase = c.libre_de_fondo ? 'bg-verde' : 'bg-rojo';
+
+            return `
+                <tr class="fila-chofer">
+                    <td>
+                        <b style="display:block;">${c.nombre} ${c.apellido || ''}</b>
+                        <span style="font-size:10px; color:#888;">${c.telefono}</span>
+                    </td>
+                    <td style="color: var(--dorado); font-weight:bold;">$${c.fondo_actual}</td>
+                    <td><span class="status-badge ${estadoClase}">${estadoTexto}</span></td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function filtrarNombre() {
+        const busqueda = document.getElementById('busquedaNombre').value.toLowerCase();
+        const filas = document.querySelectorAll('.fila-chofer');
+
+        filas.forEach(fila => {
+            const nombre = fila.querySelector('b').innerText.toLowerCase();
+            if (nombre.includes(busqueda)) {
+                fila.style.display = '';
+            } else {
+                fila.style.display = 'none';
+            }
+        });
+    }
+
+    // Cargar al iniciar
+    cargarPagosPendientes();
+</script>
+</body>
+</html>
