@@ -39,10 +39,7 @@
     <div class="field">
         <label>Colaboración</label>
         <select id="colaboracion">
-            <option value="">Seleccionar colaboración...</option>
-            <option value="Directo">Directo</option>
-            <option value="Agencia">Agencia</option>
-            <option value="Colaboración Externa">Colaboración Externa</option>
+            <option value="">Cargando agencias...</option>
         </select>
     </div>
 
@@ -134,6 +131,25 @@
 <script>
     let choferData = null;
 
+    // --- NUEVO: CARGAR COLABORACIONES DESDE LA TABLA ---
+    async function cargarColaboraciones() {
+        const select = document.getElementById('colaboracion');
+        const { data, error } = await supabaseClient.from('colaboraciones').select('nombre').order('nombre', { ascending: true });
+        
+        if (!error) {
+            let opciones = '<option value="">Seleccionar colaboración...</option>';
+            opciones += '<option value="Directo">Directo</option>'; // Opción por defecto
+            data.forEach(item => {
+                opciones += `<option value="${item.nombre}">${item.nombre}</option>`;
+            });
+            select.innerHTML = opciones;
+        } else {
+            select.innerHTML = '<option value="">Error al cargar agencias</option>';
+        }
+    }
+    cargarColaboraciones(); // Ejecutar al cargar la página
+    // --------------------------------------------------
+
     async function buscarChofer() {
         const tel = document.getElementById('tel-chofer').value;
         if(!tel) return alert("Ingrese un número");
@@ -143,7 +159,6 @@
             const res = document.getElementById('res-chofer');
             res.style.display = 'block';
             
-            // Verificamos estado de bloqueo para aviso visual rápido
             let statusHTML = "";
             if (data.fondo_actual < 150 && !data.libre_de_fondo) {
                 statusHTML = `<br><b style="color:#ff4444;">⚠️ ESTADO: BLOQUEADO POR FONDO</b>`;
@@ -194,10 +209,7 @@
         if(datos.destino) txtChofer += `Destino: ${datos.destino}\n`;
         if(datos.pax) txtChofer += `Pax: ${datos.pax}\n`;
         if(datos.fondo) txtChofer += `Fondo Actual: ${datos.fondo}\n`;
-        txtChofer += `\n⚠️ IMPORTANTE ⚠️\n\n‎•usted tiene 15 minutos máximo para llegar a la dirección de recojida del cliente.
-‎•El cliente tiene 15 minutos para abordar su vehículo,por encima de este tiempo se le cobrará 25 cup el minuto extra
-‎•En caso de llegada tarde a un servicio programado se le descontará el 50% del precio del servicio. 
-‎•Recuerde mantener su auto limpio y en perfectas condiciones técnicas al igual que un trato cordial con cada cliente.`;
+        txtChofer += `\n⚠️ IMPORTANTE ⚠️\n\n‎•usted tiene 15 minutos máximo para llegar a la dirección de recojida del cliente.\n‎•El cliente tiene 15 minutos para abordar su vehículo,por encima de este tiempo se le cobrará 25 cup el minuto extra\n‎•En caso de llegada tarde a un servicio programado se le descontará el 50% del precio del servicio. \n‎•Recuerde mantener su auto limpio y en perfectas condiciones técnicas al igual que un trato cordial con cada cliente.`;
         document.getElementById('p-chofer').innerText = txtChofer;
 
         let txtCliente = `*Taxi En Camino*\n`;
@@ -205,10 +217,7 @@
         if(datos.chofer) txtCliente += `Chofer: ${datos.chofer}\n`;
         if(datos.auto) txtCliente += `Auto: ${datos.auto}\n`;
         if(datos.color) txtCliente += `Color: ${datos.color}\n`;
-        txtCliente += `\n⚠️ *IMPORTANTE* ⚠️\n\n‎•Cada parada extra se recalcula la ruta y modifica el costo.
-‎•Al llegar el taxi a su origen usted tiene 10min de espera como cortesía, pasado este tiempo debe pagar por cada minuto extra.
-‎•Tiempo de espera extra:  25cup x minutos. 
-‎•En caso de cancelar estando el auto en el lugar de recogida, deberá pagar la mitad del costo del servicio.`;
+        txtCliente += `\n⚠️ *IMPORTANTE* ⚠️\n\n‎•Cada parada extra se recalcula la ruta y modifica el costo.\n‎•Al llegar el taxi a su origen usted tiene 10min de espera como cortesía, pasado este tiempo debe pagar por cada minuto extra.\n‎•Tiempo de espera extra: 25cup x minutos. \n‎•En caso de cancelar estando el auto en el lugar de recogida, deberá pagar la mitad del costo del servicio.`;
         document.getElementById('p-cliente').innerText = txtCliente;
 
         document.getElementById('p-resumen').innerText = `RESUMEN:\nChofer: ${datos.chofer}\nCliente: ${datos.cliente}\nPrecio: ${datos.precio}`;
@@ -228,7 +237,6 @@
     async function crearViaje() {
         if(!choferData || !document.getElementById('precio-final').value) return alert("Faltan datos");
         
-        // BLOQUEO POR FONDO BAJO (Menos de 150 y sin Libre de Fondo)
         if (choferData.fondo_actual < 150 && !choferData.libre_de_fondo) {
             return alert(`❌ Chófer Bloqueado: ${choferData.nombre} tiene un fondo de $${choferData.fondo_actual}. No puede realizar viajes hasta recargar.`);
         }
@@ -245,6 +253,7 @@
         const nuevoFondo = choferData.fondo_actual - descuento;
 
         const { error } = await supabaseClient.from('viajes').insert([{
+            colaboracion: document.getElementById('colaboracion').value,
             chofer_id: choferData.id,
             precio: precioViaje,
             cliente_telefono: document.getElementById('tel-cliente').value,
