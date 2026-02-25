@@ -4,13 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Choferes - RF TransGestión</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; --verde: #28a745; --rojo: #dc3545; --azul: #007bff; }
-        body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding: 10px; padding-bottom: 80px; }
+        body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding-bottom: 80px; }
         
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        /* ESTILOS DEL MENÚ UNIVERSAL */
+        .sidebar {
+            height: 100%; width: 0; position: fixed;
+            z-index: 3000; top: 0; left: 0;
+            background-color: #1e1e1e;
+            overflow-x: hidden; transition: 0.5s;
+            padding-top: 60px; border-right: 1px solid #d4af37;
+        }
+        .sidebar a {
+            padding: 12px 24px; text-decoration: none;
+            font-size: 15px; color: #818181;
+            display: block; transition: 0.3s;
+            text-transform: uppercase;
+        }
+        .sidebar a:hover { color: #d4af37; background: rgba(212, 175, 55, 0.1); }
+        .sidebar .closebtn { position: absolute; top: 10px; right: 25px; font-size: 36px; color: #d4af37; }
+
+        .header-nav-universal { 
+            display: flex; align-items: center; gap: 15px; 
+            padding: 15px; background: #121212; 
+            border-bottom: 1px solid #d4af37; margin-bottom: 20px;
+        }
+        .openbtn { font-size: 25px; cursor: pointer; background: none; border: none; color: #d4af37; }
+        .logo-txt-universal { font-family: 'Playfair Display', serif; font-size: 20px; color: white; }
+
+        /* Estilos propios de la página */
+        .contenedor-principal { padding: 0 15px; }
+        .header-acciones { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .btn-add { background: var(--dorado); color: black; border: none; padding: 12px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
         .btn-embudo { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--dorado); }
         #filtroArea { display: none; margin-bottom: 15px; }
@@ -49,18 +76,20 @@
 </head>
 <body>
 
-<div class="header">
-    <button class="btn-add" onclick="abrirModal('modalRegistro')">+ AÑADIR CHÓFER</button>
-    <button class="btn-embudo" onclick="toggleFiltro()">⏳</button>
-</div>
+<div class="contenedor-principal">
+    <div class="header-acciones">
+        <button class="btn-add" onclick="abrirModal('modalRegistro')">+ AÑADIR CHÓFER</button>
+        <button class="btn-embudo" onclick="toggleFiltro()">⏳</button>
+    </div>
 
-<div id="filtroArea"><input type="text" id="busqueda" placeholder="Buscar..." onkeyup="filtrar()"></div>
+    <div id="filtroArea"><input type="text" id="busqueda" placeholder="Buscar..." onkeyup="filtrar()"></div>
 
-<div class="tabla-contenedor">
-    <table>
-        <thead><tr><th>Nombre</th><th>Teléfono</th><th>Lic.</th><th>Fondo</th><th></th></tr></thead>
-        <tbody id="lista-choferes"></tbody>
-    </table>
+    <div class="tabla-contenedor">
+        <table>
+            <thead><tr><th>Nombre</th><th>Teléfono</th><th>Lic.</th><th>Fondo</th><th></th></tr></thead>
+            <tbody id="lista-choferes"></tbody>
+        </table>
+    </div>
 </div>
 
 <div id="modalRegistro" class="modal">
@@ -110,11 +139,15 @@
 </div>
 
 <script src="config.js"></script>
+<script src="menu.js"></script>
 <script>
     let choferSel = null;
+    let tipoMov = "";
 
+    // Funciones de Modal
     function abrirModal(id) { document.getElementById(id).style.display = 'block'; }
     function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
+    
     function toggleFiltro() { 
         const f = document.getElementById('filtroArea');
         f.style.display = f.style.display === 'block' ? 'none' : 'block';
