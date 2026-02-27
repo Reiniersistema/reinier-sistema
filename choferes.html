@@ -1,1 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choferes - RF TransGestión</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; }
+        body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding-bottom: 50px; }
 
+        /* ESTILOS DEL MENÚ UNIVERSAL */
+        .sidebar { height: 100%; width: 0; position: fixed; z-index: 3000; top: 0; left: 0; background-color: #1e1e1e; overflow-x: hidden; transition: 0.5s; padding-top: 60px; border-right: 1px solid var(--dorado); }
+        .sidebar a { padding: 12px 24px; text-decoration: none; font-size: 15px; color: #818181; display: block; transition: 0.3s; text-transform: uppercase; }
+        .sidebar a:hover { color: var(--dorado); background: rgba(212,175,55,0.1); }
+        .sidebar .closebtn { position: absolute; top: 10px; right: 25px; font-size: 36px; color: var(--dorado); }
+
+        .header-nav-universal { display: flex; align-items: center; gap: 15px; padding: 15px; background: var(--oscuro); border-bottom: 1px solid var(--dorado); margin-bottom: 20px; }
+        .openbtn { font-size: 25px; cursor: pointer; background: none; border: none; color: var(--dorado); }
+        .logo-txt-universal { font-family: 'Playfair Display', serif; font-size: 20px; color: white; }
+
+        /* ESTILOS PROPIOS */
+        .contenedor-principal { padding: 0 15px; }
+        h2 { color: var(--dorado); text-transform: uppercase; font-size: 18px; margin-bottom: 20px; text-align:center; }
+
+        .busqueda { display: flex; gap: 10px; margin-bottom: 20px; }
+        .busqueda input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #333; background:#000; color:white; }
+        .busqueda button { padding: 10px; border-radius: 8px; border:none; background: var(--dorado); color:black; font-weight:bold; cursor:pointer; }
+
+        .tabla-contenedor { overflow-x: auto; background: var(--gris); border-radius: 15px; padding: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th { color: var(--dorado); text-align: left; padding: 12px; border-bottom: 2px solid #333; font-size: 12px; text-transform: uppercase; }
+        td { padding: 12px; border-bottom: 1px solid #222; font-size: 13px; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; color: var(--dorado); background:#333; display:inline-block; }
+        .estado-bloqueado { color: #ff4444; font-weight: bold; }
+        .estado-libre { color: #44ff44; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="contenedor-principal">
+    <h2>Choferes Registrados</h2>
+
+    <div class="busqueda">
+        <input type="text" id="input-telefono" placeholder="Buscar chofer por teléfono...">
+        <button onclick="buscarChofer()">Buscar</button>
+        <button onclick="cargarChoferes()">Mostrar Todos</button>
+    </div>
+
+    <div class="tabla-contenedor">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Teléfono</th>
+                    <th>Auto</th>
+                    <th>Color</th>
+                    <th>Fondo</th>
+                    <th>Licencia</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-choferes">
+                <tr><td colspan="7" style="text-align:center; padding:20px;">Cargando choferes...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="config.js"></script>
+<script src="menu.js"></script>
+<script>
+    async function cargarChoferes() {
+        const { data: choferes, error } = await supabaseClient.from('choferes').select('*').order('nombre', { ascending:true });
+        const tbody = document.getElementById('tabla-choferes');
+
+        if(error) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:red;">Error: ${error.message}</td></tr>`;
+            return;
+        }
+
+        if(choferes.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No se encontraron choferes</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = choferes.map(c => {
+            const estado = (c.fondo_actual < 150 && !c.libre_de_fondo) ? 'Bloqueado' : 'Libre';
+            const claseEstado = (estado === 'Bloqueado') ? 'estado-bloqueado' : 'estado-libre';
+            return `
+                <tr>
+                    <td>${c.nombre} ${c.apellido || ''}</td>
+                    <td>${c.telefono}</td>
+                    <td>${c.marca_carro || ''} ${c.modelo_carro || ''}</td>
+                    <td>${c.color_carro || ''}</td>
+                    <td>$${c.fondo_actual || 0}</td>
+                    <td>${c.tiene_licencia_operativa ? 'Sí' : 'No'}</td>
+                    <td class="${claseEstado}">${estado}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    async function buscarChofer() {
+        const tel = document.getElementById('input-telefono').value;
+        if(!tel) return alert("Ingrese un número de teléfono para buscar");
+        const { data: chofer, error } = await supabaseClient.from('choferes').select('*').eq('telefono', tel).single();
+        const tbody = document.getElementById('tabla-choferes');
+        if(error || !chofer) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Chofer no encontrado</td></tr>`;
+            return;
+        }
+        const estado = (chofer.fondo_actual < 150 && !chofer.libre_de_fondo) ? 'Bloqueado' : 'Libre';
+        const claseEstado = (estado === 'Bloqueado') ? 'estado-bloqueado' : 'estado-libre';
+        tbody.innerHTML = `
+            <tr>
+                <td>${chofer.nombre} ${chofer.apellido || ''}</td>
+                <td>${chofer.telefono}</td>
+                <td>${chofer.marca_carro || ''} ${chofer.modelo_carro || ''}</td>
+                <td>${chofer.color_carro || ''}</td>
+                <td>$${chofer.fondo_actual || 0}</td>
+                <td>${chofer.tiene_licencia_operativa ? 'Sí' : 'No'}</td>
+                <td class="${claseEstado}">${estado}</td>
+            </tr>
+        `;
+    }
+
+    cargarChoferes();
+</script>
+</body>
+</html>
