@@ -1,142 +1,246 @@
-<script>
-    // 1. Corregido: Función para abrir formulario de añadir nuevo chófer
-    async function abrirFormularioNuevo() {
-        document.getElementById('contenidoModal').innerHTML = `
-            <h2 style="font-family:'Playfair Display'; color:var(--dorado);">NUEVO CHÓFER</h2>
-            <label>Foto Chófer</label>
-            <input type="file" id="new-foto-chofer" accept="image/*">
-            <label>Nombre</label>
-            <input type="text" id="new-nombre">
-            <label>Apellido</label>
-            <input type="text" id="new-apellido">
-            <label>Teléfono</label>
-            <input type="tel" id="new-telefono">
-            <label>Fondo Inicial</label>
-            <input type="number" id="new-fondo" value="0">
-            
-            <div style="margin:15px 0;">
-                <label style="display:block; margin-bottom:10px;">
-                    <input type="checkbox" id="new-licencia"> TIENE LICENCIA OPERATIVA
-                </label>
-                <label style="display:block; margin-bottom:10px;">
-                    <input type="checkbox" id="new-aire"> TIENE AIRE ACONDICIONADO
-                </label>
-                <label style="display:block;">
-                    <input type="checkbox" id="new-libre"> TRABAJAR SIN FONDO (AUTORIZADO)
-                </label>
-            </div>
-
-            <label>Foto Carro</label>
-            <input type="file" id="new-foto-carro" accept="image/*">
-            <label>Marca Carro</label>
-            <input type="text" id="new-marca">
-            <label>Modelo Carro</label>
-            <input type="text" id="new-modelo">
-            <label>Color Carro</label>
-            <input type="text" id="new-color">
-
-            <button class="btn-action btn-gold" onclick="guardarNuevoChofer()">GUARDAR CHÓFER</button>
-        `;
-        document.getElementById('modalDetalle').style.display = 'block';
-    }
-
-    // 2. Corregido: Ajuste de tarjeta para móviles (Responsive)
-    function renderizarGrid(lista) {
-        const contenedor = document.getElementById('lista-choferes');
-        contenedor.innerHTML = "";
-        lista.forEach(c => {
-            contenedor.innerHTML += `
-                <div class="card-chofer" onclick="verDetalle('${c.id}')" style="padding: 12px; margin-bottom: 10px;">
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        <img src="${c.foto_chofer || ''}" style="width:55px; height:55px; border-radius:50%; object-fit:cover; border:2px solid var(--dorado);">
-                        <div style="flex:1;">
-                            <h3 style="margin:0; font-size:14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${c.nombre} ${c.apellido}</h3>
-                            <p style="margin:2px 0; font-size:12px; color:#aaa;">📞 ${c.telefono}</p>
-                            <span style="font-size:10px; color:var(--dorado); background:rgba(212,175,55,0.1); padding:2px 6px; border-radius:4px;">
-                                ${c.tiene_licencia_operativa ? 'CON LICENCIA' : 'SIN LICENCIA'}
-                            </span>
-                        </div>
-                        <div style="text-align:right;">
-                            <div style="font-size:14px; font-weight:bold; color:var(--dorado);">$${c.fondo_actual.toFixed(2)}</div>
-                        </div>
-                    </div>
-                </div>`;
-        });
-    }
-
-    // 3, 4 y 5. Corregido: Detalle con check de Moto/Auto, conteo de viajes y función Editar
-    async function verDetalle(id) {
-        const { data: c } = await supabaseClient.from('choferes').select('*').eq('id', id).single();
-        choferActual = c;
-        
-        // 4. Lógica de conteo de viajes (Simulada para el ejemplo, conectar con tabla 'viajes')
-        const vHoy = 0; const vMes = 0; const vTotal = 0; 
-
-        document.getElementById('contenidoModal').innerHTML = `
-            <img src="${c.foto_chofer}" style="width:120px; height:120px; border-radius:50%; display:block; margin:auto; object-fit:cover; border:3px solid var(--dorado);">
-            
-            <div style="text-align:center; margin:15px 0;">
-                <h3 style="margin:0; font-size:18px;">${c.nombre} ${c.apellido}</h3>
-                
-                <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px; align-items:center; font-size:12px;">
-                    <label><input type="checkbox" ${c.libre_de_fondo ? 'checked' : ''} onchange="updateField('${c.id}', 'libre_de_fondo', this.checked)"> TRABAJAR CON FONDO (AUTORIZADO)</label>
-                    <label><input type="checkbox" ${c.tipo_vehiculo === 'Auto' ? 'checked' : ''} onchange="updateField('${c.id}', 'tipo_vehiculo', this.checked ? 'Auto' : 'Moto')"> VEHÍCULO: AUTO</label>
-                    <label><input type="checkbox" ${c.tipo_vehiculo === 'Moto' ? 'checked' : ''} onchange="updateField('${c.id}', 'tipo_vehiculo', this.checked ? 'Moto' : 'Auto')"> VEHÍCULO: MOTO</label>
-                </div>
-
-                <div style="display:flex; justify-content:space-around; margin-top:15px; background:#000; padding:10px; border-radius:8px; border:1px solid #333;">
-                    <div style="text-align:center;"><div style="color:var(--dorado); font-weight:bold;">${vHoy}</div><div style="font-size:9px;">VIAJES HOY</div></div>
-                    <div style="text-align:center;"><div style="color:var(--dorado); font-weight:bold;">${vMes}</div><div style="font-size:9px;">VIAJES MES</div></div>
-                    <div style="text-align:center;"><div style="color:var(--dorado); font-weight:bold;">${vTotal}</div><div style="font-size:9px;">TOTAL</div></div>
-                </div>
-            </div>
-
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                <button class="btn-action btn-gold" onclick="abrirEditorChofer()">EDITAR DATOS</button>
-                <a href="https://wa.me/${c.telefono}" target="_blank" class="btn-action" style="background:#25d366; color:white; text-decoration:none; text-align:center; line-height:1.2;">WHATSAPP</a>
-            </div>
-
-            <div class="sub-menu" style="margin-top:15px; display:flex; gap:5px;">
-                <button class="btn-toggle active" onclick="verSeccion('info')">INFO</button>
-                <button class="btn-toggle" onclick="verSeccion('auto')">AUTO</button>
-                <button class="btn-toggle" onclick="verSeccion('fondo')">FONDO</button>
-            </div>
-            
-            <div id="sec-info" class="sec" style="padding-top:10px;">
-                <p style="font-size:13px;"><b>Teléfono:</b> ${c.telefono}</p>
-                <p style="font-size:13px;"><b>Fondo Actual:</b> $${c.fondo_actual}</p>
-            </div>
-            `;
-        document.getElementById('modalDetalle').style.display = 'block';
-    }
-
-    // 5. Función para editar todos los datos
-    async function abrirEditorChofer() {
-        const c = choferActual;
-        document.getElementById('contenidoModal').innerHTML = `
-            <h3>EDITAR CHÓFER</h3>
-            <label>Nombre</label>
-            <input type="text" id="edit-nombre" value="${c.nombre}">
-            <label>Apellido</label>
-            <input type="text" id="edit-apellido" value="${c.apellido}">
-            <label>Teléfono</label>
-            <input type="tel" id="edit-telefono" value="${c.telefono}">
-            <label>Marca Carro</label>
-            <input type="text" id="edit-marca" value="${c.marca_carro || ''}">
-            <label>Modelo Carro</label>
-            <input type="text" id="edit-modelo" value="${c.modelo_carro || ''}">
-            
-            <div style="margin:15px 0;">
-                <label><input type="checkbox" id="edit-licencia" ${c.tiene_licencia_operativa ? 'checked' : ''}> LICENCIA OPERATIVA</label><br><br>
-                <label><input type="checkbox" id="edit-aire" ${c.tiene_aire_acondicionado ? 'checked' : ''}> AIRE ACONDICIONADO</label>
-            </div>
-
-            <button class="btn-action btn-gold" onclick="actualizarDatosChofer('${c.id}')">GUARDAR CAMBIOS</button>
-            <button class="btn-action btn-red" onclick="verDetalle('${c.id}')">CANCELAR</button>
-        `;
-    }
-
-    async function updateField(id, campo, valor) {
-        await supabaseClient.from('choferes').update({ [campo]: valor }).eq('id', id);
-    }
-</script>
+‎<!DOCTYPE html>
+‎<html lang="es">
+‎<head>
+‎    <meta charset="UTF-8">
+‎    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+‎    <title>Gestión de Choferes - RF TransGestión</title>
+‎    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+‎    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+‎    <style>
+‎        :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; --rojo: #ff4d4d; --verde: #25d366; }
+‎        body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding-bottom: 60px; }
+‎        
+‎        .contenedor-principal { padding: 0 15px; max-width: 500px; margin: auto; }
+‎        h2 { color: var(--dorado); text-align: center; text-transform: uppercase; font-size: 18px; margin-bottom: 20px; }
+‎
+‎        /* Tarjetas */
+‎        .choferes-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+‎        .card-chofer { background: var(--gris); border-radius: 15px; border: 1px solid #333; padding: 15px; cursor: pointer; position: relative; }
+‎        .foto-perfil { width: 65px; height: 65px; border-radius: 50%; border: 2px solid var(--dorado); object-fit: cover; }
+‎        
+‎        /* Modal Detalle */
+‎        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 5000; overflow-y: auto; }
+‎        .modal-content { width: 90%; max-width: 450px; margin: 20px auto; background: var(--gris); padding: 20px; border-radius: 15px; border: 1px solid #d4af37; box-sizing: border-box; }
+‎        
+‎        /* Conteo de Viajes */
+‎        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; text-align: center; }
+‎        .stat-box { background: #000; padding: 10px 5px; border-radius: 8px; border: 1px solid #444; }
+‎        .stat-val { color: var(--dorado); font-weight: bold; font-size: 16px; display: block; }
+‎        .stat-lbl { font-size: 9px; text-transform: uppercase; color: #aaa; }
+‎
+‎        /* Botones y Toggles */
+‎        .toggle-group { display: flex; gap: 10px; margin: 15px 0; }
+‎        .btn-toggle-select { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #000; color: white; cursor: pointer; font-size: 12px; font-weight: bold; text-align: center; }
+‎        .btn-toggle-select.active { background: var(--dorado); color: black; border-color: var(--dorado); }
+‎
+‎        .form-group { margin-bottom: 12px; }
+‎        label { display: block; font-size: 11px; color: var(--dorado); margin-bottom: 5px; }
+‎        input, select { width: 100%; padding: 10px; background: #000; color: white; border: 1px solid #444; border-radius: 8px; box-sizing: border-box; }
+‎        
+‎        .btn-action { padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; text-transform: uppercase; }
+‎        .btn-gold { background: var(--dorado); color: black; }
+‎        .btn-red { background: var(--rojo); color: white; }
+‎        .btn-green { background: var(--verde); color: white; }
+‎    </style>
+‎</head>
+‎<body>
+‎
+‎<div class="contenedor-principal">
+‎    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0;">
+‎        <h2 style="margin:0;">Choferes</h2>
+‎        <span style="font-size: 20px; cursor: pointer;">🔍</span>
+‎    </div>
+‎    
+‎    <button class="btn-action btn-gold" onclick="abrirFormularioChofer()" style="margin-bottom: 20px;">+ AÑADIR NUEVO CHÓFER</button>
+‎    <div id="lista-choferes" class="choferes-grid"></div>
+‎</div>
+‎
+‎<div id="modalChofer" class="modal">
+‎    <div class="modal-content" id="contenidoModal">
+‎        </div>
+‎</div>
+‎
+‎<script src="config.js"></script> <script>
+‎    let choferActual = null;
+‎
+‎    async function cargarChoferes() {
+‎        const { data, error } = await supabaseClient.from('choferes').select('*').order('nombre');
+‎        if (error) return console.log(error);
+‎        const contenedor = document.getElementById('lista-choferes');
+‎        contenedor.innerHTML = "";
+‎        data.forEach(c => {
+‎            contenedor.innerHTML += `
+‎                <div class="card-chofer" onclick="verDetalle('${c.id}')">
+‎                    <div style="display:flex; gap:15px; align-items:center;">
+‎                        <img src="${c.foto_chofer || 'https://via.placeholder.com/100'}" class="foto-perfil">
+‎                        <div>
+‎                            <h3 style="margin:0; font-size:16px;">${c.nombre} ${c.apellido}</h3>
+‎                            <p style="margin:2px 0; font-size:12px; color:#aaa">${c.telefono}</p>
+‎                            <p style="margin:0; font-size:11px; color:var(--dorado)">${c.tiene_licencia_operativa ? 'Con Licencia' : 'Sin Licencia'}</p>
+‎                        </div>
+‎                    </div>
+‎                    <div style="position:absolute; right:15px; bottom:15px; font-weight:bold; color:var(--dorado); font-size:18px;">$${c.fondo_actual.toFixed(2)}</div>
+‎                </div>`;
+‎        });
+‎    }
+‎
+‎    // --- VISTA DETALLE ---
+‎    async function verDetalle(id) {
+‎        const { data: c } = await supabaseClient.from('choferes').select('*').eq('id', id).single();
+‎        choferActual = c;
+‎        
+‎        document.getElementById('contenidoModal').innerHTML = `
+‎            <button onclick="cerrarModal()" style="float:right; background:none; border:none; color:var(--rojo); font-weight:bold; font-size:20px;">✕</button>
+‎            <img src="${c.foto_chofer || 'https://via.placeholder.com/150'}" style="width:120px; height:120px; border-radius:15px; display:block; margin:10px auto; object-fit:cover; border:2px solid var(--dorado);">
+‎            
+‎            <div style="text-align:center; margin-bottom:15px;">
+‎                <h3 style="margin:0; font-size:20px;">${c.nombre} ${c.apellido}</h3>
+‎                <label style="display:inline-flex; align-items:center; gap:8px; margin-top:10px; color:white; font-size:12px;">
+‎                    <input type="checkbox" style="width:18px; height:18px;" ${c.libre_de_fondo ? 'checked' : ''} onchange="actualizarCampo('${c.id}', 'libre_de_fondo', this.checked)"> 
+‎                    TRABAJAR SIN FONDO (AUTORIZADO)
+‎                </label>
+‎            </div>
+‎
+‎            <div class="toggle-group">
+‎                <div class="btn-toggle-select ${c.tipo_vehiculo === 'Moto' ? 'active' : ''}" onclick="actualizarCampo('${c.id}', 'tipo_vehiculo', 'Moto')">MOTO</div>
+‎                <div class="btn-toggle-select ${c.tipo_vehiculo === 'Auto' ? 'active' : ''}" onclick="actualizarCampo('${c.id}', 'tipo_vehiculo', 'Auto')">AUTO</div>
+‎            </div>
+‎
+‎            <div class="stats-grid">
+‎                <div class="stat-box"><span class="stat-val">0</span><span class="stat-lbl">Día</span></div>
+‎                <div class="stat-box"><span class="stat-val">0</span><span class="stat-lbl">Mes</span></div>
+‎                <div class="stat-box"><span class="stat-val">0</span><span class="stat-lbl">Total</span></div>
+‎            </div>
+‎
+‎            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+‎                <button class="btn-action btn-gold" onclick="abrirFormularioChofer(true)">EDITAR DATOS</button>
+‎                <a href="https://wa.me/${c.telefono}" target="_blank" class="btn-action btn-green" style="text-decoration:none; text-align:center; display:flex; align-items:center; justify-content:center;">WHATSAPP</a>
+‎            </div>
+‎
+‎            <div class="sub-menu" style="margin-top:20px; display:flex; gap:5px;">
+‎                <button class="btn-toggle-select active" style="padding:8px" onclick="verSeccion('info')">INFO</button>
+‎                <button class="btn-toggle-select" style="padding:8px" onclick="verSeccion('auto')">AUTO</button>
+‎                <button class="btn-toggle-select" style="padding:8px" onclick="verSeccion('fondo')">FONDO</button>
+‎            </div>
+‎
+‎            <div id="sec-info" class="sec" style="padding:15px 0;">
+‎                <p style="margin:5px 0; font-size:13px;"><b>Teléfono:</b> ${c.telefono}</p>
+‎                <p style="margin:5px 0; font-size:13px;"><b>Licencia Operativa:</b> ${c.tiene_licencia_operativa ? 'SÍ' : 'NO'}</p>
+‎            </div>
+‎
+‎            <div id="sec-auto" class="sec" style="display:none; padding:15px 0;">
+‎                <img src="${c.foto_carro || 'https://via.placeholder.com/300x150'}" style="width:100%; border-radius:8px; margin-bottom:10px; border: 1px solid #444;">
+‎                <p style="margin:5px 0; font-size:13px;"><b>Marca/Modelo:</b> ${c.marca_carro} ${c.modelo_carro}</p>
+‎                <p style="margin:5px 0; font-size:13px;"><b>Aire Acondicionado:</b> ${c.tiene_aire_acondicionado ? 'SÍ' : 'NO'}</p>
+‎            </div>
+‎        `;
+‎        document.getElementById('modalChofer').style.display = 'block';
+‎    }
+‎
+‎    // --- FORMULARIO AÑADIR / EDITAR ---
+‎    function abrirFormularioChofer(esEdicion = false) {
+‎        const c = esEdicion ? choferActual : { nombre:'', apellido:'', telefono:'', tiene_licencia_operativa:false, marca_carro:'', modelo_carro:'', tiene_aire_acondicionado:false, foto_chofer:'', foto_carro:'' };
+‎        
+‎        document.getElementById('contenidoModal').innerHTML = `
+‎            <h3 style="color:var(--dorado); text-align:center;">${esEdicion ? 'EDITAR CHÓFER' : 'NUEVO CHÓFER'}</h3>
+‎            
+‎            <div class="form-group">
+‎                <label>Foto Chófer (Galería)</label>
+‎                <input type="file" id="f-foto-chofer" accept="image/*" onchange="previewImg(this, 'pre-chofer')">
+‎                <img id="pre-chofer" src="${c.foto_chofer}" style="width:60px; height:60px; margin-top:5px; border-radius:8px; display:${c.foto_chofer ? 'block' : 'none'}">
+‎            </div>
+‎
+‎            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+‎                <div class="form-group"><label>Nombre</label><input type="text" id="f-nombre" value="${c.nombre}"></div>
+‎                <div class="form-group"><label>Apellido</label><input type="text" id="f-apellido" value="${c.apellido}"></div>
+‎            </div>
+‎
+‎            <div class="form-group"><label>Teléfono (WhatsApp)</label><input type="number" id="f-telefono" value="${c.telefono}"></div>
+‎
+‎            <div class="form-group">
+‎                <label><input type="checkbox" id="f-licencia" ${c.tiene_licencia_operativa ? 'checked' : ''}> Posee Licencia Operativa</label>
+‎            </div>
+‎
+‎            <hr style="border:0; border-top:1px solid #333; margin:15px 0;">
+‎
+‎            <div class="form-group">
+‎                <label>Foto Vehículo (Galería)</label>
+‎                <input type="file" id="f-foto-carro" accept="image/*" onchange="previewImg(this, 'pre-carro')">
+‎                <img id="pre-carro" src="${c.foto_carro}" style="width:100px; height:60px; margin-top:5px; border-radius:8px; display:${c.foto_carro ? 'block' : 'none'}">
+‎            </div>
+‎
+‎            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+‎                <div class="form-group"><label>Marca</label><input type="text" id="f-marca" value="${c.marca_carro}"></div>
+‎                <div class="form-group"><label>Modelo</label><input type="text" id="f-modelo" value="${c.modelo_carro}"></div>
+‎            </div>
+‎
+‎            <div class="form-group">
+‎                <label><input type="checkbox" id="f-aire" ${c.tiene_aire_acondicionado ? 'checked' : ''}> Tiene Aire Acondicionado</label>
+‎            </div>
+‎
+‎            <button class="btn-action btn-gold" onclick="guardarChofer(${esEdicion})">${esEdicion ? 'GUARDAR CAMBIOS' : 'CREAR REGISTRO'}</button>
+‎            <button class="btn-action btn-red" onclick="${esEdicion ? `verDetalle('${c.id}')` : 'cerrarModal()'}">CANCELAR</button>
+‎        `;
+‎        document.getElementById('modalChofer').style.display = 'block';
+‎    }
+‎
+‎    // Función para manejar la lógica de guardado (Insert o Update)
+‎    async function guardarChofer(esEdicion) {
+‎        const datos = {
+‎            nombre: document.getElementById('f-nombre').value,
+‎            apellido: document.getElementById('f-apellido').value,
+‎            telefono: document.getElementById('f-telefono').value,
+‎            tiene_licencia_operativa: document.getElementById('f-licencia').checked,
+‎            marca_carro: document.getElementById('f-marca').value,
+‎            modelo_carro: document.getElementById('f-modelo').value,
+‎            tiene_aire_acondicionado: document.getElementById('f-aire').checked,
+‎            // Aquí iría la lógica de subir a Storage y obtener URL, por ahora simulamos con el valor anterior
+‎            foto_chofer: choferActual?.foto_chofer || '', 
+‎            foto_carro: choferActual?.foto_carro || ''
+‎        };
+‎
+‎        if(esEdicion) {
+‎            await supabaseClient.from('choferes').update(datos).eq('id', choferActual.id);
+‎            alert("Datos actualizados");
+‎            verDetalle(choferActual.id);
+‎        } else {
+‎            datos.fondo_actual = 0;
+‎            await supabaseClient.from('choferes').insert([datos]);
+‎            alert("Chófer creado");
+‎            cerrarModal();
+‎        }
+‎        cargarChoferes();
+‎    }
+‎
+‎    // --- FUNCIONES AUXILIARES ---
+‎    async function actualizarCampo(id, campo, valor) {
+‎        await supabaseClient.from('choferes').update({ [campo]: valor }).eq('id', id);
+‎        verDetalle(id); // Recargar vista
+‎        cargarChoferes();
+‎    }
+‎
+‎    function previewImg(input, targetId) {
+‎        if (input.files && input.files[0]) {
+‎            const reader = new FileReader();
+‎            reader.onload = e => {
+‎                const img = document.getElementById(targetId);
+‎                img.src = e.target.result;
+‎                img.style.display = 'block';
+‎            }
+‎            reader.readAsDataURL(input.files[0]);
+‎        }
+‎    }
+‎
+‎    function verSeccion(s) {
+‎        document.querySelectorAll('.sec').forEach(el => el.style.display = 'none');
+‎        document.getElementById('sec-' + s).style.display = 'block';
+‎        document.querySelectorAll('.sub-menu .btn-toggle-select').forEach(b => b.classList.remove('active'));
+‎        event.currentTarget.classList.add('active');
+‎    }
+‎
+‎    function cerrarModal() { document.getElementById('modalChofer').style.display = 'none'; }
+‎    document.addEventListener('DOMContentLoaded', cargarChoferes);
+‎</script>
+‎</body>
+‎</html>
+‎
