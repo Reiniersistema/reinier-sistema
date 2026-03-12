@@ -131,12 +131,10 @@
         document.getElementById('user-name').innerText = usuario.nombre;
 
         async function cargarDatosPanel() {
-            // Limpiar la tabla antes de cargar para evitar duplicados
             const tbody = document.getElementById('tabla-recientes');
             tbody.innerHTML = ""; 
 
             // 1. Cargar últimos 5 viajes
-            // Hemos simplificado la consulta para asegurar que traiga los datos sin errores de relación
             const { data: viajes, error } = await supabaseClient
                 .from('viajes')
                 .select('precio, origen, chofer_id')
@@ -146,10 +144,7 @@
             if (error) {
                 console.error("Error cargando datos:", error);
                 tbody.innerHTML = "<tr><td colspan='3'>Error al cargar datos</td></tr>";
-                return;
-            }
-
-            if (viajes && viajes.length > 0) {
+            } else if (viajes && viajes.length > 0) {
                 viajes.forEach(v => {
                     tbody.innerHTML += `<tr>
                         <td>${v.chofer_id ? 'Asignado' : 'Pendiente'}</td>
@@ -161,20 +156,35 @@
                 tbody.innerHTML = "<tr><td colspan='3'>No hay viajes registrados</td></tr>";
             }
 
-            // 2. Configurar Gráfica
+            // 2. Configurar Gráfica (MODIFICADA A COLUMNAS)
             const ctx = document.getElementById('graficaViajes').getContext('2d');
             new Chart(ctx, {
-                type: 'line',
+                type: 'bar', // Cambiado a columnas (barras)
                 data: {
                     labels: ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'],
                     datasets: [{
                         label: 'Viajes',
-                        data: [12, 19, 3, 5, 2, 3, 10],
-                        borderColor: '#d4af37',
-                        tension: 0.4
+                        data: [12, 19, 3, 5, 2, 3, 10], // Datos de ejemplo
+                        backgroundColor: '#d4af37', // Color dorado
+                        borderRadius: 5 // Bordes suavizados
                     }]
                 },
-                options: { plugins: { legend: { display: false } } }
+                options: { 
+                    plugins: { 
+                        legend: { display: false } 
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: { color: '#818181' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#818181' }
+                        }
+                    }
+                }
             });
         }
 
