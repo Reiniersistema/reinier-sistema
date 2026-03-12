@@ -1,61 +1,78 @@
+<div id="panelFiltros" class="panel-filtros">
+    <div class="opciones-filtro">
+        <button id="btn-solo-mio" class="btn-filtro" style="grid-column: span 2; margin-bottom: 5px; border-style: dashed;" onclick="alternarFiltroUsuario()">👤 VER SOLO MIS VIAJES</button>
+        
+        <button class="btn-filtro" onclick="aplicarFiltro('hoy')">HOY</button>
+        <button class="btn-filtro" onclick="aplicarFiltro('semana')">ESTA SEMANA</button>
+        <button class="btn-filtro" onclick="aplicarFiltro('mes')">ESTE MES</button>
+        <button class="btn-filtro" onclick="toggleRango()">PERSONALIZADO</button>
+    </div>
+    </div>
+
 <script>
-    let choferActual = null;
-    let todosLosChoferes = [];
-    // NUEVA VARIABLE: Para saber si estamos filtrando solo al usuario actual
-    let soloMisViajesActivo = false; 
+    // 1. Variable para recordar si el filtro personal está activo
+    let filtroUsuarioActivo = false;
+    // Guardamos el último filtro de tiempo aplicado para poder refrescar
+    let ultimoFiltroTiempo = 'todos';
 
-    function toggleFiltros() {
-        const p = document.getElementById('panelFiltros');
-        p.style.display = (p.style.display === 'block') ? 'none' : 'block';
+    function alternarFiltroUsuario() {
+        const btn = document.getElementById('btn-solo-mio');
+        filtroUsuarioActivo = !filtroUsuarioActivo;
+        
+        if (filtroUsuarioActivo) {
+            btn.style.background = "var(--dorado)";
+            btn.style.color = "black";
+            btn.innerText = "✔️ VIENDO MIS VIAJES";
+        } else {
+            btn.style.background = "transparent";
+            btn.style.color = "white";
+            btn.innerText = "👤 VER SOLO MIS VIAJES";
+        }
+        // Refrescamos la búsqueda con el estado actual del usuario
+        aplicarFiltro(ultimoFiltroTiempo);
     }
 
-    function toggleRango() {
-        const r = document.getElementById('rangoFechas');
-        r.style.display = (r.style.display === 'flex') ? 'none' : 'flex';
-    }
+    async function cargarViajes(filtro = 'todos', inicio = null, fin = null) {
+        // Guardamos cuál fue el último filtro de tiempo usado
+        ultimoFiltroTiempo = filtro;
 
-    async function cargarViajes(periodo = 'todos', inicio = null, fin = null) {
         let query = supabaseClient
             .from('viajes')
             .select('precio, origen, destino, usuario_gestor, chofer_id, created_at')
             .order('created_at', { ascending: false });
 
+        // --- LÓGICA DE FILTRO POR USUARIO (AQUÍ ESTÁ EL CAMBIO) ---
+        if (filtroUsuarioActivo) {
+            const usuario = JSON.parse(localStorage.getItem('usuario_activo'));
+            if (usuario && usuario.nombre) {
+                query = query.eq('usuario_gestor', usuario.nombre);
+            }
+        }
+        // ---------------------------------------------------------
+
         const hoy = new Date();
         hoy.setHours(0,0,0,0);
 
-        // 1. FILTRO DE IDENTIDAD (¿Son mis viajes o todos?)
-        if (soloMisViajesActivo) {
-            const userActivo = JSON.parse(localStorage.getItem('usuario_activo'));
-            if (userActivo && userActivo.nombre) {
-                query = query.eq('usuario_gestor', userActivo.nombre);
-                // Cambiamos el título para que el usuario sepa qué está viendo
-                document.querySelector('h2').innerText = "Mis Viajes";
-            }
-        } else {
-            document.querySelector('h2').innerText = "Historial de Viajes";
-        }
-
-        // 2. FILTRO DE TIEMPO (Sobre la selección anterior)
-        if (periodo === 'hoy') {
+        if (filtro === 'hoy') {
             query = query.gte('created_at', hoy.toISOString());
-        } else if (periodo === 'semana') {
+        } else if (filtro === 'semana') {
             const semana = new Date();
             semana.setDate(hoy.getDate() - 7);
             query = query.gte('created_at', semana.toISOString());
-        } else if (periodo === 'mes') {
+        } else if (filtro === 'mes') {
             const mes = new Date();
             mes.setMonth(hoy.getMonth() - 1);
             query = query.gte('created_at', mes.toISOString());
-        } else if (periodo === 'rango' && inicio && fin) {
+        } else if (filtro === 'rango' && inicio && fin) {
             query = query.gte('created_at', inicio + "T00:00:00").lte('created_at', fin + "T23:59:59");
         }
 
         const { data: viajes, error } = await query;
+        // ... (el resto de tu función renderizar se mantiene exactamente igual)
         const tbody = document.getElementById('lista-viajes');
-        
-        // ... (resto del código de renderizado igual que antes)
         if (error) {
-            tbody.innerHTML = "<tr><td colspan='4'>Error: " + error.message + "</td></tr>";
+            console.error("Error Supabase:", error);
+            tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; color:red;'>Error: " + error.message + "</td></tr>";
             return;
         }
 
@@ -66,7 +83,7 @@
 
             tbody.innerHTML = viajes.map(v => `
                 <tr>
-                    <td><b>${choferMap[v.chofer_id] || 'Chófer'}</b></td>
+                    <td><b>${choferMap[v.chofer_id] || 'Chófer #' + v.chofer_id}</b></td>
                     <td style="color:var(--dorado); font-weight:bold;">$${v.precio}</td>
                     <td>${v.origen} <br> <small style="color:#888">→ ${v.destino}</small></td>
                     <td><span class="badge-user">${v.usuario_gestor || 'Admin'}</span></td>
@@ -77,36 +94,17 @@
         }
     }
 
+    // No cambiamos nada en aplicarFiltro, solo que ahora usará la variable global
     function aplicarFiltro(tipo) {
-        if (tipo === 'personales') {
-            // Alternamos el estado: si estaba activo se desactiva y viceversa
-            soloMisViajesActivo = !soloMisViajesActivo;
-            
-            // Cambiamos visualmente el botón para que sepa si está activado
-            const btn = document.querySelector('.btn-mis-viajes');
-            if (soloMisViajesActivo) {
-                btn.style.background = "var(--dorado)";
-                btn.style.color = "black";
-                btn.innerText = "✔️ VIENDO MIS VIAJES";
-            } else {
-                btn.style.background = "rgba(212, 175, 55, 0.2)";
-                btn.style.color = "white";
-                btn.innerText = "👤 VER SOLO MIS VIAJES";
-            }
-            // Al cambiar el modo, refrescamos la lista actual
-            cargarViajes(); 
-        } else if (tipo === 'rango') {
+        if (tipo === 'rango') {
             const inicio = document.getElementById('fecha-inicio').value;
             const fin = document.getElementById('fecha-fin').value;
             if(!inicio || !fin) return alert("Seleccione ambas fechas");
             cargarViajes('rango', inicio, fin);
         } else {
-            // Filtros de tiempo (Hoy, Semana, Mes)
             cargarViajes(tipo);
         }
-        // No cerramos el menú si solo pulsó "Mis Viajes" para que pueda elegir tiempo después
-        if (tipo !== 'personales') toggleFiltros();
+        // Solo cerramos el panel si no estamos activando el botón de "Mis Viajes"
+        // (En este caso lo manejamos en alternarFiltroUsuario para que sea más cómodo)
     }
-
-    cargarViajes();
 </script>
