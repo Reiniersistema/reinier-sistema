@@ -41,3 +41,30 @@ function cerrarSesion() {
     localStorage.removeItem('usuario_activo');
     window.location.href = "index.html";
 }
+document.addEventListener('DOMContentLoaded', () => {
+    const user = JSON.parse(localStorage.getItem('usuario_activo'));
+    if (!user) return;
+
+    if (user.rol === 'gestor') {
+        // Seleccionamos los enlaces que el gestor NO debe ver
+        const enlacesProhibidos = [
+            'pagos-pendientes.html',
+            'pagos-aprobar.html',
+            'tarjetas.html',
+            'transferencias.html',
+            'colaboracion.html',
+            'usuarios.html',
+            'clientes.html'
+        ];
+
+        // Buscamos los enlaces en el sidebar y los ocultamos
+        const links = document.querySelectorAll('.sidebar a');
+        links.forEach(link => {
+            enlacesProhibidos.forEach(prohibido => {
+                if (link.getAttribute('href') === prohibido) {
+                    link.style.display = 'none';
+                }
+            });
+        });
+    }
+});
