@@ -14,8 +14,8 @@
         .sidebar { height: 100%; width: 0; position: fixed; z-index: 3000; top: 0; left: 0; background-color: #1e1e1e; overflow-x: hidden; transition: 0.5s; padding-top: 60px; border-right: 1px solid #d4af37; }
         .sidebar a { padding: 12px 24px; text-decoration: none; font-size: 15px; color: #818181; display: block; transition: 0.3s; text-transform: uppercase; }
         
-        /* CORRECCIÓN DE LA X A LA DERECHA (Según imagen 1000091720.jpg) */
-        .closebtn { position: absolute; top: 15px; right: 25px; font-size: 30px; color: var(--dorado); background: none; border: none; cursor: pointer; text-decoration: none; }
+        /* LA X DEL MENÚ A LA DERECHA Y DORADA (Igual a la imagen de referencia) */
+        .closebtn { position: absolute; top: 15px; right: 25px; font-size: 36px; color: var(--dorado); background: none; border: none; cursor: pointer; }
 
         .header-nav-universal { display: flex; align-items: center; gap: 15px; padding: 15px; background: #121212; border-bottom: 1px solid #d4af37; margin-bottom: 20px; }
         .openbtn { font-size: 25px; cursor: pointer; background: none; border: none; color: #d4af37; }
@@ -24,7 +24,7 @@
         .contenedor-principal { padding: 0 15px; max-width: 800px; margin: auto; }
         h2 { color: var(--dorado); text-align: center; text-transform: uppercase; font-size: 18px; margin-bottom: 20px; }
 
-        /* BOTÓN DE FILTRO DORADO (Según imagen 1000091721.jpg) */
+        /* BOTÓN DE FILTRO DORADO Y CIRCULAR */
         .btn-filtro-circular {
             background: var(--dorado);
             width: 50px;
@@ -51,9 +51,10 @@
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 5000; overflow-y: auto; padding: 20px; box-sizing: border-box; }
         .modal-content { max-width: 600px; margin: auto; background: var(--gris); padding: 20px; border-radius: 15px; border: 1px solid #d4af37; }
         
-        /* Inputs y Labels */
+        /* Inputs y Labels Estilo RF */
         label { display: block; color: var(--dorado); font-size: 12px; margin-bottom: 5px; font-weight: bold; }
-        input[type="text"], input[type="tel"], input[type="number"], select { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #444; background: #000; color: white; box-sizing: border-box; }
+        input[type="text"], input[type="tel"], input[type="number"], select { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #444; background: #000; color: white; box-sizing: border-box; outline: none; }
+        input[type="text"]:focus { border-color: var(--dorado); }
 
         .btn-action { padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
         .btn-gold { background: var(--dorado); color: black; }
@@ -63,20 +64,46 @@
         .stat-item { text-align: center; }
         .stat-val { color: var(--dorado); font-size: 18px; font-weight: bold; display: block; }
         .stat-lbl { font-size: 10px; color: #888; text-transform: uppercase; }
+
+        /* NUEVOS ESTILOS PARA LA MODAL DE BÚSQUEDA PERSONALIZADA (Oscura y Dorada) */
+        #modalBusqueda {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 6000; /* Por encima de todo */
+            justify-content: center;
+            align-items: center;
+        }
+        .busqueda-content {
+            background: var(--gris);
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid var(--dorado);
+            width: 85%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        .busqueda-content h3 {
+            color: var(--dorado);
+            margin-top: 0;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
 
 <div id="mySidebar" class="sidebar">
     <button class="closebtn" onclick="closeNav()">×</button>
-    <a href="panel.html">Inicio</a>
-    <a href="choferes.html">Choferes</a>
     </div>
 
 <div class="contenedor-principal">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
         <h2 style="margin: 0;">Choferes</h2>
-        <button class="btn-filtro-circular" onclick="abrirFiltroBusqueda()">⌛</button>
+        <button class="btn-filtro-circular" onclick="abrirModalBusqueda()">⌛</button>
     </div>
     
     <button id="btn-nuevo-chofer" class="btn-action btn-gold" onclick="abrirFormularioNuevo()" style="margin: 20px 0;">+ AÑADIR NUEVO CHÓFER</button>
@@ -91,13 +118,23 @@
     </div>
 </div>
 
+<div id="modalBusqueda">
+    <div class="busqueda-content">
+        <h3>Filtrar Choferes</h3>
+        <input type="text" id="inputBusqueda" placeholder="Nombre o teléfono...">
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-action btn-gold" onclick="ejecutarFiltro()">BUSCAR</button>
+            <button class="btn-action btn-red" onclick="cerrarModalBusqueda()">CANCELAR</button>
+        </div>
+    </div>
+</div>
+
 <script src="config.js"></script>
 <script src="menu.js"></script>
 <script>
     let choferActual = null;
-    let todosLosChoferes = []; // Variable para guardar los datos originales
+    let todosLosChoferes = [];
 
-    // FUNCIÓN DE PERMISOS (ROL GESTOR)
     function aplicarPermisosChoferes() {
         const user = JSON.parse(localStorage.getItem('usuario_activo'));
         if (user && user.rol === 'gestor') {
@@ -108,11 +145,10 @@
 
     async function cargarChoferes() {
         const { data } = await supabaseClient.from('choferes').select('*').order('nombre');
-        todosLosChoferes = data || []; // Guardamos copia para el filtro
+        todosLosChoferes = data || [];
         renderizarLista(todosLosChoferes);
     }
 
-    // Función para dibujar los choferes en pantalla
     function renderizarLista(lista) {
         const contenedor = document.getElementById('lista-choferes');
         contenedor.innerHTML = "";
@@ -130,21 +166,37 @@
         });
     }
 
-    // LÓGICA DEL BOTÓN DE FILTRO FUNCIONAL
-    function abrirFiltroBusqueda() {
-        const query = prompt("Filtrar por nombre o teléfono:");
-        if (query === null) return; // Si cancela no hace nada
-
-        const q = query.toLowerCase();
-        const filtrados = todosLosChoferes.filter(c => 
-            c.nombre.toLowerCase().includes(q) || 
-            c.apellido.toLowerCase().includes(q) || 
-            c.telefono.includes(q)
-        );
-        renderizarLista(filtrados);
+    // LÓGICA DE LA NUEVA MODAL DE BÚSQUEDA (Esmerada y con estilo)
+    function abrirModalBusqueda() {
+        document.getElementById('modalBusqueda').style.display = 'flex';
+        document.getElementById('inputBusqueda').value = ''; // Limpiar búsqueda anterior
+        document.getElementById('inputBusqueda').focus(); // Poner el cursor dentro
     }
 
-    // ... (El resto de funciones se mantienen iguales: abrirFormularioNuevo, verDetalle, etc.)
+    function cerrarModalBusqueda() {
+        document.getElementById('modalBusqueda').style.display = 'none';
+    }
+
+    function ejecutarFiltro() {
+        const query = document.getElementById('inputBusqueda').value.toLowerCase();
+        
+        const filtrados = todosLosChoferes.filter(c => 
+            c.nombre.toLowerCase().includes(query) || 
+            c.apellido.toLowerCase().includes(query) || 
+            c.telefono.includes(query)
+        );
+        renderizarLista(filtrados);
+        cerrarModalBusqueda(); // Cerrar popup tras buscar
+    }
+
+    // Permitir buscar al presionar 'Enter' en el input
+    document.getElementById('inputBusqueda').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            ejecutarFiltro();
+        }
+    });
+
+    // ... Resto de funciones se mantienen iguales
 
     function abrirFormularioNuevo() {
         document.getElementById('contenidoModal').innerHTML = `
