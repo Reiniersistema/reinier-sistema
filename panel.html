@@ -108,8 +108,7 @@
                             <th>Origen</th>
                         </tr>
                     </thead>
-                    <tbody id="tabla-recientes">
-                        </tbody>
+                    <tbody id="tabla-recientes"></tbody>
                 </table>
             </div>
 
@@ -122,7 +121,6 @@
 
     <script src="config.js"></script>
     <script>
-        // Funciones del Menú
         function openNav() { document.getElementById("mySidebar").style.width = "280px"; }
         function closeNav() { document.getElementById("mySidebar").style.width = "0"; }
 
@@ -142,8 +140,7 @@
                 .limit(5);
 
             if (error) {
-                console.error("Error cargando datos:", error);
-                tbody.innerHTML = "<tr><td colspan='3'>Error al cargar datos</td></tr>";
+                console.error("Error cargando tabla:", error);
             } else if (viajes && viajes.length > 0) {
                 viajes.forEach(v => {
                     tbody.innerHTML += `<tr>
@@ -152,32 +149,47 @@
                         <td>${v.origen}</td>
                     </tr>`;
                 });
-            } else {
-                tbody.innerHTML = "<tr><td colspan='3'>No hay viajes registrados</td></tr>";
             }
 
-            // 2. Configurar Gráfica (MODIFICADA A COLUMNAS)
+            // 2. Lógica para la Gráfica de Columnas con datos de la semana
+            const haceUnaSemana = new Date();
+            haceUnaSemana.setDate(haceUnaSemana.getDate() - 7);
+
+            const { data: datosGrafica, error: errorGrafica } = await supabaseClient
+                .from('viajes')
+                .select('created_at')
+                .gte('created_at', haceUnaSemana.toISOString());
+
+            let conteoDias = [0, 0, 0, 0, 0, 0, 0]; // [Lun, Mar, Mie, Jue, Vie, Sab, Dom]
+
+            if (!errorGrafica && datosGrafica) {
+                datosGrafica.forEach(viaje => {
+                    const fecha = new Date(viaje.created_at);
+                    let diaSemana = fecha.getDay(); 
+                    let indiceAjustado = diaSemana === 0 ? 6 : diaSemana - 1;
+                    conteoDias[indiceAjustado]++;
+                });
+            }
+
             const ctx = document.getElementById('graficaViajes').getContext('2d');
             new Chart(ctx, {
-                type: 'bar', // Cambiado a columnas (barras)
+                type: 'bar',
                 data: {
                     labels: ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'],
                     datasets: [{
                         label: 'Viajes',
-                        data: [12, 19, 3, 5, 2, 3, 10], // Datos de ejemplo
-                        backgroundColor: '#d4af37', // Color dorado
-                        borderRadius: 5 // Bordes suavizados
+                        data: conteoDias,
+                        backgroundColor: '#d4af37',
+                        borderRadius: 5
                     }]
                 },
                 options: { 
-                    plugins: { 
-                        legend: { display: false } 
-                    },
+                    plugins: { legend: { display: false } },
                     scales: {
                         y: {
                             beginAtZero: true,
-                            grid: { color: 'rgba(255,255,255,0.1)' },
-                            ticks: { color: '#818181' }
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: '#818181', stepSize: 1 }
                         },
                         x: {
                             grid: { display: false },
