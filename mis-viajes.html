@@ -1,54 +1,156 @@
-<div id="panelFiltros" class="panel-filtros">
-    <div class="opciones-filtro">
-        <button id="btn-solo-mio" class="btn-filtro" style="grid-column: span 2; margin-bottom: 5px; border-style: dashed;" onclick="alternarFiltroUsuario()">👤 VER SOLO MIS VIAJES</button>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Viajes - RF TransGestión</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; }
+        body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding-bottom: 50px; }
         
-        <button class="btn-filtro" onclick="aplicarFiltro('hoy')">HOY</button>
-        <button class="btn-filtro" onclick="aplicarFiltro('semana')">ESTA SEMANA</button>
-        <button class="btn-filtro" onclick="aplicarFiltro('mes')">ESTE MES</button>
-        <button class="btn-filtro" onclick="toggleRango()">PERSONALIZADO</button>
-    </div>
+        /* ESTILOS DEL MENÚ UNIVERSAL */
+        .sidebar {
+            height: 100%; width: 0; position: fixed;
+            z-index: 3000; top: 0; left: 0;
+            background-color: #1e1e1e;
+            overflow-x: hidden; transition: 0.5s;
+            padding-top: 60px; border-right: 1px solid #d4af37;
+        }
+        .sidebar a {
+            padding: 12px 24px; text-decoration: none;
+            font-size: 15px; color: #818181;
+            display: block; transition: 0.3s;
+            text-transform: uppercase;
+        }
+        .sidebar a:hover { color: #d4af37; background: rgba(212, 175, 55, 0.1); }
+        .sidebar .closebtn { position: absolute; top: 10px; right: 25px; font-size: 36px; color: #d4af37; }
+
+        .header-nav-universal { 
+            display: flex; align-items: center; gap: 15px; 
+            padding: 15px; background: #121212; 
+            border-bottom: 1px solid #d4af37; margin-bottom: 20px;
+        }
+        .openbtn { font-size: 25px; cursor: pointer; background: none; border: none; color: #d4af37; }
+        .logo-txt-universal { font-family: 'Playfair Display', serif; font-size: 20px; color: white; }
+
+        /* Estilos propios de la página */
+        .contenedor-principal { padding: 0 15px; }
+        .header-seccion { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        h2 { color: var(--dorado); text-transform: uppercase; font-size: 18px; margin: 0; }
+
+        .btn-embudo { background: var(--dorado); border: none; border-radius: 50%; width: 45px; height: 45px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        
+        .panel-filtros { display: none; background: var(--gris); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--dorado); }
+        .opciones-filtro { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn-filtro { background: transparent; border: 1px solid var(--dorado); color: white; padding: 8px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .btn-filtro:hover { background: var(--dorado); color: black; }
+        .rango-fechas { grid-column: span 2; display: none; flex-direction: column; gap: 5px; margin-top: 10px; }
+        .rango-fechas input { background: #000; border: 1px solid #333; color: white; padding: 8px; border-radius: 5px; font-family: 'Montserrat'; }
+
+        .tabla-contenedor { overflow-x: auto; background: var(--gris); border-radius: 15px; padding: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        table { width: 100%; border-collapse: collapse; min-width: 500px; }
+        th { color: var(--dorado); text-align: left; padding: 12px; border-bottom: 2px solid #333; font-size: 11px; text-transform: uppercase; }
+        td { padding: 12px; border-bottom: 1px solid #222; font-size: 13px; }
+        .badge-user { background: #333; padding: 4px 8px; border-radius: 4px; font-size: 10px; color: var(--dorado); text-transform: uppercase; }
+        
+        small { display: block; margin-top: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="contenedor-principal">
+    <div class="header-seccion">
+        <h2 id="titulo-historial">Historial de Viajes</h2>
+        <button class="btn-embudo" onclick="toggleFiltros()">⏳</button>
     </div>
 
+    <div id="panelFiltros" class="panel-filtros">
+        <button id="btn-solo-mio" class="btn-filtro" style="width: 100%; margin-bottom: 15px; border-style: dashed;" onclick="toggleFiltroUsuario()">👤 VER SOLO MIS VIAJES</button>
+        
+        <div class="opciones-filtro">
+            <button class="btn-filtro" onclick="aplicarFiltro('hoy')">HOY</button>
+            <button class="btn-filtro" onclick="aplicarFiltro('semana')">ESTA SEMANA</button>
+            <button class="btn-filtro" onclick="aplicarFiltro('mes')">ESTE MES</button>
+            <button class="btn-filtro" onclick="toggleRango()">PERSONALIZADO</button>
+        </div>
+        <div id="rangoFechas" class="rango-fechas">
+            <input type="date" id="fecha-inicio">
+            <input type="date" id="fecha-fin">
+            <button class="btn-filtro" style="background: var(--dorado); color: black; margin-top:5px;" onclick="aplicarFiltro('rango')">FILTRAR RANGO</button>
+        </div>
+    </div>
+
+    <div class="tabla-contenedor">
+        <table>
+            <thead>
+                <tr>
+                    <th>Chofer</th>
+                    <th>Precio</th>
+                    <th>Ruta</th>
+                    <th>Usuario</th>
+                </tr>
+            </thead>
+            <tbody id="lista-viajes">
+                <tr><td colspan="4" style="text-align:center; padding:20px;">Cargando viajes...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="config.js"></script>
+<script src="menu.js"></script>
 <script>
-    // 1. Variable para recordar si el filtro personal está activo
-    let filtroUsuarioActivo = false;
-    // Guardamos el último filtro de tiempo aplicado para poder refrescar
-    let ultimoFiltroTiempo = 'todos';
+    // Variables para controlar el estado de los filtros
+    let filtroSoloMio = false;
+    let filtroTiempoActual = 'todos';
 
-    function alternarFiltroUsuario() {
+    function toggleFiltros() {
+        const p = document.getElementById('panelFiltros');
+        p.style.display = (p.style.display === 'block') ? 'none' : 'block';
+    }
+
+    function toggleRango() {
+        const r = document.getElementById('rangoFechas');
+        r.style.display = (r.style.display === 'flex') ? 'none' : 'flex';
+    }
+
+    // Nueva función para alternar el filtro de usuario
+    function toggleFiltroUsuario() {
         const btn = document.getElementById('btn-solo-mio');
-        filtroUsuarioActivo = !filtroUsuarioActivo;
-        
-        if (filtroUsuarioActivo) {
+        const titulo = document.getElementById('titulo-historial');
+        filtroSoloMio = !filtroSoloMio;
+
+        if (filtroSoloMio) {
             btn.style.background = "var(--dorado)";
             btn.style.color = "black";
             btn.innerText = "✔️ VIENDO MIS VIAJES";
+            titulo.innerText = "Mis Viajes";
         } else {
             btn.style.background = "transparent";
             btn.style.color = "white";
             btn.innerText = "👤 VER SOLO MIS VIAJES";
+            titulo.innerText = "Historial de Viajes";
         }
-        // Refrescamos la búsqueda con el estado actual del usuario
-        aplicarFiltro(ultimoFiltroTiempo);
+        // Recargar con el filtro de tiempo que ya esté seleccionado
+        cargarViajes(filtroTiempoActual);
     }
 
     async function cargarViajes(filtro = 'todos', inicio = null, fin = null) {
-        // Guardamos cuál fue el último filtro de tiempo usado
-        ultimoFiltroTiempo = filtro;
-
+        filtroTiempoActual = filtro;
         let query = supabaseClient
             .from('viajes')
             .select('precio, origen, destino, usuario_gestor, chofer_id, created_at')
             .order('created_at', { ascending: false });
 
-        // --- LÓGICA DE FILTRO POR USUARIO (AQUÍ ESTÁ EL CAMBIO) ---
-        if (filtroUsuarioActivo) {
-            const usuario = JSON.parse(localStorage.getItem('usuario_activo'));
-            if (usuario && usuario.nombre) {
-                query = query.eq('usuario_gestor', usuario.nombre);
+        // APLICAR FILTRO DE USUARIO (SI ESTÁ ACTIVO)
+        if (filtroSoloMio) {
+            const userActivo = JSON.parse(localStorage.getItem('usuario_activo'));
+            if (userActivo && userActivo.nombre) {
+                query = query.eq('usuario_gestor', userActivo.nombre);
             }
         }
-        // ---------------------------------------------------------
 
         const hoy = new Date();
         hoy.setHours(0,0,0,0);
@@ -68,11 +170,11 @@
         }
 
         const { data: viajes, error } = await query;
-        // ... (el resto de tu función renderizar se mantiene exactamente igual)
         const tbody = document.getElementById('lista-viajes');
+        
         if (error) {
             console.error("Error Supabase:", error);
-            tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; color:red;'>Error: " + error.message + "</td></tr>";
+            tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; color:red;'>Error</td></tr>";
             return;
         }
 
@@ -94,7 +196,6 @@
         }
     }
 
-    // No cambiamos nada en aplicarFiltro, solo que ahora usará la variable global
     function aplicarFiltro(tipo) {
         if (tipo === 'rango') {
             const inicio = document.getElementById('fecha-inicio').value;
@@ -104,7 +205,10 @@
         } else {
             cargarViajes(tipo);
         }
-        // Solo cerramos el panel si no estamos activando el botón de "Mis Viajes"
-        // (En este caso lo manejamos en alternarFiltroUsuario para que sea más cómodo)
+        toggleFiltros();
     }
+
+    cargarViajes();
 </script>
+</body>
+</html>
