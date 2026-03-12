@@ -10,7 +10,6 @@
         :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; }
         body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding-bottom: 50px; }
         
-        /* ESTILOS DEL MENÚ UNIVERSAL */
         .sidebar {
             height: 100%; width: 0; position: fixed;
             z-index: 3000; top: 0; left: 0;
@@ -35,7 +34,6 @@
         .openbtn { font-size: 25px; cursor: pointer; background: none; border: none; color: #d4af37; }
         .logo-txt-universal { font-family: 'Playfair Display', serif; font-size: 20px; color: white; }
 
-        /* Estilos propios de la página */
         .contenedor-principal { padding: 0 15px; }
         .header-seccion { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         h2 { color: var(--dorado); text-transform: uppercase; font-size: 18px; margin: 0; }
@@ -46,6 +44,10 @@
         .opciones-filtro { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .btn-filtro { background: transparent; border: 1px solid var(--dorado); color: white; padding: 8px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: bold; }
         .btn-filtro:hover { background: var(--dorado); color: black; }
+        
+        /* Estilo especial para el botón "MIS VIAJES" */
+        .btn-mis-viajes { grid-column: span 2; background: rgba(212, 175, 55, 0.2); border: 1px dashed var(--dorado); }
+
         .rango-fechas { grid-column: span 2; display: none; flex-direction: column; gap: 5px; margin-top: 10px; }
         .rango-fechas input { background: #000; border: 1px solid #333; color: white; padding: 8px; border-radius: 5px; font-family: 'Montserrat'; }
 
@@ -71,7 +73,8 @@
             <button class="btn-filtro" onclick="aplicarFiltro('hoy')">HOY</button>
             <button class="btn-filtro" onclick="aplicarFiltro('semana')">ESTA SEMANA</button>
             <button class="btn-filtro" onclick="aplicarFiltro('mes')">ESTE MES</button>
-            <button class="btn-filtro" onclick="toggleRango()">PERSONALIZADO</button>
+            <button class="btn-filtro" onclick="toggleRango()">RANGO</button>
+            <button class="btn-filtro btn-mis-viajes" onclick="aplicarFiltro('personales')">👤 VER SOLO MIS VIAJES</button>
         </div>
         <div id="rangoFechas" class="rango-fechas">
             <input type="date" id="fecha-inicio">
@@ -119,6 +122,7 @@
         const hoy = new Date();
         hoy.setHours(0,0,0,0);
 
+        // Lógica de filtrado
         if (filtro === 'hoy') {
             query = query.gte('created_at', hoy.toISOString());
         } else if (filtro === 'semana') {
@@ -131,6 +135,15 @@
             query = query.gte('created_at', mes.toISOString());
         } else if (filtro === 'rango' && inicio && fin) {
             query = query.gte('created_at', inicio + "T00:00:00").lte('created_at', fin + "T23:59:59");
+        } else if (filtro === 'personales') {
+            // AQUÍ FILTRAMOS POR EL USUARIO QUE TRABAJA
+            const userActivo = JSON.parse(localStorage.getItem('usuario_activo'));
+            if (userActivo && userActivo.nombre) {
+                query = query.eq('usuario_gestor', userActivo.nombre);
+            } else {
+                alert("No se detectó usuario activo.");
+                return;
+            }
         }
 
         const { data: viajes, error } = await query;
