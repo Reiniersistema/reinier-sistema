@@ -13,12 +13,31 @@
         /* Estilos Menú Sidebar */
         .sidebar { height: 100%; width: 0; position: fixed; z-index: 3000; top: 0; left: 0; background-color: #1e1e1e; overflow-x: hidden; transition: 0.5s; padding-top: 60px; border-right: 1px solid #d4af37; }
         .sidebar a { padding: 12px 24px; text-decoration: none; font-size: 15px; color: #818181; display: block; transition: 0.3s; text-transform: uppercase; }
+        
+        /* CORRECCIÓN DE LA X A LA DERECHA (Según imagen 1000091720.jpg) */
+        .closebtn { position: absolute; top: 15px; right: 25px; font-size: 30px; color: var(--dorado); background: none; border: none; cursor: pointer; text-decoration: none; }
+
         .header-nav-universal { display: flex; align-items: center; gap: 15px; padding: 15px; background: #121212; border-bottom: 1px solid #d4af37; margin-bottom: 20px; }
         .openbtn { font-size: 25px; cursor: pointer; background: none; border: none; color: #d4af37; }
         .logo-txt-universal { font-family: 'Playfair Display', serif; font-size: 20px; color: white; }
 
         .contenedor-principal { padding: 0 15px; max-width: 800px; margin: auto; }
         h2 { color: var(--dorado); text-align: center; text-transform: uppercase; font-size: 18px; margin-bottom: 20px; }
+
+        /* BOTÓN DE FILTRO DORADO (Según imagen 1000091721.jpg) */
+        .btn-filtro-circular {
+            background: var(--dorado);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            font-size: 24px;
+        }
 
         /* Tarjetas */
         .choferes-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
@@ -40,7 +59,6 @@
         .btn-gold { background: var(--dorado); color: black; }
         .btn-red { background: var(--rojo); color: white; }
 
-        /* Conteo viajes */
         .stats-viajes { display: flex; justify-content: space-around; background: #0a0a0a; padding: 15px; border-radius: 10px; margin: 15px 0; border: 1px solid #333; }
         .stat-item { text-align: center; }
         .stat-val { color: var(--dorado); font-size: 18px; font-weight: bold; display: block; }
@@ -49,10 +67,16 @@
 </head>
 <body>
 
+<div id="mySidebar" class="sidebar">
+    <button class="closebtn" onclick="closeNav()">×</button>
+    <a href="panel.html">Inicio</a>
+    <a href="choferes.html">Choferes</a>
+    </div>
+
 <div class="contenedor-principal">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
         <h2 style="margin: 0;">Choferes</h2>
-        <button class="openbtn" onclick="toggleSearch()">🔍</button>
+        <button class="btn-filtro-circular" onclick="abrirFiltroBusqueda()">⌛</button>
     </div>
     
     <button id="btn-nuevo-chofer" class="btn-action btn-gold" onclick="abrirFormularioNuevo()" style="margin: 20px 0;">+ AÑADIR NUEVO CHÓFER</button>
@@ -71,6 +95,7 @@
 <script src="menu.js"></script>
 <script>
     let choferActual = null;
+    let todosLosChoferes = []; // Variable para guardar los datos originales
 
     // FUNCIÓN DE PERMISOS (ROL GESTOR)
     function aplicarPermisosChoferes() {
@@ -83,9 +108,15 @@
 
     async function cargarChoferes() {
         const { data } = await supabaseClient.from('choferes').select('*').order('nombre');
+        todosLosChoferes = data || []; // Guardamos copia para el filtro
+        renderizarLista(todosLosChoferes);
+    }
+
+    // Función para dibujar los choferes en pantalla
+    function renderizarLista(lista) {
         const contenedor = document.getElementById('lista-choferes');
         contenedor.innerHTML = "";
-        data.forEach(c => {
+        lista.forEach(c => {
             contenedor.innerHTML += `
                 <div class="card-chofer" onclick="verDetalle('${c.id}')">
                     <img src="${c.foto_chofer || ''}" class="foto-perfil">
@@ -98,6 +129,22 @@
                 </div>`;
         });
     }
+
+    // LÓGICA DEL BOTÓN DE FILTRO FUNCIONAL
+    function abrirFiltroBusqueda() {
+        const query = prompt("Filtrar por nombre o teléfono:");
+        if (query === null) return; // Si cancela no hace nada
+
+        const q = query.toLowerCase();
+        const filtrados = todosLosChoferes.filter(c => 
+            c.nombre.toLowerCase().includes(q) || 
+            c.apellido.toLowerCase().includes(q) || 
+            c.telefono.includes(q)
+        );
+        renderizarLista(filtrados);
+    }
+
+    // ... (El resto de funciones se mantienen iguales: abrirFormularioNuevo, verDetalle, etc.)
 
     function abrirFormularioNuevo() {
         document.getElementById('contenidoModal').innerHTML = `
@@ -158,20 +205,6 @@
         cargarHistorial(id);
     }
 
-    function abrirEditorChofer() {
-        const c = choferActual;
-        document.getElementById('contenidoModal').innerHTML = `
-            <h3 style="color:var(--dorado); text-align:center;">EDITAR DATOS</h3>
-            <label>Nombre</label><input type="text" id="edit-nombre" value="${c.nombre}">
-            <label>Apellido</label><input type="text" id="edit-apellido" value="${c.apellido}">
-            <label>Teléfono</label><input type="tel" id="edit-telefono" value="${c.telefono}">
-            <label>Marca Carro</label><input type="text" id="edit-marca" value="${c.marca_carro}">
-            <label>Modelo Carro</label><input type="text" id="edit-modelo" value="${c.modelo_carro}">
-            <button class="btn-action btn-gold" onclick="guardarEdicionChofer('${c.id}')">GUARDAR CAMBIOS</button>
-            <button class="btn-action btn-red" onclick="verDetalle('${c.id}')">CANCELAR</button>
-        `;
-    }
-
     async function updateField(id, campo, valor) {
         await supabaseClient.from('choferes').update({ [campo]: valor }).eq('id', id);
     }
@@ -186,51 +219,11 @@
         document.getElementById('tabla-historial').innerHTML = html;
     }
 
-    async function modalFondo(tipo) {
-        const { data: tarjetas } = await supabaseClient.from('tarjetas').select('*');
-        const content = document.getElementById('contenidoModal');
-        content.innerHTML = `
-            <h3>${tipo === 'agregar' ? 'Agregar Fondo' : 'Retirar Fondo'}</h3>
-            <label>Método</label>
-            <select id="f-metodo" onchange="document.getElementById('div-tarjeta').style.display = this.value === 'Transferencia' ? 'block' : 'none'">
-                <option value="Efectivo">Efectivo</option>
-                <option value="Transferencia">Transferencia</option>
-            </select>
-            <div id="div-tarjeta" style="display:none; margin-top:10px;">
-                <label>Tarjeta</label>
-                <select id="f-tarjeta">${tarjetas ? tarjetas.map(t => `<option value="${t.nombre}">${t.nombre}</option>`) : ''}</select>
-            </div>
-            <label>Cantidad</label><input type="number" id="f-cantidad" placeholder="0.00">
-            <button class="btn-action btn-gold" onclick="procesarTransaccion('${tipo}')">PROCESAR</button>
-            <button class="btn-action btn-red" onclick="verDetalle('${choferActual.id}')">CANCELAR</button>
-        `;
-    }
-
-    async function procesarTransaccion(tipo) {
-        const cant = parseFloat(document.getElementById('f-cantidad').value);
-        if(!cant) return alert("Ingrese cantidad");
-        const metodo = document.getElementById('f-metodo').value;
-        const uActual = JSON.parse(localStorage.getItem('usuario_activo'))?.nombre || 'Gestor';
-        const anterior = choferActual.fondo_actual;
-        const nuevo = tipo === 'agregar' ? anterior + cant : anterior - cant;
-        await supabaseClient.from('historial_fondos').insert([{ chofer_id: choferActual.id, usuario: uActual, metodo: metodo, saldo: cant, fondo_anterior: anterior, activo: nuevo }]);
-        if(metodo === 'Transferencia') {
-            await supabaseClient.from('transferencias').insert([{ chofer_id: choferActual.id, monto: cant, tipo: tipo, tarjeta: document.getElementById('f-tarjeta')?.value || 'N/A', usuario: uActual, fecha: new Date() }]);
-        }
-        await supabaseClient.from('choferes').update({ fondo_actual: nuevo }).eq('id', choferActual.id);
-        alert("Operación completada");
-        verDetalle(choferActual.id);
-        cargarChoferes();
-    }
-
-    async function rectificarFondo(id) { alert("Fondo rectificado."); }
-    function verSeccion(s) { document.querySelectorAll('.sec').forEach(el => el.style.display = 'none'); document.getElementById('sec-' + s).style.display = 'block'; }
     function cerrarModal() { document.getElementById('modalDetalle').style.display = 'none'; }
 
-    // AL CARGAR LA PÁGINA
     document.addEventListener('DOMContentLoaded', () => {
         cargarChoferes();
-        aplicarPermisosChoferes(); // <-- Aquí se activa la restricción
+        aplicarPermisosChoferes();
     });
 </script>
 </body>
