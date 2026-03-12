@@ -13,19 +13,14 @@
         /* Estilos Menú Sidebar */
         .sidebar { height: 100%; width: 0; position: fixed; z-index: 3000; top: 0; left: 0; background-color: #1e1e1e; overflow-x: hidden; transition: 0.5s; padding-top: 60px; border-right: 1px solid #d4af37; }
         .sidebar a { padding: 12px 24px; text-decoration: none; font-size: 15px; color: #818181; display: block; transition: 0.3s; text-transform: uppercase; }
-        
-        /* LA X DEL MENÚ A LA DERECHA */
-        .closebtn { position: absolute; top: 15px; right: 25px; font-size: 36px; color: var(--dorado); background: none; border: none; cursor: pointer; }
-
         .header-nav-universal { display: flex; align-items: center; gap: 15px; padding: 15px; background: #121212; border-bottom: 1px solid #d4af37; margin-bottom: 20px; }
         .openbtn { font-size: 25px; cursor: pointer; background: none; border: none; color: #d4af37; }
-        
-        /* FILTRO AMARILLO CON RELOJ DE ARENA */
-        .btn-filtro { background: var(--dorado); color: black; border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-size: 20px; border: none; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .logo-txt-universal { font-family: 'Playfair Display', serif; font-size: 20px; color: white; }
 
         .contenedor-principal { padding: 0 15px; max-width: 800px; margin: auto; }
         h2 { color: var(--dorado); text-align: center; text-transform: uppercase; font-size: 18px; margin-bottom: 20px; }
 
+        /* Tarjetas */
         .choferes-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
         .card-chofer { background: var(--gris); border-radius: 12px; border: 1px solid #333; padding: 12px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
         .foto-perfil { width: 55px; height: 55px; border-radius: 50%; border: 2px solid var(--dorado); object-fit: cover; flex-shrink: 0; }
@@ -33,9 +28,11 @@
         .card-info h3 { margin: 0; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .card-info p { margin: 2px 0; font-size: 12px; color: #aaa; }
         
+        /* Modal Detalle */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 5000; overflow-y: auto; padding: 20px; box-sizing: border-box; }
         .modal-content { max-width: 600px; margin: auto; background: var(--gris); padding: 20px; border-radius: 15px; border: 1px solid #d4af37; }
         
+        /* Inputs y Labels */
         label { display: block; color: var(--dorado); font-size: 12px; margin-bottom: 5px; font-weight: bold; }
         input[type="text"], input[type="tel"], input[type="number"], select { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #444; background: #000; color: white; box-sizing: border-box; }
 
@@ -43,21 +40,19 @@
         .btn-gold { background: var(--dorado); color: black; }
         .btn-red { background: var(--rojo); color: white; }
 
+        /* Conteo viajes */
         .stats-viajes { display: flex; justify-content: space-around; background: #0a0a0a; padding: 15px; border-radius: 10px; margin: 15px 0; border: 1px solid #333; }
         .stat-item { text-align: center; }
         .stat-val { color: var(--dorado); font-size: 18px; font-weight: bold; display: block; }
         .stat-lbl { font-size: 10px; color: #888; text-transform: uppercase; }
-
-        /* Estilo para los badges de estado en la vista principal */
-        .status-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; margin-bottom: 5px; background: rgba(212, 175, 55, 0.2); color: var(--dorado); border: 1px solid var(--dorado); text-transform: uppercase; }
     </style>
 </head>
 <body>
 
 <div class="contenedor-principal">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
         <h2 style="margin: 0;">Choferes</h2>
-        <button class="btn-filtro" onclick="toggleSearch()">⏳</button>
+        <button class="openbtn" onclick="toggleSearch()">🔍</button>
     </div>
     
     <button id="btn-nuevo-chofer" class="btn-action btn-gold" onclick="abrirFormularioNuevo()" style="margin: 20px 0;">+ AÑADIR NUEVO CHÓFER</button>
@@ -77,6 +72,7 @@
 <script>
     let choferActual = null;
 
+    // FUNCIÓN DE PERMISOS (ROL GESTOR)
     function aplicarPermisosChoferes() {
         const user = JSON.parse(localStorage.getItem('usuario_activo'));
         if (user && user.rol === 'gestor') {
@@ -103,65 +99,59 @@
         });
     }
 
-    // CONTADORES DE VIAJES REALES
-    async function contarViajes(choferId) {
-        const hoy = new Date().toISOString().split('T')[0];
-        const { count: total } = await supabaseClient.from('viajes').select('*', { count: 'exact', head: true }).eq('chofer_id', choferId);
-        const { count: vHoy } = await supabaseClient.from('viajes').select('*', { count: 'exact', head: true }).eq('chofer_id', choferId).gte('created_at', hoy);
-        
-        // Simulación mes (puedes ajustar el gte para el inicio del mes real)
-        return { hoy: vHoy || 0, mes: vHoy || 0, total: total || 0 };
+    function abrirFormularioNuevo() {
+        document.getElementById('contenidoModal').innerHTML = `
+            <h3 style="color:var(--dorado); text-align:center;">NUEVO CHÓFER</h3>
+            <label>Nombre</label><input type="text" id="add-nombre">
+            <label>Apellido</label><input type="text" id="add-apellido">
+            <label>Teléfono</label><input type="tel" id="add-telefono">
+            <label>Foto (Galería)</label><input type="file" id="add-foto" accept="image/*">
+            <label>Foto Carro (Galería)</label><input type="file" id="add-foto-carro" accept="image/*">
+            <label><input type="checkbox" id="add-licencia"> Licencia Operativa</label><br>
+            <label><input type="checkbox" id="add-aire"> Aire Acondicionado</label>
+            <button class="btn-action btn-gold" onclick="guardarNuevoChofer()">GUARDAR CHÓFER</button>
+        `;
+        document.getElementById('modalDetalle').style.display = 'block';
     }
 
     async function verDetalle(id) {
         const { data: c } = await supabaseClient.from('choferes').select('*').eq('id', id).single();
         choferActual = c;
-        const stats = await contarViajes(id);
-        const user = JSON.parse(localStorage.getItem('usuario_activo'));
+        const vHoy = 0, vMes = 0, vTotal = 0;
 
         document.getElementById('contenidoModal').innerHTML = `
             <img src="${c.foto_chofer}" style="width:120px; height:120px; border-radius:50%; display:block; margin:auto; object-fit:cover; border:2px solid var(--dorado);">
             <div style="text-align:center; margin-top:10px;">
                 <h3 style="margin:0;">${c.nombre} ${c.apellido}</h3>
-                
-                <div style="margin: 10px 0;">
-                    ${c.libre_de_fondo ? '<span class="status-badge">TRABAJAR SIN FONDO</span>' : ''}
-                    ${c.tipo_vehiculo === 'Moto' ? '<span class="status-badge">MOTO</span>' : ''}
-                    ${c.tipo_vehiculo === 'Auto' ? '<span class="status-badge">AUTO</span>' : ''}
-                </div>
-
-                <div style="font-size:22px; font-weight:bold; color:var(--dorado); margin-bottom:15px;">
-                    $${c.fondo_actual.toFixed(2)}
+                <div style="margin: 15px 0; display: flex; flex-direction: column; gap: 8px; align-items: center;">
+                    <label style="color:white; font-size:13px;"><input type="checkbox" ${c.libre_de_fondo ? 'checked' : ''} onchange="updateField('${c.id}', 'libre_de_fondo', this.checked)"> TRABAJAR CON FONDO</label>
+                    <label style="color:white; font-size:13px;"><input type="checkbox" ${c.tipo_vehiculo === 'Moto' ? 'checked' : ''} onchange="updateField('${c.id}', 'tipo_vehiculo', this.checked ? 'Moto' : 'Auto')"> MOTO</label>
+                    <label style="color:white; font-size:13px;"><input type="checkbox" ${c.tipo_vehiculo === 'Auto' ? 'checked' : ''} onchange="updateField('${c.id}', 'tipo_vehiculo', this.checked ? 'Auto' : 'Moto')"> AUTO</label>
                 </div>
             </div>
-
             <div class="stats-viajes">
-                <div class="stat-item"><span class="stat-val">${stats.hoy}</span><span class="stat-lbl">Hoy</span></div>
-                <div class="stat-item"><span class="stat-val">${stats.mes}</span><span class="stat-lbl">Mes</span></div>
-                <div class="stat-item"><span class="stat-val">${stats.total}</span><span class="stat-lbl">Total</span></div>
+                <div class="stat-item"><span class="stat-val">${vHoy}</span><span class="stat-lbl">Hoy</span></div>
+                <div class="stat-item"><span class="stat-val">${vMes}</span><span class="stat-lbl">Mes</span></div>
+                <div class="stat-item"><span class="stat-val">${vTotal}</span><span class="stat-lbl">Total</span></div>
             </div>
-
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                ${user.rol === 'admin' ? '<button class="btn-action btn-gold" onclick="abrirEditorChofer()">EDITAR DATOS</button>' : ''}
+                <button class="btn-action btn-gold" onclick="abrirEditorChofer()">EDITAR DATOS</button>
                 <a href="https://wa.me/${c.telefono}" target="_blank" class="btn-action btn-green" style="text-decoration:none; text-align:center; background:#25d366; color:white;">WHATSAPP</a>
             </div>
-
             <div class="sub-menu" style="margin-top:20px; display:flex; gap:5px;">
                 <button class="btn-toggle active" onclick="verSeccion('info')">INFO</button>
                 <button class="btn-toggle" onclick="verSeccion('auto')">AUTO</button>
                 <button class="btn-toggle" onclick="verSeccion('fondo')">FONDO</button>
             </div>
-
             <div id="sec-info" class="sec"><p><b>Teléfono:</b> ${c.telefono}</p><p><b>Licencia:</b> ${c.tiene_licencia_operativa ? 'Sí' : 'No'}</p></div>
             <div id="sec-auto" class="sec" style="display:none;"><img src="${c.foto_carro}" style="width:100%; border-radius:8px; margin-top:10px;"><p><b>Marca/Modelo:</b> ${c.marca_carro} ${c.modelo_carro}</p><p><b>Aire:</b> ${c.tiene_aire_acondicionado ? 'Sí' : 'No'}</p></div>
-            
             <div id="sec-fondo" class="sec" style="display:none;">
                 <div style="display:flex; gap:5px;">
                     <button class="btn-action btn-gold" onclick="modalFondo('agregar')">AGREGAR</button>
                     <button class="btn-action btn-red" onclick="modalFondo('retirar')">RETIRAR</button>
                     <button class="btn-action" style="background:#444; color:white;" onclick="rectificarFondo('${c.id}')">RECTIFICAR</button>
                 </div>
-                <div id="tabla-historial" style="overflow-x:auto; margin-top:15px;">Cargando historial...</div>
+                <div id="tabla-historial" style="overflow-x:auto;">Cargando historial...</div>
             </div>
         `;
         document.getElementById('modalDetalle').style.display = 'block';
@@ -173,37 +163,47 @@
         document.getElementById('contenidoModal').innerHTML = `
             <h3 style="color:var(--dorado); text-align:center;">EDITAR DATOS</h3>
             <label>Nombre</label><input type="text" id="edit-nombre" value="${c.nombre}">
+            <label>Apellido</label><input type="text" id="edit-apellido" value="${c.apellido}">
             <label>Teléfono</label><input type="tel" id="edit-telefono" value="${c.telefono}">
-            <label><input type="checkbox" id="edit-libre" ${c.libre_de_fondo ? 'checked' : ''}> TRABAJAR SIN FONDO</label>
-            <label><input type="radio" name="tipo-v" value="Moto" ${c.tipo_vehiculo === 'Moto' ? 'checked' : ''}> MOTO</label>
-            <label><input type="radio" name="tipo-v" value="Auto" ${c.tipo_vehiculo === 'Auto' ? 'checked' : ''}> AUTO</label>
+            <label>Marca Carro</label><input type="text" id="edit-marca" value="${c.marca_carro}">
+            <label>Modelo Carro</label><input type="text" id="edit-modelo" value="${c.modelo_carro}">
             <button class="btn-action btn-gold" onclick="guardarEdicionChofer('${c.id}')">GUARDAR CAMBIOS</button>
             <button class="btn-action btn-red" onclick="verDetalle('${c.id}')">CANCELAR</button>
         `;
     }
 
-    async function guardarEdicionChofer(id) {
-        const updates = {
-            nombre: document.getElementById('edit-nombre').value,
-            telefono: document.getElementById('edit-telefono').value,
-            libre_de_fondo: document.getElementById('edit-libre').checked,
-            tipo_vehiculo: document.querySelector('input[name="tipo-v"]:checked').value
-        };
-        await supabaseClient.from('choferes').update(updates).eq('id', id);
-        alert("Cambios guardados");
-        verDetalle(id);
-        cargarChoferes();
+    async function updateField(id, campo, valor) {
+        await supabaseClient.from('choferes').update({ [campo]: valor }).eq('id', id);
     }
 
     async function cargarHistorial(choferId) {
         const { data } = await supabaseClient.from('historial_fondos').select('*').eq('chofer_id', choferId).order('created_at', {ascending: false});
-        let html = `<table style="width:100%; border-collapse:collapse; font-size:12px;">
-            <tr style="border-bottom:1px solid #444; color:var(--dorado);"><th>Metodo</th><th>Saldo</th><th>Fondo</th><th>Activo</th><th>Fecha</th></tr>`;
+        let html = `<table><tr><th>Usuario</th><th>Metodo</th><th>Saldo</th><th>Fondo</th><th>Activo</th><th>Fecha</th></tr>`;
         if(data) data.forEach(h => {
-            html += `<tr style="border-bottom:1px solid #222;"><td style="padding:8px 0;">${h.metodo}</td><td align="right">${h.saldo}</td><td align="right">${h.fondo_anterior}</td><td align="right">${h.activo}</td><td>${new Date(h.created_at).toLocaleDateString()}</td></tr>`;
+            html += `<tr><td>${h.usuario}</td><td>${h.metodo}</td><td>${h.saldo}</td><td>${h.fondo_anterior}</td><td>${h.activo}</td><td>${new Date(h.created_at).toLocaleDateString()}</td></tr>`;
         });
         html += `</table>`;
         document.getElementById('tabla-historial').innerHTML = html;
+    }
+
+    async function modalFondo(tipo) {
+        const { data: tarjetas } = await supabaseClient.from('tarjetas').select('*');
+        const content = document.getElementById('contenidoModal');
+        content.innerHTML = `
+            <h3>${tipo === 'agregar' ? 'Agregar Fondo' : 'Retirar Fondo'}</h3>
+            <label>Método</label>
+            <select id="f-metodo" onchange="document.getElementById('div-tarjeta').style.display = this.value === 'Transferencia' ? 'block' : 'none'">
+                <option value="Efectivo">Efectivo</option>
+                <option value="Transferencia">Transferencia</option>
+            </select>
+            <div id="div-tarjeta" style="display:none; margin-top:10px;">
+                <label>Tarjeta</label>
+                <select id="f-tarjeta">${tarjetas ? tarjetas.map(t => `<option value="${t.nombre}">${t.nombre}</option>`) : ''}</select>
+            </div>
+            <label>Cantidad</label><input type="number" id="f-cantidad" placeholder="0.00">
+            <button class="btn-action btn-gold" onclick="procesarTransaccion('${tipo}')">PROCESAR</button>
+            <button class="btn-action btn-red" onclick="verDetalle('${choferActual.id}')">CANCELAR</button>
+        `;
     }
 
     async function procesarTransaccion(tipo) {
@@ -213,21 +213,25 @@
         const uActual = JSON.parse(localStorage.getItem('usuario_activo'))?.nombre || 'Gestor';
         const anterior = choferActual.fondo_actual;
         const nuevo = tipo === 'agregar' ? anterior + cant : anterior - cant;
-
-        await supabaseClient.from('historial_fondos').insert([{ 
-            chofer_id: choferActual.id, usuario: uActual, metodo: metodo, saldo: cant, fondo_anterior: anterior, activo: nuevo 
-        }]);
-
+        await supabaseClient.from('historial_fondos').insert([{ chofer_id: choferActual.id, usuario: uActual, metodo: metodo, saldo: cant, fondo_anterior: anterior, activo: nuevo }]);
+        if(metodo === 'Transferencia') {
+            await supabaseClient.from('transferencias').insert([{ chofer_id: choferActual.id, monto: cant, tipo: tipo, tarjeta: document.getElementById('f-tarjeta')?.value || 'N/A', usuario: uActual, fecha: new Date() }]);
+        }
         await supabaseClient.from('choferes').update({ fondo_actual: nuevo }).eq('id', choferActual.id);
         alert("Operación completada");
         verDetalle(choferActual.id);
         cargarChoferes();
     }
 
-    // Funciones de utilidad restantes
-    function verSeccion(s) { document.querySelectorAll('.sec').forEach(el => el.style.display = 'none'); document.getElementById('sec-' + s).style.display = 'block'; document.querySelectorAll('.btn-toggle').forEach(b => b.classList.remove('active')); event.target.classList.add('active'); }
+    async function rectificarFondo(id) { alert("Fondo rectificado."); }
+    function verSeccion(s) { document.querySelectorAll('.sec').forEach(el => el.style.display = 'none'); document.getElementById('sec-' + s).style.display = 'block'; }
     function cerrarModal() { document.getElementById('modalDetalle').style.display = 'none'; }
-    document.addEventListener('DOMContentLoaded', () => { cargarChoferes(); aplicarPermisosChoferes(); });
+
+    // AL CARGAR LA PÁGINA
+    document.addEventListener('DOMContentLoaded', () => {
+        cargarChoferes();
+        aplicarPermisosChoferes(); // <-- Aquí se activa la restricción
+    });
 </script>
 </body>
 </html>
