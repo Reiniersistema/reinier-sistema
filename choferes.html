@@ -16,7 +16,6 @@
         .closebtn { position: absolute; top: 15px; right: 25px; font-size: 36px; color: var(--dorado); background: none; border: none; cursor: pointer; }
 
         .header-nav-universal { display: flex; align-items: center; gap: 15px; padding: 15px; background: #121212; border-bottom: 1px solid #d4af37; margin-bottom: 20px; }
-        .openbtn { font-size: 25px; cursor: pointer; background: none; border: none; color: #d4af37; }
         
         .contenedor-principal { padding: 0 15px; max-width: 800px; margin: auto; }
         h2 { color: var(--dorado); text-align: center; text-transform: uppercase; font-size: 18px; margin-bottom: 20px; }
@@ -56,6 +55,8 @@
         table { width: 100%; border-collapse: collapse; font-size: 11px; }
         th { color: var(--dorado); text-align: left; padding: 8px; border-bottom: 1px solid #444; }
         td { padding: 8px; border-bottom: 1px solid #222; }
+        
+        .grid-editar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: left; }
     </style>
 </head>
 <body>
@@ -124,13 +125,12 @@
         const { data: c } = await supabaseClient.from('choferes').select('*').eq('id', id).single();
         choferActual = c;
 
-        // Estadísticas de viajes reales
         const { data: viajes } = await supabaseClient.from('viajes').select('created_at').eq('chofer_id', id);
         const hoy = viajes.filter(v => new Date(v.created_at).toDateString() === new Date().toDateString()).length;
         const mes = viajes.filter(v => new Date(v.created_at).getMonth() === new Date().getMonth()).length;
 
         document.getElementById('contenidoModal').innerHTML = `
-            <img src="${c.foto_chofer}" style="width:120px; height:120px; border-radius:50%; display:block; margin:auto; object-fit:cover; border:2px solid var(--dorado);">
+            <img src="${c.foto_chofer || ''}" style="width:120px; height:120px; border-radius:50%; display:block; margin:auto; object-fit:cover; border:2px solid var(--dorado);">
             <div style="text-align:center; margin-top:10px;">
                 <h3 style="margin:0;">${c.nombre} ${c.apellido}</h3>
                 <p style="color:var(--dorado); font-size:12px; margin:5px 0;">
@@ -161,22 +161,24 @@
 
             <div id="sec-info" class="sec-detalle">
                 <p><b>Teléfono:</b> ${c.telefono}</p>
-                <p><b>Licencia:</b> ${c.tiene_licencia_operativa ? 'Sí' : 'No'}</p>
+                <p><b>Licencia Operativa:</b> ${c.tiene_licencia_operativa ? 'Sí' : 'No'}</p>
             </div>
 
             <div id="sec-auto" class="sec-detalle" style="display:none;">
-                <img src="${c.foto_carro}" style="width:100%; border-radius:8px; margin-bottom:10px; border:1px solid #444;">
-                <p><b>Marca/Modelo:</b> ${c.marca_carro} ${c.modelo_carro}</p>
+                <img src="${c.foto_carro || ''}" style="width:100%; border-radius:8px; margin-bottom:10px; border:1px solid #444;">
+                <p><b>Marca:</b> ${c.marca_carro || ''}</p>
+                <p><b>Modelo:</b> ${c.modelo_carro || ''}</p>
+                <p><b>Color:</b> ${c.color_carro || ''}</p>
                 <p><b>Aire Acondicionado:</b> ${c.tiene_aire_acondicionado ? 'Sí' : 'No'}</p>
             </div>
 
             <div id="sec-fondo" class="sec-detalle" style="display:none;">
                 <div style="display:flex; gap:5px; margin-bottom:15px;">
-                    <button class="btn-action btn-gold" style="font-size:10px;" onclick="alert('Funcionalidad Agregar')">AGREGAR</button>
-                    <button class="btn-action btn-red" style="font-size:10px;" onclick="alert('Funcionalidad Retirar')">RETIRAR</button>
-                    <button class="btn-action" style="background:#444; color:white; font-size:10px;" onclick="alert('Funcionalidad Rectificar')">RECTIFICAR</button>
+                    <button class="btn-action btn-gold" style="font-size:10px;">AGREGAR</button>
+                    <button class="btn-action btn-red" style="font-size:10px;">RETIRAR</button>
+                    <button class="btn-action" style="background:#444; color:white; font-size:10px;">RECTIFICAR</button>
                 </div>
-                <div id="tabla-historial" style="overflow-x:auto;">Cargando...</div>
+                <div id="tabla-historial" style="overflow-x:auto;">Cargando historial...</div>
             </div>
         `;
         document.getElementById('modalDetalle').style.display = 'block';
@@ -194,18 +196,32 @@
         const c = choferActual;
         document.getElementById('contenidoModal').innerHTML = `
             <h3 style="color:var(--dorado); text-align:center;">EDITAR DATOS</h3>
-            <label>Nombre</label><input type="text" id="edit-nombre" value="${c.nombre}">
-            <label>Apellido</label><input type="text" id="edit-apellido" value="${c.apellido}">
-            <label>Teléfono</label><input type="tel" id="edit-telefono" value="${c.telefono}">
-            <label>Marca de Carro</label><input type="text" id="edit-marca" value="${c.marca_carro || ''}">
+            <div class="grid-editar">
+                <div><label>Nombre</label><input type="text" id="edit-nombre" value="${c.nombre || ''}"></div>
+                <div><label>Apellido</label><input type="text" id="edit-apellido" value="${c.apellido || ''}"></div>
+            </div>
+            <label>Teléfono</label><input type="tel" id="edit-telefono" value="${c.telefono || ''}">
             
-            <div style="background:#222; padding:15px; border-radius:10px; margin-bottom:15px;">
-                <label style="color:white;"><input type="checkbox" id="edit-libre" ${c.libre_de_fondo ? 'checked' : ''}> TRABAJAR SIN FONDO</label>
-                <div style="display:flex; gap:20px; margin-top:10px;">
+            <div class="grid-editar">
+                <div><label>Marca Carro</label><input type="text" id="edit-marca" value="${c.marca_carro || ''}"></div>
+                <div><label>Modelo Carro</label><input type="text" id="edit-modelo" value="${c.modelo_carro || ''}"></div>
+            </div>
+            <label>Color Carro</label><input type="text" id="edit-color" value="${c.color_carro || ''}">
+            
+            <div style="background:#222; padding:12px; border-radius:10px; margin-bottom:15px; text-align:left;">
+                <label style="color:white; cursor:pointer;"><input type="checkbox" id="edit-libre" ${c.libre_de_fondo ? 'checked' : ''}> TRABAJAR SIN FONDO</label>
+                <label style="color:white; cursor:pointer;"><input type="checkbox" id="edit-aire" ${c.tiene_aire_acondicionado ? 'checked' : ''}> AIRE ACONDICIONADO</label>
+                <label style="color:white; cursor:pointer;"><input type="checkbox" id="edit-licencia" ${c.tiene_licencia_operativa ? 'checked' : ''}> LICENCIA OPERATIVA</label>
+                
+                <p style="color:var(--dorado); font-size:11px; margin: 10px 0 5px 0;">TIPO DE VEHÍCULO:</p>
+                <div style="display:flex; gap:20px;">
                     <label style="color:white;"><input type="radio" name="tipo_v" value="Moto" ${c.tipo_vehiculo === 'Moto' ? 'checked' : ''}> MOTO</label>
                     <label style="color:white;"><input type="radio" name="tipo_v" value="Auto" ${c.tipo_vehiculo !== 'Moto' ? 'checked' : ''}> AUTO</label>
                 </div>
             </div>
+
+            <label>URL Foto Chófer</label><input type="text" id="edit-foto-chofer" value="${c.foto_chofer || ''}">
+            <label>URL Foto Carro</label><input type="text" id="edit-foto-carro" value="${c.foto_carro || ''}">
 
             <button class="btn-action btn-gold" onclick="guardarEdicion()">GUARDAR CAMBIOS</button>
             <button class="btn-action btn-red" onclick="verDetalle('${c.id}')">CANCELAR</button>
@@ -218,29 +234,45 @@
             apellido: document.getElementById('edit-apellido').value,
             telefono: document.getElementById('edit-telefono').value,
             marca_carro: document.getElementById('edit-marca').value,
+            modelo_carro: document.getElementById('edit-modelo').value,
+            color_carro: document.getElementById('edit-color').value,
             libre_de_fondo: document.getElementById('edit-libre').checked,
-            tipo_vehiculo: document.querySelector('input[name="tipo_v"]:checked').value
+            tiene_aire_acondicionado: document.getElementById('edit-aire').checked,
+            tiene_licencia_operativa: document.getElementById('edit-licencia').checked,
+            tipo_vehiculo: document.querySelector('input[name="tipo_v"]:checked').value,
+            foto_chofer: document.getElementById('edit-foto-chofer').value,
+            foto_carro: document.getElementById('edit-foto-carro').value
         };
-        await supabaseClient.from('choferes').update(upd).eq('id', choferActual.id);
-        alert("¡Datos actualizados!");
-        cargarChoferes();
-        verDetalle(choferActual.id);
+
+        const { error } = await supabaseClient.from('choferes').update(upd).eq('id', choferActual.id);
+        
+        if (error) {
+            alert("Error al guardar: " + error.message);
+        } else {
+            alert("¡Cambios guardados con éxito!");
+            await cargarChoferes(); // Actualiza la lista principal
+            verDetalle(choferActual.id); // Refresca la vista detalle con los nuevos datos
+        }
     }
 
     async function cargarHistorial(choferId) {
         const { data } = await supabaseClient.from('historial_fondos').select('*').eq('chofer_id', choferId).order('created_at', {ascending: false});
-        let html = `<table><tr><th>FECHA</th><th>USUARIO</th><th>MÉTODO</th><th>SALDO</th><th>FONDO</th><th>ACTIVO</th></tr>`;
-        if(data) data.forEach(h => {
-            html += `<tr>
-                <td>${new Date(h.created_at).toLocaleDateString()}</td>
-                <td>${h.usuario || 'Sistema'}</td>
-                <td>${h.metodo || 'N/A'}</td>
-                <td style="color:var(--verde); font-weight:bold;">$${h.saldo}</td>
-                <td>$${h.fondo_anterior}</td>
-                <td style="color:var(--dorado); font-weight:bold;">$${h.activo}</td>
-            </tr>`;
-        });
-        document.getElementById('tabla-historial').innerHTML = html + `</table>`;
+        let html = `<table><thead><tr><th>FECHA</th><th>USUARIO</th><th>MÉTODO</th><th>SALDO</th><th>FONDO</th><th>ACTIVO</th></tr></thead><tbody>`;
+        if(data && data.length > 0) {
+            data.forEach(h => {
+                html += `<tr>
+                    <td>${new Date(h.created_at).toLocaleDateString()}</td>
+                    <td>${h.usuario || 'Sistema'}</td>
+                    <td>${h.metodo || 'N/A'}</td>
+                    <td style="color:var(--verde); font-weight:bold;">$${h.saldo}</td>
+                    <td>$${h.fondo_anterior}</td>
+                    <td style="color:var(--dorado); font-weight:bold;">$${h.activo}</td>
+                </tr>`;
+            });
+        } else {
+            html += `<tr><td colspan="6" style="text-align:center;">Sin movimientos registrados</td></tr>`;
+        }
+        document.getElementById('tabla-historial').innerHTML = html + `</tbody></table>`;
     }
 
     function abrirModalBusqueda() { document.getElementById('modalBusqueda').style.display = 'flex'; }
