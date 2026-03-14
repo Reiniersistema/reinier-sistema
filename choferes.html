@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Choferes - RF TransGestión</title>
+    <title>Choferes - RF TransGestión</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; --rojo: #ff4d4d; --verde: #25d366; }
-        body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding-bottom: 20px; overflow-x: hidden; }
+        body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding-bottom: 20px; }
 
-        /* SIDEBAR DERECHA */
-        .sidebar { height: 100%; width: 0; position: fixed; z-index: 5000; top: 0; right: 0; background-color: #1a1a1a; overflow-x: hidden; transition: 0.5s; padding-top: 60px; border-left: 1px solid var(--dorado); }
-        .sidebar a { padding: 15px 25px; text-decoration: none; font-size: 14px; color: #bbb; display: block; transition: 0.3s; text-transform: uppercase; border-bottom: 1px solid #222; }
+        /* SIDEBAR IZQUIERDA (SEGÚN TU IMAGEN) */
+        .sidebar { height: 100%; width: 0; position: fixed; z-index: 5000; top: 0; left: 0; background-color: #1a1a1a; overflow-x: hidden; transition: 0.5s; padding-top: 60px; border-right: 1px solid var(--dorado); }
+        .sidebar a { padding: 12px 25px; text-decoration: none; font-size: 14px; color: #888; display: block; transition: 0.3s; text-transform: uppercase; border-bottom: 1px solid #222; }
         .sidebar a:hover { color: var(--dorado); background: rgba(212, 175, 55, 0.1); }
-        .sidebar .closebtn { position: absolute; top: 10px; left: 25px; font-size: 36px; color: var(--dorado); }
+        .sidebar .closebtn { position: absolute; top: 10px; right: 25px; font-size: 36px; color: var(--dorado); }
 
         /* HEADER */
         .header-nav-universal { display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; background: #000; border-bottom: 1px solid var(--dorado); position: sticky; top: 0; z-index: 1000; }
@@ -22,55 +22,39 @@
         .logo-txt-universal { font-family: 'Playfair Display', serif; font-size: 20px; color: white; }
         .btn-reloj { background: var(--dorado); border-radius: 50%; width: 45px; height: 45px; border: none; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: black; }
 
-        /* CONTENIDO PRINCIPAL */
-        .contenedor { padding: 20px; max-width: 800px; margin: auto; }
-        .titulo-seccion { color: var(--dorado); text-transform: uppercase; font-size: 20px; letter-spacing: 2px; margin-bottom: 20px; display: inline-block; }
-        .btn-add-main { background: var(--dorado); color: black; border: none; padding: 16px; border-radius: 12px; font-weight: bold; width: 100%; margin-bottom: 25px; cursor: pointer; font-size: 14px; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2); }
+        /* CONTENIDO */
+        .contenedor { padding: 20px; max-width: 600px; margin: auto; }
+        .btn-add-main { background: var(--dorado); color: black; border: none; padding: 16px; border-radius: 12px; font-weight: bold; width: 100%; margin-bottom: 25px; cursor: pointer; text-transform: uppercase; }
 
-        /* TARJETAS */
-        .card-chofer { background: var(--gris); border-radius: 18px; padding: 15px; display: flex; align-items: center; gap: 15px; position: relative; border: 1px solid #333; margin-bottom: 15px; cursor: pointer; transition: 0.3s; }
-        .card-chofer:active { transform: scale(0.98); }
-        .foto-perfil-mini { width: 75px; height: 75px; border-radius: 50%; border: 2px solid var(--dorado); object-fit: cover; background: #000; }
-        .info-card h3 { margin: 0; font-size: 18px; color: white; }
+        /* TARJETAS (SIN PUNTOS) */
+        .card-chofer { background: var(--gris); border-radius: 18px; padding: 15px; display: flex; align-items: center; gap: 15px; position: relative; border: 1px solid #333; margin-bottom: 15px; cursor: pointer; }
+        .foto-perfil-mini { width: 75px; height: 75px; border-radius: 50%; border: 2px solid var(--dorado); object-fit: cover; }
+        .info-card h3 { margin: 0; font-size: 18px; }
         .info-card p { margin: 2px 0; color: #999; font-size: 13px; }
         .fondo-monto { position: absolute; bottom: 15px; right: 20px; color: var(--dorado); font-weight: bold; font-size: 18px; }
-        .puntos-opciones { position: absolute; top: 15px; right: 15px; color: var(--dorado); font-size: 24px; padding: 5px; }
-
-        /* MENU TRES PUNTOS */
-        .dropdown-menu { display: none; position: absolute; top: 45px; right: 15px; background: white; border-radius: 8px; z-index: 100; box-shadow: 0 5px 15px rgba(0,0,0,0.5); overflow: hidden; }
-        .dropdown-menu div { padding: 12px 25px; color: black; font-size: 14px; font-weight: bold; border-bottom: 1px solid #eee; }
-        .dropdown-menu div:last-child { border: none; color: var(--rojo); }
 
         /* MODALES */
         .modal { display: none; position: fixed; z-index: 6000; top: 0; left: 0; width: 100%; height: 100%; background: #000; overflow-y: auto; padding-bottom: 50px; }
-        .modal-body { padding: 20px; max-width: 600px; margin: auto; }
-        .field { margin-bottom: 20px; }
-        label { display: block; font-size: 11px; color: var(--dorado); margin-bottom: 8px; text-transform: uppercase; font-weight: bold; }
-        input, select, textarea { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #333; background: #1a1a1a; color: white; font-family: 'Montserrat'; box-sizing: border-box; }
-        
-        /* DISEÑO "VER CHOFER" */
-        .foto-grande { width: 100%; height: 350px; object-fit: cover; border-radius: 20px; border: 2px solid var(--dorado); margin-bottom: 15px; }
-        .grid-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .stat-item { background: #1a1a1a; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #333; }
-        .stat-item span { display: block; font-size: 10px; color: var(--dorado); margin-bottom: 5px; }
-        .stat-item b { font-size: 16px; }
+        .modal-body { padding: 20px; max-width: 500px; margin: auto; }
+        .field { margin-bottom: 18px; }
+        label { display: block; font-size: 11px; color: var(--dorado); margin-bottom: 5px; text-transform: uppercase; font-weight: bold; }
+        input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: white; }
 
-        .tabs-container { display: flex; border-bottom: 1px solid #333; margin: 20px 0; gap: 5px; overflow-x: auto; padding-bottom: 10px; }
-        .tab-btn { background: #222; border: none; color: #777; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 11px; white-space: nowrap; }
+        /* DISEÑO INTERIOR TARJETA (VER) */
+        .foto-grande { width: 100%; height: 300px; object-fit: cover; border-radius: 15px; border: 2px solid var(--dorado); margin-bottom: 15px; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 15px 0; }
+        .stat-box { background: #1a1a1a; padding: 10px; border-radius: 10px; text-align: center; border: 1px solid #333; }
+        .stat-box small { font-size: 9px; color: var(--dorado); display: block; margin-bottom: 5px; }
+
+        .tabs-container { display: flex; border-bottom: 1px solid #333; margin: 20px 0; gap: 5px; overflow-x: auto; }
+        .tab-btn { background: #222; border: none; color: #777; padding: 10px; border-radius: 5px; font-size: 10px; cursor: pointer; font-weight: bold; }
         .tab-btn.active { background: var(--dorado); color: black; }
 
-        /* TABLA FONDOS */
-        .tabla-fondos-container { overflow-x: auto; background: #1a1a1a; border-radius: 10px; border: 1px solid #333; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th { background: #222; color: var(--dorado); padding: 12px; text-align: left; }
-        td { padding: 12px; border-bottom: 1px solid #222; }
+        .tabla-fondos { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
+        .tabla-fondos th { background: #222; color: var(--dorado); padding: 8px; text-align: left; }
+        .tabla-fondos td { padding: 8px; border-bottom: 1px solid #222; }
 
-        /* BOTONES ACCION */
-        .btn-flex { display: flex; gap: 10px; margin-bottom: 20px; }
-        .btn-sec { flex: 1; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 12px; }
-        
-        /* BUSQUEDA */
-        .search-box { display: none; background: #1a1a1a; padding: 15px; border-bottom: 1px solid var(--dorado); }
+        .btn-accion-footer { flex: 1; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -82,306 +66,158 @@
     <a href="mis-viajes.html">Mis Viajes</a>
     <a href="choferes.html" style="color:var(--dorado)">Choferes</a>
     <a href="pagos-pendientes.html">Pagos Pendientes</a>
+    <a href="pagos-aprobar.html">Pagos por Aprobar</a>
+    <a href="tarjetas.html">Tarjetas</a>
+    <a href="transferencias.html">Transferencias</a>
+    <a href="colaboracion.html">Colaboración</a>
     <a href="usuarios.html">Usuarios</a>
     <a href="clientes.html">Clientes</a>
-    <hr style="border:0.1px solid #333; margin:20px;">
+    <hr style="border:0.5px solid #333; margin:20px;">
     <a href="#" onclick="cerrarSesion()" style="color: var(--rojo)">Cerrar Sesión</a>
 </div>
 
 <div class="header-nav-universal">
+    <button class="openbtn" onclick="openNav()">&#9776;</button>
     <div class="logo-txt-universal">RF <span style="color: var(--dorado); font-size: 14px;">TransGestión</span></div>
-    <div style="display:flex; gap:15px; align-items:center;">
-        <button class="btn-reloj" onclick="toggleSearch()">⏳</button>
-        <button class="openbtn" onclick="openNav()">&#9776;</button>
-    </div>
-</div>
-
-<div class="search-box" id="searchBox">
-    <input type="text" id="inputBuscar" placeholder="Nombre o teléfono..." oninput="buscarLocal()">
+    <button class="btn-reloj" onclick="toggleBusqueda()">⏳</button>
 </div>
 
 <div class="contenedor">
-    <div class="titulo-seccion">Choferes</div>
     <button class="btn-add-main" onclick="abrirModal('modalNuevo')">+ AÑADIR NUEVO CHÓFER</button>
+    <div id="search-container" style="display:none; margin-bottom:15px;">
+        <input type="text" id="inputBuscar" placeholder="Buscar por nombre o teléfono..." oninput="buscarLocal()">
+    </div>
+    <div id="lista-choferes"></div>
+</div>
 
-    <div id="lista-choferes">
-        </div>
+<div id="modalVer" class="modal">
+    <div class="modal-body" id="det-content"></div>
 </div>
 
 <div id="modalNuevo" class="modal">
     <div class="modal-body">
-        <h2 style="color:var(--dorado); text-align:center;">DATOS DEL CHOFER</h2>
-        <div class="field"><label>Foto del Chófer</label><input type="file" id="f_chofer" accept="image/*"></div>
-        <div class="field"><label>Nombre</label><input type="text" id="f_nombre"></div>
-        <div class="field"><label>Apellido</label><input type="text" id="f_apellido"></div>
-        <div class="field"><label>Número de Teléfono</label><input type="tel" id="f_tel"></div>
-        
-        <div class="field" style="display:flex; justify-content: space-between;">
-            <label>Licencia Operativa</label>
-            <input type="checkbox" id="f_lic" style="width:20px;">
-        </div>
-        <div class="field"><label>Fondo Inicial</label><input type="number" id="f_fondo" value="0"></div>
-        <div class="field" style="display:flex; justify-content: space-between;">
-            <label>Trabajar sin Fondo</label>
-            <input type="checkbox" id="f_sin_fondo" style="width:20px;">
-        </div>
-
-        <hr style="border:0.5px solid #333; margin:20px 0;">
-        <h2 style="color:var(--dorado); text-align:center;">DATOS DEL AUTO</h2>
-        <div class="field"><label>Foto del Carro</label><input type="file" id="f_carro" accept="image/*"></div>
-        <div class="field"><label>Marca</label><input type="text" id="f_marca"></div>
-        <div class="field"><label>Modelo</label><input type="text" id="f_modelo"></div>
-        <div class="field"><label>Color</label><input type="text" id="f_color"></div>
-        <div class="field" style="display:flex; justify-content: space-between;">
-            <label>Aire Acondicionado</label>
-            <input type="checkbox" id="f_aire" style="width:20px;">
-        </div>
-
-        <div class="btn-flex">
-            <button class="btn-sec" style="background:#333; color:white;" onclick="cerrarModal('modalNuevo')">CANCELAR</button>
-            <button class="btn-sec" style="background:var(--dorado); color:black;" onclick="crearNuevoChofer()">GUARDAR CHÓFER</button>
-        </div>
+        <h2 style="color:var(--dorado); text-align:center;">NUEVO CHÓFER</h2>
+        <div class="field"><label>Foto Chófer</label><input type="file" id="n_foto_c"></div>
+        <div class="field"><label>Nombre</label><input type="text" id="n_nombre"></div>
+        <div class="field"><label>Apellido</label><input type="text" id="n_apellido"></div>
+        <div class="field"><label>Teléfono</label><input type="tel" id="n_tel"></div>
+        <div class="field"><label>Licencia Operativa</label><input type="checkbox" id="n_lic"></div>
+        <div class="field"><label>Fondo Inicial</label><input type="number" id="n_fondo" value="0"></div>
+        <button class="btn-add-main" onclick="guardarNuevo()">GUARDAR CHÓFER</button>
+        <button class="btn-add-main" style="background:#333; color:white;" onclick="cerrarModal('modalNuevo')">CANCELAR</button>
     </div>
-</div>
-
-<div id="modalDetalle" class="modal">
-    <div class="modal-body" id="contenidoDetalle">
-        </div>
 </div>
 
 <script src="config.js"></script>
 <script>
-    let choferesData = [];
-    let choferSeleccionado = null;
+    let todos = [];
+    let sel = null;
 
-    // --- NAVEGACIÓN ---
     function openNav() { document.getElementById("mySidebar").style.width = "280px"; }
     function closeNav() { document.getElementById("mySidebar").style.width = "0"; }
     function abrirModal(id) { document.getElementById(id).style.display = 'block'; }
     function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
-    function toggleSearch() { 
-        const s = document.getElementById('searchBox');
-        s.style.display = s.style.display === 'block' ? 'none' : 'block';
+    function toggleBusqueda() { 
+        const s = document.getElementById('search-container');
+        s.style.display = s.style.display === 'none' ? 'block' : 'none';
     }
 
-    // --- CARGA DE DATOS ---
-    async function cargarChoferes() {
-        const { data, error } = await supabaseClient.from('choferes').select('*').order('nombre');
-        if (data) {
-            choferesData = data;
-            renderChoferes(data);
-        }
+    async function cargar() {
+        const { data } = await supabaseClient.from('choferes').select('*').order('nombre');
+        todos = data || [];
+        render(todos);
     }
 
-    function renderChoferes(lista) {
-        const container = document.getElementById('lista-choferes');
-        container.innerHTML = lista.map(c => `
+    function render(lista) {
+        document.getElementById('lista-choferes').innerHTML = lista.map(c => `
             <div class="card-chofer" onclick="abrirVer('${c.id}')">
-                <img src="${c.foto_chofer || 'https://via.placeholder.com/100'}" class="foto-perfil-mini">
+                <img src="${c.foto_chofer || ''}" class="foto-perfil-mini">
                 <div class="info-card">
                     <h3>${c.nombre} ${c.apellido || ''}</h3>
-                    <p>📞 ${c.telefono}</p>
-                    <p style="color:${c.tiene_licencia_operativa ? 'var(--verde)' : 'var(--rojo)'}">
-                        ${c.tiene_licencia_operativa ? '✅ Con Licencia' : '❌ Sin Licencia'}
-                    </p>
-                </div>
-                <div class="puntos-opciones" onclick="event.stopPropagation(); toggleDots('${c.id}')">⋮</div>
-                <div id="dots-${c.id}" class="dropdown-menu">
-                    <div onclick="abrirVer('${c.id}')">Ver</div>
-                    <div onclick="eliminarDefinitivo('${c.id}')">Eliminar</div>
+                    <p>${c.telefono}</p>
+                    <p style="color:var(--dorado)">${c.tiene_licencia_operativa ? 'Con Licencia' : 'Sin Licencia'}</p>
                 </div>
                 <div class="fondo-monto">$${c.fondo_actual}</div>
             </div>
         `).join('');
     }
 
-    function toggleDots(id) {
-        document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
-        document.getElementById(`dots-${id}`).style.display = 'block';
-    }
-
-    // --- VISTA DETALLADA (EL "VER") ---
     async function abrirVer(id) {
-        const c = choferesData.find(x => x.id === id);
-        choferSeleccionado = c;
-        const modal = document.getElementById('contenidoDetalle');
+        sel = todos.find(x => x.id === id);
         
-        modal.innerHTML = `
-            <button onclick="cerrarModal('modalDetalle')" style="background:none; border:none; color:var(--dorado); font-size:30px; float:right;">&times;</button>
-            <img src="${c.foto_chofer || ''}" class="foto-grande">
-            <h2 style="margin:0; text-align:center;">${c.nombre} ${c.apellido}</h2>
+        // Cuentas de viajes reales
+        const { count: total } = await supabaseClient.from('viajes').select('*', { count: 'exact', head: true }).eq('chofer_id', id);
+        const hoy = new Date().toISOString().split('T')[0];
+        const { count: c_hoy } = await supabaseClient.from('viajes').select('*', { count: 'exact', head: true }).eq('chofer_id', id).gte('created_at', hoy);
+
+        const content = document.getElementById('det-content');
+        content.innerHTML = `
+            <button onclick="cerrarModal('modalVer')" style="float:right; background:none; border:none; color:var(--dorado); font-size:30px;">&times;</button>
+            <img src="${sel.foto_chofer}" class="foto-grande">
+            <h2 style="text-align:center; margin:0;">${sel.nombre} ${sel.apellido}</h2>
             
-            <div style="text-align:center; margin:15px 0;">
-                <label><input type="checkbox" ${c.libre_de_fondo ? 'checked' : ''} disabled> TRABAJAR SIN CRÉDITOS</label>
-            </div>
+            <div style="text-align:center; margin:10px 0;"><label><input type="checkbox" ${sel.libre_de_fondo ? 'checked' : ''} disabled> TRABAJAR SIN CRÉDITOS</label></div>
 
             <div class="field">
                 <label>GRUPO QUE PERTENECE</label>
-                <div style="display:flex; gap:20px;">
-                    <span><input type="radio" name="g" checked> Legión</span>
-                    <span><input type="radio" name="g"> Particular</span>
+                <div style="display:flex; gap:20px; font-size:12px;">
+                    <label><input type="radio" name="grp" checked> AUTO</label>
+                    <label><input type="radio" name="grp"> MOTO</label>
                 </div>
             </div>
 
-            <div class="grid-stats">
-                <div class="stat-item"><span>FONDO ACTUAL</span><b>$${c.fondo_actual}</b></div>
-                <div class="stat-item"><span>VIAJES HOY</span><b>0</b></div>
-                <div class="stat-item"><span>VIAJES MES</span><b>0</b></div>
-                <div class="stat-item"><span>VIAJES TOTAL</span><b>0</b></div>
+            <div class="stats-grid">
+                <div class="stat-box"><small>FONDO</small><b>$${sel.fondo_actual}</b></div>
+                <div class="stat-box"><small>VIAJES HOY</small><b>${c_hoy || 0}</b></div>
+                <div class="stat-box"><small>TOTAL VIAJES</small><b>${total || 0}</b></div>
             </div>
 
-            <div class="btn-flex">
-                <button class="btn-sec" style="background:#333; color:white;">FILTRAR VIAJES</button>
-                <button class="btn-sec" style="background:var(--verde); color:white;" onclick="window.open('https://wa.me/${c.telefono}')">WHATSAPP</button>
-                <button class="btn-sec" style="background:var(--rojo); color:white;" onclick="eliminarDefinitivo('${c.id}')">ELIMINAR</button>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-accion-footer" style="background:#333; color:white;" onclick="alert('Modo Edición Activado')">EDITAR</button>
+                <button class="btn-accion-footer" style="background:var(--verde); color:white;" onclick="window.open('https://wa.me/${sel.telefono}')">WHATSAPP</button>
+                <button class="btn-accion-footer" style="background:var(--rojo); color:white;" onclick="eliminar('${sel.id}')">ELIMINAR</button>
             </div>
 
             <div class="tabs-container">
-                <button class="tab-btn active" onclick="showTab('info', this)">INFORMACIÓN</button>
-                <button class="tab-btn" onclick="showTab('auto', this)">AUTO</button>
-                <button class="tab-btn" onclick="showTab('fondo', this)">FONDO</button>
+                <button class="tab-btn active" onclick="showTab('i', this)">INFORMACIÓN</button>
+                <button class="tab-btn" onclick="showTab('a', this)">AUTO</button>
+                <button class="tab-btn" onclick="showTab('f', this)">FONDO</button>
             </div>
-
-            <div id="tab-content">
-                <div id="t-info">
-                    <p><b>Nombre:</b> ${c.nombre}</p>
-                    <p><b>Apellidos:</b> ${c.apellido}</p>
-                    <p><b>Teléfono:</b> ${c.telefono}</p>
-                </div>
-            </div>
+            <div id="tab-data"></div>
         `;
-        abrirModal('modalDetalle');
+        abrirModal('modalVer');
+        showTab('i', document.querySelector('.tab-btn.active'));
     }
 
-    function showTab(tab, btn) {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const content = document.getElementById('tab-content');
-        const c = choferSeleccionado;
-
-        if(tab === 'info') {
-            content.innerHTML = `<p><b>Nombre:</b> ${c.nombre}</p><p><b>Apellidos:</b> ${c.apellido}</p><p><b>Teléfono:</b> ${c.telefono}</p>`;
-        } else if(tab === 'auto') {
-            content.innerHTML = `
-                <img src="${c.foto_carro || ''}" style="width:100%; border-radius:10px; margin-bottom:10px;">
-                <p><b>Marca:</b> ${c.marca_carro}</p>
-                <p><b>Modelo:</b> ${c.modelo_carro}</p>
-                <p><b>Color:</b> ${c.color_carro}</p>
-                <p><b>Aire:</b> ${c.tiene_aire_acondicionado ? 'SI' : 'NO'}</p>
-                <p><b>Licencia:</b> ${c.tiene_licencia_operativa ? 'SI' : 'NO'}</p>
-            `;
-        } else if(tab === 'fondo') {
-            content.innerHTML = `
-                <div class="btn-flex">
-                    <button class="btn-sec" style="background:var(--verde); color:black;" onclick="operacionFondo('ADD')">AGREGAR</button>
-                    <button class="btn-sec" style="background:var(--rojo); color:white;" onclick="operacionFondo('SUB')">RETIRAR</button>
-                    <button class="btn-sec" style="background:var(--dorado); color:black;" onclick="rectificar()">RECTIFICAR</button>
-                </div>
-                <div id="area-operacion"></div>
-                <div class="tabla-fondos-container">
-                    <table>
-                        <thead><tr><th>USER</th><th>MÉTODO</th><th>SALDO</th><th>FONDO</th><th>ACTIVO</th><th>FECHA</th></tr></thead>
-                        <tbody id="historial-body"></tbody>
-                    </table>
-                </div>
-            `;
-            cargarHistorial(c.id);
-        }
+    function showTab(t, b) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        b.classList.add('active');
+        const div = document.getElementById('tab-data');
+        if(t==='i') div.innerHTML = `<p><b>Teléfono:</b> ${sel.telefono}</p><p><b>Registro:</b> ${new Date(sel.created_at).toLocaleDateString()}</p>`;
+        if(t==='a') div.innerHTML = `<img src="${sel.foto_carro}" style="width:100%; border-radius:10px;"><p><b>Marca:</b> ${sel.marca_carro}</p>`;
+        if(t==='f') div.innerHTML = `<button class="btn-accion-footer" style="background:var(--verde); color:black; width:100%; margin-bottom:10px;">RECTIFICAR FONDO</button><table class="tabla-fondos"><thead><tr><th>USER</th><th>SALDO</th><th>ACTIVO</th><th>FECHA</th></tr></thead><tbody id="hist-body"></tbody></table>`;
+        if(t==='f') cargarHist(sel.id);
     }
 
-    // --- LÓGICA DE FONDOS ---
-    async function operacionFondo(tipo) {
-        const area = document.getElementById('area-operacion');
-        area.innerHTML = `
-            <div style="background:#222; padding:15px; border-radius:10px; margin-bottom:15px; border:1px solid var(--dorado);">
-                <label>${tipo === 'ADD' ? 'MÉTODO' : 'CANTIDAD A RETIRAR'}</label>
-                ${tipo === 'ADD' ? '<select id="op_metodo"><option>Efectivo</option><option>Transferencia</option></select>' : ''}
-                <input type="number" id="op_monto" placeholder="Cantidad">
-                <button class="btn-add-main" style="margin:10px 0 0 0" onclick="ejecutarOperacion('${tipo}')">PROCESAR</button>
-            </div>
-        `;
+    async function cargarHist(id) {
+        const { data } = await supabaseClient.from('historial_fondos').select('*').eq('chofer_id', id).order('created_at', {ascending: false});
+        if(data) document.getElementById('hist-body').innerHTML = data.map(h => `<tr><td>${h.usuario}</td><td>${h.saldo}</td><td>${h.activo}</td><td>${new Date(h.fecha).toLocaleDateString()}</td></tr>`).join('');
     }
 
-    async function ejecutarOperacion(tipo) {
-        const monto = parseFloat(document.getElementById('op_monto').value);
-        const metodo = document.getElementById('op_metodo')?.value || 'Retiro';
-        const user = JSON.parse(localStorage.getItem('usuario_activo'))?.nombre || 'Gestor';
-        
-        if(!monto) return alert("Ponga una cantidad");
-
-        const fondoAnterior = choferSeleccionado.fondo_actual;
-        const saldoFinal = (tipo === 'ADD') ? monto : -monto;
-        const activoFinal = fondoAnterior + saldoFinal;
-
-        const { error } = await supabaseClient.from('historial_fondos').insert([{
-            chofer_id: choferSeleccionado.id,
-            usuario: user,
-            metodo: metodo,
-            saldo: saldoFinal,
-            fondo_anterior: fondoAnterior,
-            activo: activoFinal,
-            fecha: new Date()
-        }]);
-
-        if(!error) {
-            await supabaseClient.from('choferes').update({ fondo_actual: activoFinal }).eq('id', choferSeleccionado.id);
-            alert("Operación completada");
+    async function eliminar(id) {
+        if(confirm("¿Eliminar chófer por completo?")) {
+            await supabaseClient.from('choferes').delete().eq('id', id);
             location.reload();
         }
     }
 
-    async function cargarHistorial(id) {
-        const { data } = await supabaseClient.from('historial_fondos').select('*').eq('chofer_id', id).order('created_at', {ascending: false});
-        const body = document.getElementById('historial-body');
-        if(data) {
-            body.innerHTML = data.map(h => `
-                <tr>
-                    <td>${h.usuario}</td>
-                    <td>${h.metodo}</td>
-                    <td style="color:${h.saldo > 0 ? 'var(--verde)' : 'var(--rojo)'}">${h.saldo}</td>
-                    <td>${h.fondo_anterior}</td>
-                    <td><b>${h.activo}</b></td>
-                    <td>${new Date(h.fecha).toLocaleDateString()}</td>
-                </tr>
-            `).join('');
-        }
+    function buscarLocal() {
+        const txt = document.getElementById('inputBuscar').value.toLowerCase();
+        const filtrados = todos.filter(c => c.nombre.toLowerCase().includes(txt) || c.telefono.includes(txt));
+        render(filtrados);
     }
 
-    // --- ACCIONES BASE DE DATOS ---
-    async function crearNuevoChofer() {
-        // Aquí iría la lógica de subida de imágenes y el insert. Por brevedad asumo datos directos:
-        const payload = {
-            nombre: document.getElementById('f_nombre').value,
-            apellido: document.getElementById('f_apellido').value,
-            telefono: document.getElementById('f_tel').value,
-            tiene_licencia_operativa: document.getElementById('f_lic').checked,
-            fondo_actual: parseFloat(document.getElementById('f_fondo').value),
-            libre_de_fondo: document.getElementById('f_sin_fondo').checked,
-            marca_carro: document.getElementById('f_marca').value,
-            modelo_carro: document.getElementById('f_modelo').value,
-            color_carro: document.getElementById('f_color').value,
-            tiene_aire_acondicionado: document.getElementById('f_aire').checked
-        };
-
-        const { error } = await supabaseClient.from('choferes').insert([payload]);
-        if(!error) location.reload();
-        else alert(error.message);
-    }
-
-    async function eliminarDefinitivo(id) {
-        if(confirm("¿Seguro que desea eliminar a este chófer?")) {
-            const { error } = await supabaseClient.from('choferes').delete().eq('id', id);
-            if(!error) location.reload();
-        }
-    }
-
-    window.onclick = function(event) {
-        if (!event.target.matches('.puntos-opciones')) {
-            document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
-        }
-    }
-
-    window.onload = cargarChoferes;
+    window.onload = cargar;
 </script>
 </body>
 </html>
