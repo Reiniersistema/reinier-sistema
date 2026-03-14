@@ -1,4 +1,4 @@
-// CONFIGURACIÓN CENTRAL CONGO MUSUNDI
+// CONFIGURACIÓN CENTRAL TRANSGESTION
 const URL_PROYECTO = 'https://rkcqrnqlmuzcvwlgkmyb.supabase.co'; 
 const CLAVE_API = 'sb_publishable_rCrNB27M4ypZk7j0a10p_Q_3iNO7qRO';
 
