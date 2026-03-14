@@ -20,12 +20,16 @@
         .openbtn { font-size: 28px; cursor: pointer; background: none; border: none; color: var(--dorado); }
         .btn-reloj { background: var(--dorado); border-radius: 50%; width: 45px; height: 45px; border: none; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
-        /* LISTADO */
+        /* LISTADO Y TARJETAS */
         .contenedor { padding: 20px; max-width: 600px; margin: auto; }
         .btn-add-main { background: var(--dorado); color: black; border: none; padding: 16px; border-radius: 12px; font-weight: bold; width: 100%; margin-bottom: 25px; cursor: pointer; text-transform: uppercase; }
         .card-chofer { background: var(--gris); border-radius: 18px; padding: 15px; display: flex; align-items: center; gap: 15px; position: relative; border: 1px solid #333; margin-bottom: 15px; cursor: pointer; }
-        .foto-perfil-mini { width: 75px; height: 75px; border-radius: 50%; border: 2px solid var(--dorado); object-fit: cover; background: #000; }
+        .foto-perfil-mini { width: 75px; height: 75px; border-radius: 50%; border: 2px solid var(--dorado); object-fit: cover; }
         .fondo-monto { position: absolute; bottom: 15px; right: 20px; color: var(--dorado); font-weight: bold; font-size: 18px; }
+
+        /* DISTINTIVOS/BADGES EN LA TARJETA PRINCIPAL */
+        .badge-container { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; justify-content: center; }
+        .badge { font-size: 9px; padding: 4px 8px; border-radius: 4px; font-weight: bold; text-transform: uppercase; background: #333; color: var(--dorado); border: 1px solid var(--dorado); }
 
         /* MODALES */
         .modal { display: none; position: fixed; z-index: 6000; top: 0; left: 0; width: 100%; height: 100%; background: #000; overflow-y: auto; padding-bottom: 50px; }
@@ -47,9 +51,9 @@
         .btn-flex { display: flex; gap: 10px; margin: 15px 0; }
         .btn-accion { flex: 1; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 11px; text-transform: uppercase; }
         
-        table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 10px; }
-        th { background: #222; color: var(--dorado); padding: 8px; text-align: left; }
-        td { padding: 8px; border-bottom: 1px solid #222; }
+        table { width: 100%; border-collapse: collapse; font-size: 9px; margin-top: 10px; }
+        th { background: #222; color: var(--dorado); padding: 8px; text-align: left; border-bottom: 1px solid var(--dorado); }
+        td { padding: 8px; border-bottom: 1px solid #222; text-align: left; }
     </style>
 </head>
 <body>
@@ -85,20 +89,20 @@
 
 <div id="modalNuevo" class="modal">
     <div class="modal-body">
-        <h2 style="color:var(--dorado); text-align:center;">DATOS DEL CHÓFER</h2>
+        <h2 style="color:var(--dorado); text-align:center;">NUEVO CHÓFER</h2>
         <div class="field"><label>Foto Chófer</label><input type="file" id="n_fot_c"></div>
         <div class="field"><label>Nombre</label><input type="text" id="n_nom"></div>
         <div class="field"><label>Apellido</label><input type="text" id="n_ape"></div>
         <div class="field"><label>Teléfono</label><input type="tel" id="n_tel"></div>
         <div class="field" style="display:flex; justify-content:space-between;"><label>Licencia Operativa</label><input type="checkbox" id="n_lic" style="width:20px;"></div>
-        <div class="field" style="display:flex; justify-content:space-between;"><label>Sin Fondo</label><input type="checkbox" id="n_lib" style="width:20px;"></div>
+        <div class="field" style="display:flex; justify-content:space-between;"><label>Sin Créditos</label><input type="checkbox" id="n_lib" style="width:20px;"></div>
         <div class="field"><label>Fondo Inicial</label><input type="number" id="n_fon" value="0"></div>
         <div class="field"><label>Grupo</label>
             <div style="display:flex; gap:20px;"><label><input type="radio" name="n_gp" value="Auto" checked> AUTO</label><label><input type="radio" name="n_gp" value="Moto"> MOTO</label></div>
         </div>
         <hr style="border:0.5px solid #333; margin:20px 0;">
-        <h2 style="color:var(--dorado); text-align:center;">DATOS DEL VEHÍCULO</h2>
-        <div class="field"><label>Foto Vehículo</label><input type="file" id="n_fot_v"></div>
+        <h2 style="color:var(--dorado); text-align:center;">DATOS DEL AUTO</h2>
+        <div class="field"><label>Foto Carro</label><input type="file" id="n_fot_v"></div>
         <div class="field"><label>Marca</label><input type="text" id="n_mar"></div>
         <div class="field"><label>Modelo</label><input type="text" id="n_mod"></div>
         <div class="field"><label>Color</label><input type="text" id="n_col"></div>
@@ -114,15 +118,16 @@
 
 <script src="config.js"></script>
 <script>
-    let chs = []; let sel = null;
+    let chs = []; let sel = null; let tjs = [];
     const openNav = () => document.getElementById("mySidebar").style.width = "280px";
     const closeNav = () => document.getElementById("mySidebar").style.width = "0";
     const abrirModal = (id) => document.getElementById(id).style.display = 'block';
     const cerrarModal = (id) => document.getElementById(id).style.display = 'none';
 
     async function cargar() {
-        const { data } = await supabaseClient.from('choferes').select('*').order('nombre');
-        chs = data || [];
+        const { data: choferes } = await supabaseClient.from('choferes').select('*').order('nombre');
+        const { data: tarjetas } = await supabaseClient.from('tarjetas').select('*');
+        chs = choferes || []; tjs = tarjetas || [];
         render(chs);
     }
 
@@ -130,45 +135,41 @@
         document.getElementById('lista-choferes').innerHTML = l.map(c => `
             <div class="card-chofer" onclick="abrirV('${c.id}')">
                 <img src="${c.foto_chofer || ''}" class="foto-perfil-mini">
-                <div class="info-card">
+                <div class="info-card" style="width:100%">
                     <h3>${c.nombre} ${c.apellido || ''}</h3>
                     <p>${c.telefono}</p>
-                    <p style="color:var(--dorado)">${c.tiene_licencia_operativa ? 'Con Licencia' : 'Sin Licencia'}</p>
+                    <div class="badge-container">
+                        ${c.tiene_licencia_operativa ? '<span class="badge">LIC OPERATIVA</span>' : ''}
+                        ${c.libre_de_fondo ? '<span class="badge">SIN CRÉDITOS</span>' : ''}
+                        ${c.grupo ? `<span class="badge">${c.grupo.toUpperCase()}</span>` : ''}
+                        ${c.tiene_aire_acondicionado ? '<span class="badge">AIRE</span>' : ''}
+                    </div>
                 </div>
                 <div class="fondo-monto">$${c.fondo_actual}</div>
             </div>
         `).join('');
     }
 
-    async function subirImagen(input, bucket) {
-        const file = document.getElementById(input).files[0];
-        if(!file) return null;
-        const nombre = Date.now() + "_" + file.name;
-        const { data, error } = await supabaseClient.storage.from(bucket).upload(nombre, file);
+    async function subirImg(inp, buck) {
+        const f = document.getElementById(inp).files[0]; if(!f) return null;
+        const n = Date.now()+"_"+f.name;
+        const { data, error } = await supabaseClient.storage.from(buck).upload(n, f);
         if(error) return null;
-        const { data: { publicUrl } } = supabaseClient.storage.from(bucket).getPublicUrl(nombre);
+        const { data: { publicUrl } } = supabaseClient.storage.from(buck).getPublicUrl(n);
         return publicUrl;
     }
 
     async function crearTodo() {
-        const urlC = await subirImagen('n_fot_c', 'fotos_choferes');
-        const urlV = await subirImagen('n_fot_v', 'fotos_carros');
-        const payload = {
-            nombre: document.getElementById('n_nom').value,
-            apellido: document.getElementById('n_ape').value,
-            telefono: document.getElementById('n_tel').value,
-            tiene_licencia_operativa: document.getElementById('n_lic').checked,
-            libre_de_fondo: document.getElementById('n_lib').checked,
-            fondo_actual: parseFloat(document.getElementById('n_fon').value),
-            grupo: document.querySelector('input[name="n_gp"]:checked').value,
-            marca_carro: document.getElementById('n_mar').value,
-            modelo_carro: document.getElementById('n_mod').value,
-            color_carro: document.getElementById('n_col').value,
-            tiene_aire_acondicionado: document.getElementById('n_air').checked,
-            foto_chofer: urlC, foto_carro: urlV
+        const uC = await subirImg('n_fot_c','fotos_choferes'); const uV = await subirImg('n_fot_v','fotos_carros');
+        const p = {
+            nombre: document.getElementById('n_nom').value, apellido: document.getElementById('n_ape').value,
+            telefono: document.getElementById('n_tel').value, tiene_licencia_operativa: document.getElementById('n_lic').checked,
+            libre_de_fondo: document.getElementById('n_lib').checked, fondo_actual: parseFloat(document.getElementById('n_fon').value),
+            grupo: document.querySelector('input[name="n_gp"]:checked').value, marca_carro: document.getElementById('n_mar').value,
+            modelo_carro: document.getElementById('n_mod').value, color_carro: document.getElementById('n_col').value,
+            tiene_aire_acondicionado: document.getElementById('n_air').checked, foto_chofer: uC, foto_carro: uV
         };
-        await supabaseClient.from('choferes').insert([payload]);
-        location.reload();
+        await supabaseClient.from('choferes').insert([p]); location.reload();
     }
 
     async function abrirV(id) {
@@ -182,8 +183,13 @@
         document.getElementById('v-content').innerHTML = `
             <button onclick="cerrarModal('modalVer')" style="float:right; background:none; border:none; color:var(--dorado); font-size:30px;">&times;</button>
             <img src="${sel.foto_chofer}" class="foto-grande">
-            <h2 style="text-align:center; margin:5px 0;">${sel.nombre} ${sel.apellido}</h2>
-            <div style="text-align:center; font-size:11px;"><label><input type="checkbox" ${sel.libre_de_fondo ? 'checked' : ''} disabled> SIN CRÉDITOS</label></div>
+            <h2 style="text-align:center;">${sel.nombre} ${sel.apellido}</h2>
+            <div class="badge-container" style="margin-bottom:15px;">
+                ${sel.tiene_licencia_operativa ? '<span class="badge">LIC OPERATIVA</span>' : ''}
+                ${sel.libre_de_fondo ? '<span class="badge">SIN CRÉDITOS</span>' : ''}
+                ${sel.grupo ? `<span class="badge">${sel.grupo.toUpperCase()}</span>` : ''}
+                ${sel.tiene_aire_acondicionado ? '<span class="badge">AIRE</span>' : ''}
+            </div>
             <div class="stats-grid">
                 <div class="stat-box"><small>HOY</small><b>${t_h}</b></div>
                 <div class="stat-box"><small>MES</small><b>${t_m}</b></div>
@@ -207,8 +213,8 @@
     function tab(t, b) {
         document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active')); b.classList.add('active');
         const c = document.getElementById('t-cont');
-        if(t==='i') c.innerHTML = `<p><b>Teléfono:</b> ${sel.telefono}</p><p><b>Grupo:</b> ${sel.grupo}</p><p><b>Licencia:</b> ${sel.tiene_licencia_operativa ? 'SI' : 'NO'}</p>`;
-        if(t==='a') c.innerHTML = `<img src="${sel.foto_carro}" style="width:100%; border-radius:10px; margin-top:10px;"><p><b>Marca/Modelo:</b> ${sel.marca_carro} ${sel.modelo_carro}</p><p><b>Aire:</b> ${sel.tiene_aire_acondicionado ? 'SI' : 'NO'}</p>`;
+        if(t==='i') c.innerHTML = `<p><b>Tel:</b> ${sel.telefono}</p><p><b>Grupo:</b> ${sel.grupo}</p><p><b>Licencia:</b> ${sel.tiene_licencia_operativa ? 'SI' : 'NO'}</p>`;
+        if(t==='a') c.innerHTML = `<img src="${sel.foto_carro}" style="width:100%; border-radius:10px;"><p><b>Marca:</b> ${sel.marca_carro} ${sel.modelo_carro}</p><p><b>Aire:</b> ${sel.tiene_aire_acondicionado ? 'SI' : 'NO'}</p>`;
         if(t==='f') {
             c.innerHTML = `
                 <div class="btn-flex">
@@ -217,7 +223,7 @@
                     <button class="btn-accion" style="background:var(--dorado); color:black;" onclick="rectificar()">RECTIFICAR</button>
                 </div>
                 <div id="op-area"></div>
-                <table><thead><tr><th>USER</th><th>MÉTODO</th><th>SALDO</th><th>ACTIVO</th></tr></thead><tbody id="h-body"></tbody></table>
+                <table><thead><tr><th>USER</th><th>MÉTODO</th><th>FECHA</th><th>SALDO</th><th>FONDO</th><th>ACTIVO</th></tr></thead><tbody id="h-body"></tbody></table>
             `;
             cargarH(sel.id);
         }
@@ -226,13 +232,13 @@
     async function activarEdicion() {
         const esMoto = sel.grupo === 'Moto';
         document.getElementById('v-content').innerHTML = `
-            <h2 style="color:var(--dorado); text-align:center;">EDITAR COMPLETO</h2>
-            <div class="field"><label>Cambiar Foto Chófer</label><input type="file" id="e_fot_c"></div>
+            <h2 style="color:var(--dorado); text-align:center;">EDITAR CHÓFER</h2>
+            <div class="field"><label>Cambiar Foto</label><input type="file" id="e_fot_c"></div>
             <div class="field"><label>Nombre</label><input type="text" id="e_nom" value="${sel.nombre}"></div>
-            <div class="field"><label>Apellido</label><input type="text" id="e_ape" value="${sel.apellido}"></div>
+            <div class="field"><label>Apellido</label><input type="text" id="e_ape" value="${sel.apellido || ''}"></div>
             <div class="field"><label>Teléfono</label><input type="tel" id="e_tel" value="${sel.telefono}"></div>
-            <div class="field" style="display:flex; justify-content:space-between;"><label>Licencia Operativa</label><input type="checkbox" id="e_lic" ${sel.tiene_licencia_operativa ? 'checked' : ''} style="width:20px;"></div>
-            <div class="field" style="display:flex; justify-content:space-between;"><label>Sin Fondo</label><input type="checkbox" id="e_lib" ${sel.libre_de_fondo ? 'checked' : ''} style="width:20px;"></div>
+            <div class="field" style="display:flex; justify-content:space-between;"><label>Licencia Operativa</label><input type="checkbox" id="e_lic" ${sel.tiene_licencia_operativa?'checked':''} style="width:20px;"></div>
+            <div class="field" style="display:flex; justify-content:space-between;"><label>Sin Créditos</label><input type="checkbox" id="e_lib" ${sel.libre_de_fondo?'checked':''} style="width:20px;"></div>
             <div class="field"><label>Grupo</label>
                 <div style="display:flex; gap:20px;"><label><input type="radio" name="e_gp" value="Auto" ${!esMoto?'checked':''}> AUTO</label><label><input type="radio" name="e_gp" value="Moto" ${esMoto?'checked':''}> MOTO</label></div>
             </div>
@@ -241,7 +247,7 @@
             <div class="field"><label>Marca</label><input type="text" id="e_mar" value="${sel.marca_carro}"></div>
             <div class="field"><label>Modelo</label><input type="text" id="e_mod" value="${sel.modelo_carro}"></div>
             <div class="field"><label>Color</label><input type="text" id="e_col" value="${sel.color_carro}"></div>
-            <div class="field" style="display:flex; justify-content:space-between;"><label>Aire</label><input type="checkbox" id="e_air" ${sel.tiene_aire_acondicionado ? 'checked' : ''} style="width:20px;"></div>
+            <div class="field" style="display:flex; justify-content:space-between;"><label>Aire Acondicionado</label><input type="checkbox" id="e_air" ${sel.tiene_aire_acondicionado?'checked':''} style="width:20px;"></div>
             <div class="btn-flex">
                 <button class="btn-accion" style="background:var(--verde); color:black;" onclick="guardarE()">GUARDAR</button>
                 <button class="btn-accion" style="background:#333; color:white;" onclick="abrirV('${sel.id}')">CANCELAR</button>
@@ -250,8 +256,8 @@
     }
 
     async function guardarE() {
-        const uC = await subirImagen('e_fot_c', 'fotos_choferes') || sel.foto_chofer;
-        const uV = await subirImagen('e_fot_v', 'fotos_carros') || sel.foto_carro;
+        const uC = await subirImg('e_fot_c','fotos_choferes') || sel.foto_chofer;
+        const uV = await subirImg('e_fot_v','fotos_carros') || sel.foto_carro;
         const upd = {
             nombre: document.getElementById('e_nom').value, apellido: document.getElementById('e_ape').value,
             telefono: document.getElementById('e_tel').value, tiene_licencia_operativa: document.getElementById('e_lic').checked,
@@ -260,15 +266,26 @@
             color_carro: document.getElementById('e_col').value, tiene_aire_acondicionado: document.getElementById('e_air').checked,
             foto_chofer: uC, foto_carro: uV
         };
-        await supabaseClient.from('choferes').update(upd).eq('id', sel.id);
-        location.reload();
+        const { error } = await supabaseClient.from('choferes').update(upd).eq('id', sel.id);
+        if(!error) location.reload(); else alert("Error al guardar: " + error.message);
     }
 
     async function mov(tipo) {
+        const optsTarjetas = tjs.map(t => `<option value="${t.id}">${t.nombre_tarjeta} (${t.numero_tarjeta})</option>`).join('');
         document.getElementById('op-area').innerHTML = `
-            <div style="background:#222; padding:10px; border-radius:10px; border:1px solid var(--dorado); margin:10px 0;">
+            <div style="background:#222; padding:15px; border-radius:10px; border:1px solid var(--dorado); margin:10px 0;">
                 <label>MONTO</label><input type="number" id="m_cant">
-                ${tipo === 'ADD' ? '<label>MÉTODO</label><select id="m_met"><option>Efectivo</option><option>Transferencia</option></select>' : ''}
+                ${tipo === 'ADD' ? `
+                    <label>MÉTODO</label>
+                    <select id="m_met" onchange="this.value=='Transferencia'?document.getElementById('sel-tj').hidden=false:document.getElementById('sel-tj').hidden=true">
+                        <option>Efectivo</option>
+                        <option>Transferencia</option>
+                    </select>
+                    <div id="sel-tj" hidden class="field" style="margin-top:10px;">
+                        <label>SELECCIONAR TARJETA</label>
+                        <select id="m_tj">${optsTarjetas}</select>
+                    </div>
+                ` : ''}
                 <button class="btn-add-main" style="margin-top:10px; padding:10px;" onclick="eMov('${tipo}')">PROCESAR</button>
             </div>
         `;
@@ -279,7 +296,12 @@
         const met = document.getElementById('m_met')?.value || 'Retiro';
         const nuevoF = (tipo === 'ADD') ? sel.fondo_actual + cant : sel.fondo_actual - cant;
         const user = JSON.parse(localStorage.getItem('usuario_activo'))?.nombre || 'Gestor';
-        await supabaseClient.from('historial_fondos').insert([{ chofer_id: sel.id, usuario: user, metodo: met, saldo: (tipo === 'ADD' ? cant : -cant), fondo_anterior: sel.fondo_actual, activo: nuevoF, fecha: new Date() }]);
+        const tjId = document.getElementById('m_tj')?.value || null;
+
+        await supabaseClient.from('historial_fondos').insert([{ 
+            chofer_id: sel.id, usuario: user, metodo: met, saldo: (tipo === 'ADD' ? cant : -cant), 
+            fondo_anterior: sel.fondo_actual, activo: nuevoF, fecha: new Date(), tarjeta_id: tjId
+        }]);
         await supabaseClient.from('choferes').update({ fondo_actual: nuevoF }).eq('id', sel.id);
         location.reload();
     }
@@ -288,16 +310,24 @@
         const { data } = await supabaseClient.from('historial_fondos').select('saldo').eq('chofer_id', sel.id);
         const t = data.reduce((acc, c) => acc + c.saldo, 0);
         await supabaseClient.from('choferes').update({ fondo_actual: t }).eq('id', sel.id);
-        alert("Rectificado a: $" + t); location.reload();
+        location.reload();
     }
 
     async function cargarH(id) {
         const { data } = await supabaseClient.from('historial_fondos').select('*').eq('chofer_id', id).order('fecha', {ascending: false});
-        if(data) document.getElementById('h-body').innerHTML = data.map(h => `<tr><td>${h.usuario}</td><td>${h.metodo}</td><td style="color:${h.saldo<0?'#ff4d4d':'#25d366'}">${h.saldo}</td><td><b>${h.activo}</b></td></tr>`).join('');
+        if(data) document.getElementById('h-body').innerHTML = data.map(h => `
+            <tr>
+                <td>${h.usuario}</td>
+                <td>${h.metodo}</td>
+                <td>${new Date(h.fecha).toLocaleDateString()}</td>
+                <td style="color:${h.saldo<0?'#ff4d4d':'#25d366'}">${h.saldo}</td>
+                <td>${h.fondo_anterior}</td>
+                <td><b>${h.activo}</b></td>
+            </tr>`).join('');
     }
 
-    async function del(id) { if(confirm("¿Eliminar por completo?")) { await supabaseClient.from('choferes').delete().eq('id', id); location.reload(); } }
-    function busc() { const t = document.getElementById('inBus').value.toLowerCase(); render(chs.filter(x => x.nombre.toLowerCase().includes(t) || x.telefono.includes(t))); }
+    async function del(id) { if(confirm("¿Eliminar?")) { await supabaseClient.from('choferes').delete().eq('id', id); location.reload(); } }
+    function busc() { const t = document.getElementById('inBus').value.toLowerCase(); render(chs.filter(x => x.nombre.toLowerCase().includes(t))); }
 
     window.onload = cargar;
 </script>
