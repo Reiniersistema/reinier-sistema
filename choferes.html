@@ -1,1 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Choferes - RF TransGestión</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; --rojo: #ff4d4d; }
+        body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding-bottom: 80px; }
+        
+        /* HEADER Y SIDEBAR (Igual que tus otros archivos) */
+        .header-nav-universal { display: flex; align-items: center; justify-content: space-between; padding: 15px; background: #121212; border-bottom: 1px solid var(--dorado); }
+        .logo-txt-universal { font-family: 'Playfair Display', serif; font-size: 20px; color: white; }
+        .openbtn { font-size: 25px; cursor: pointer; background: none; border: none; color: var(--dorado); }
 
+        /* BOTONES PRINCIPALES */
+        .btn-nuevo { background: var(--dorado); color: black; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; margin: 20px; cursor: pointer; text-transform: uppercase; font-size: 12px; }
+        .btn-filtro-flotante { position: fixed; top: 15px; right: 70px; background: var(--dorado); width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000; border: none; color: black; font-size: 20px; }
+
+        /* CONTENEDOR DE TARJETAS */
+        .grid-choferes { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; padding: 0 20px; }
+        .card-chofer { background: var(--gris); border-radius: 12px; padding: 15px; border: 1px solid #333; position: relative; }
+        .card-chofer h3 { color: var(--dorado); margin: 0 0 5px 0; font-size: 16px; text-transform: uppercase; }
+        .card-chofer p { margin: 3px 0; font-size: 13px; color: #ccc; }
+        .opciones-puntos { position: absolute; top: 15px; right: 15px; cursor: pointer; font-size: 20px; color: var(--dorado); }
+
+        /* MODALES */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 5000; overflow-y: auto; padding: 20px; box-sizing: border-box; }
+        .modal-content { max-width: 600px; margin: auto; background: var(--gris); padding: 25px; border-radius: 15px; border: 1px solid var(--dorado); }
+        
+        /* FORMULARIOS */
+        .field { margin-bottom: 15px; }
+        label { display: block; font-size: 11px; color: var(--dorado); margin-bottom: 5px; text-transform: uppercase; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #000; color: white; box-sizing: border-box; }
+        .switch-group { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 12px; }
+        .switch-group input[type="checkbox"] { width: auto; }
+
+        /* DISEÑO DE DETALLES (VER CHOFER) */
+        .foto-grande { width: 100%; max-height: 300px; object-fit: cover; border-radius: 10px; border: 2px solid var(--dorado); margin-bottom: 15px; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
+        .stat-box { background: #000; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #222; }
+        .stat-box small { font-size: 10px; color: var(--dorado); display: block; }
+        
+        /* TABLA DE FONDOS */
+        .tabla-fondos { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 15px; }
+        .tabla-fondos th { background: var(--dorado); color: black; padding: 8px; }
+        .tabla-fondos td { padding: 8px; border-bottom: 1px solid #333; text-align: center; }
+
+        /* MENÚ DE ACCIONES (3 PUNTOS) */
+        .dropdown-menu { display: none; position: absolute; right: 15px; top: 40px; background: white; color: black; border-radius: 8px; overflow: hidden; z-index: 10; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .dropdown-menu div { padding: 10px 20px; cursor: pointer; font-size: 13px; font-weight: bold; }
+        .dropdown-menu div:hover { background: #eee; }
+
+        .tabs-chofer { display: flex; gap: 5px; overflow-x: auto; margin-top: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .tab-btn { background: #333; border: none; color: white; padding: 10px 15px; border-radius: 5px; font-size: 11px; cursor: pointer; white-space: nowrap; }
+        .tab-btn.active { background: var(--dorado); color: black; }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <div class="header-nav-universal">
+        <button class="openbtn" onclick="openNav()">&#9776;</button>
+        <div class="logo-txt-universal">RF <span style="color: var(--dorado); font-size: 14px;">TransGestión</span></div>
+        <div style="width: 40px;"></div>
+    </div>
+
+    <button class="btn-filtro-flotante" onclick="toggleFiltro()">⏳</button>
+    <button class="btn-nuevo" onclick="abrirModal('modalNuevo')">+ Añadir Chófer</button>
+
+    <div id="barra-filtro" style="display:none; padding: 0 20px 20px;">
+        <input type="text" id="inputBusqueda" placeholder="Buscar por nombre o teléfono..." oninput="filtrarChoferes()">
+    </div>
+
+    <div class="grid-choferes" id="listaChoferes">
+        </div>
+</div>
+
+<div id="modalNuevo" class="modal">
+    <div class="modal-content">
+        <h2 style="color:var(--dorado); text-align:center;">NUEVO CHOFER</h2>
+        <div class="field"><label>Foto Chófer</label><input type="file" id="new_foto_chofer" accept="image/*"></div>
+        <div class="field"><label>Nombre</label><input type="text" id="new_nombre"></div>
+        <div class="field"><label>Apellido</label><input type="text" id="new_apellido"></div>
+        <div class="field"><label>Teléfono</label><input type="tel" id="new_telefono"></div>
+        <div class="switch-group"><input type="checkbox" id="new_licencia"> <label>Tiene Licencia Operativa</label></div>
+        <div class="field"><label>Fondo Inicial</label><input type="number" id="new_fondo" value="0"></div>
+        <div class="switch-group"><input type="checkbox" id="new_libre"> <label>Trabajar sin fondo (Libre)</label></div>
+        <hr border="0.5px solid #333">
+        <div class="field"><label>Foto Carro</label><input type="file" id="new_foto_carro" accept="image/*"></div>
+        <div class="field"><label>Marca</label><input type="text" id="new_marca"></div>
+        <div class="field"><label>Modelo</label><input type="text" id="new_modelo"></div>
+        <div class="field"><label>Color</label><input type="text" id="new_color"></div>
+        <div class="switch-group"><input type="checkbox" id="new_aire"> <label>Tiene Aire Acondicionado</label></div>
+        
+        <div style="display:flex; gap:10px; margin-top:20px;">
+            <button class="btn-nuevo" style="background:#444; color:white; flex:1;" onclick="cerrarModal('modalNuevo')">Cancelar</button>
+            <button class="btn-nuevo" style="flex:1;" onclick="guardarChofer()">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<div id="modalVer" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+        <button onclick="cerrarModal('modalVer')" style="float:right; background:none; border:none; color:var(--rojo); font-size:24px;">&times;</button>
+        <div id="detalle-content">
+            </div>
+    </div>
+</div>
+
+<script src="config.js"></script>
+<script src="menu.js"></script>
+<script>
+    let todosLosChoferes = [];
+
+    async function cargarChoferes() {
+        const { data, error } = await supabaseClient.from('choferes').select('*').order('nombre', { ascending: true });
+        if (!error) {
+            todosLosChoferes = data;
+            renderizarChoferes(data);
+        }
+    }
+
+    function renderizarChoferes(lista) {
+        const contenedor = document.getElementById('listaChoferes');
+        contenedor.innerHTML = lista.map(c => `
+            <div class="card-chofer">
+                <div class="opciones-puntos" onclick="toggleMenuPuntos('${c.id}')">⋮</div>
+                <div id="menu-${c.id}" class="dropdown-menu">
+                    <div onclick="verDetalle('${c.id}')">Ver</div>
+                    <div onclick="eliminarChofer('${c.id}')" style="color:red;">Eliminar</div>
+                </div>
+                <h3>${c.nombre} ${c.apellido || ''}</h3>
+                <p>📞 ${c.telefono}</p>
+                <p>🪪 Licencia: ${c.tiene_licencia_operativa ? '✅ SI' : '❌ NO'}</p>
+                <p>💰 Fondo: <b style="color:${c.fondo_actual < 150 ? 'red' : 'white'}">$${c.fondo_actual}</b></p>
+            </div>
+        `).join('');
+    }
+
+    function toggleMenuPuntos(id) {
+        const menu = document.getElementById(`menu-${id}`);
+        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    }
+
+    async function verDetalle(id) {
+        const c = todosLosChoferes.find(x => x.id === id);
+        if(!c) return;
+        
+        // Obtener estadísticas de viajes (Simulado por ahora, requiere queries adicionales)
+        const content = document.getElementById('detalle-content');
+        content.innerHTML = `
+            <img src="${c.foto_chofer || 'https://via.placeholder.com/400'}" class="foto-grande">
+            <h2 style="margin:0;">${c.nombre} ${c.apellido}</h2>
+            <div class="switch-group" style="margin-top:10px;">
+                <input type="checkbox" ${c.libre_de_fondo ? 'checked' : ''} disabled> 
+                <span>Trabajar sin créditos</span>
+            </div>
+            <div class="field">
+                <label>Grupo que pertenece</label>
+                <div style="display:flex; gap:10px;">
+                    <input type="radio" name="grupo" checked> Legion
+                    <input type="radio" name="grupo"> Particular
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-box"><small>FONDO ACTUAL</small> $${c.fondo_actual}</div>
+                <div class="stat-box"><small>VIAJES HOY</small> 0</div>
+                <div class="stat-box"><small>VIAJES MES</small> 0</div>
+                <div class="stat-box"><small>TOTAL VIAJES</small> 0</div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <button class="btn-nuevo" style="margin:0; background:#333; color:white;" onclick="alert('Filtro fecha...')">Filtrar Viajes</button>
+                <button class="btn-nuevo" style="margin:0; background:#25d366; color:white;" onclick="window.open('https://wa.me/${c.telefono}')">WhatsApp</button>
+                <button class="btn-nuevo" style="margin:0; background:var(--rojo); color:white;" onclick="eliminarChofer('${c.id}')">Eliminar</button>
+            </div>
+
+            <div class="tabs-chofer">
+                <button class="tab-btn active" onclick="cambiarTab(this, 'info')">INFORMACIÓN</button>
+                <button class="tab-btn" onclick="cambiarTab(this, 'auto')">AUTO</button>
+                <button class="tab-btn" onclick="cambiarTab(this, 'fondo')">FONDO</button>
+            </div>
+
+            <div id="tab-container" style="margin-top:20px;">
+                <div id="tab-info">
+                    <p><b>Nombre:</b> ${c.nombre}</p>
+                    <p><b>Apellidos:</b> ${c.apellido}</p>
+                    <p><b>Teléfono:</b> ${c.telefono}</p>
+                </div>
+            </div>
+        `;
+        abrirModal('modalVer');
+    }
+
+    // --- LÓGICA DE FONDOS (REQUERIMIENTO ESPECIAL) ---
+    async function procesarOperacionFondo(tipo, choferId) {
+        const cantidad = parseFloat(document.getElementById('monto_operacion').value);
+        const metodo = document.getElementById('metodo_operacion')?.value || 'Efectivo';
+        const c = todosLosChoferes.find(x => x.id === choferId);
+        
+        if(!cantidad || cantidad <= 0) return alert("Monto no válido");
+
+        const fondoAnterior = c.fondo_actual;
+        const saldoOperacion = tipo === 'ADD' ? cantidad : -cantidad;
+        const nuevoFondoActivo = fondoAnterior + saldoOperacion;
+
+        // 1. Insertar en Historial
+        const { error: errHist } = await supabaseClient.from('historial_fondos').insert([{
+            chofer_id: choferId,
+            usuario: JSON.parse(localStorage.getItem('usuario_activo'))?.nombre || 'Admin',
+            metodo: metodo,
+            saldo: saldoOperacion,
+            fondo_anterior: fondoAnterior,
+            activo: nuevoFondoActivo,
+            fecha: new Date()
+        }]);
+
+        // 2. Actualizar Chofer
+        if(!errHist) {
+            await supabaseClient.from('choferes').update({ fondo_actual: nuevoFondoActivo }).eq('id', choferId);
+            alert("Operación Exitosa");
+            location.reload();
+        }
+    }
+
+    // Funciones de utilidad
+    function abrirModal(id) { document.getElementById(id).style.display = 'block'; }
+    function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
+    function toggleFiltro() { 
+        const b = document.getElementById('barra-filtro');
+        b.style.display = b.style.display === 'none' ? 'block' : 'none';
+    }
+    
+    function filtrarChoferes() {
+        const texto = document.getElementById('inputBusqueda').value.toLowerCase();
+        const filtrados = todosLosChoferes.filter(c => 
+            c.nombre.toLowerCase().includes(texto) || c.telefono.includes(texto)
+        );
+        renderizarChoferes(filtrados);
+    }
+
+    window.onload = cargarChoferes;
+</script>
+</body>
+</html>
