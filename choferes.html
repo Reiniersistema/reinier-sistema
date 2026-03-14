@@ -169,7 +169,7 @@
         const c = document.getElementById('t-cont');
         if(t==='i') c.innerHTML = `<p><b>Tel:</b> ${sel.telefono}</p><p><b>Grupo:</b> ${sel.grupo}</p><p><b>Licencia:</b> ${sel.tiene_licencia_operativa ? 'SI' : 'NO'}</p>`;
         if(t==='a') c.innerHTML = `<img src="${sel.foto_carro}" style="width:100%; border-radius:10px;"><p><b>Marca:</b> ${sel.marca_carro} ${sel.modelo_carro}</p><p><b>Aire:</b> ${sel.tiene_aire_acondicionado ? 'SI' : 'NO'}</p>`;
-        if(t==='f') { c.innerHTML = `<div class="btn-flex"><button class="btn-accion" style="background:var(--verde); color:black;" onclick="mov('ADD')">AGREGAR</button><button class="btn-accion" style="background:var(--rojo); color:white;" onclick="mov('SUB')">RETIRAR</button><button class="btn-accion" style="background:var(--dorado); color:black;" onclick="rectificar()">RECTIFICAR</button></div><div id="op-area"></div><table><thead><tr><th>USER</th><th>MÉTODO</th><th>FECHA</th><th>SALDO</th><th>FONDO</th><th>ACTIVO</th></tr></thead><tbody id="h-body"></tbody></table>`; cargarH(sel.id); }
+        if(t==='f') { c.innerHTML = `<div class="btn-flex"><button class="btn-accion" style="background:var(--verde); color:black;" onclick="mov('ADD')">AGREGAR</button><button class="btn-accion" style="background:var(--rojo); color:white;" onclick="mov('SUB')">RETIRAR</button><button class="btn-accion" style="background:var(--dorado); color:black;" onclick="rectificar()">RECTIFICAR</button></div><div id="op-area"></div><table><thead><tr><th>USER</th><th>MÉTODO</th><th>OPERACIÓN</th><th>FECHA</th><th>SALDO</th><th>FONDO</th><th>ACTIVO</th></tr></thead><tbody id="h-body"></tbody></table>`; cargarH(sel.id); }
     }
 
     async function activarEdicion() {
@@ -206,12 +206,13 @@
 
     async function eMov(tipo) {
         const cant = parseFloat(document.getElementById('m_cant').value); if (isNaN(cant) || cant <= 0) return alert("Ingresa un monto válido");
-        const met = document.getElementById('m_met')?.value || 'Retiro';
+        const met = document.getElementById('m_met')?.value || 'Caja';
+        const op = (tipo === 'ADD') ? 'Ingreso' : 'Retiro';
         const valorMovimiento = (tipo === 'ADD') ? cant : -cant;
         const nuevoF = sel.fondo_actual + valorMovimiento;
         const user = JSON.parse(localStorage.getItem('usuario_activo'))?.nombre || 'Gestor';
         const fechaISO = new Date().toISOString();
-        const { error: errH } = await supabaseClient.from('historial_fondos').insert([{ chofer_id: sel.id, usuario: user, metodo: met, saldo: valorMovimiento, fondo_anterior: sel.fondo_actual, activo: nuevoF, fecha: fechaISO }]);
+        const { error: errH } = await supabaseClient.from('historial_fondos').insert([{ chofer_id: sel.id, usuario: user, metodo: met, operacion: op, saldo: valorMovimiento, fondo_anterior: sel.fondo_actual, activo: nuevoF, fecha: fechaISO }]);
         if(!errH) { await supabaseClient.from('choferes').update({ fondo_actual: nuevoF }).eq('id', sel.id); location.reload(); }
     }
 
@@ -227,7 +228,8 @@
         const { data } = await supabaseClient.from('historial_fondos').select('*').eq('chofer_id', id).order('fecha', {ascending: false});
         if(data) document.getElementById('h-body').innerHTML = data.map(h => {
             let f = "S/F"; if (h.fecha) { const d = new Date(h.fecha); f = d.toLocaleDateString() !== "Invalid Date" ? d.toLocaleDateString() : "S/F"; }
-            return `<tr><td>${h.usuario || '---'}</td><td>${h.metodo}</td><td>${f}</td><td style="color:${h.saldo < 0 ? 'var(--rojo)' : 'var(--verde)'}">${h.saldo}</td><td>${h.fondo_anterior}</td><td><b>${h.activo}</b></td></tr>`;
+            let opLabel = h.operacion || (h.metodo.includes("Descuento") ? "Descuento %" : (h.saldo > 0 ? "Ingreso" : "Retiro"));
+            return `<tr><td>${h.usuario || '---'}</td><td>${h.metodo}</td><td>${opLabel}</td><td>${f}</td><td style="color:${h.saldo < 0 ? 'var(--rojo)' : 'var(--verde)'}">${h.saldo}</td><td>${h.fondo_anterior}</td><td><b>${h.activo}</b></td></tr>`;
         }).join('');
     }
 
