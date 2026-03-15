@@ -65,28 +65,6 @@
 </head>
 <body>
 
-<div id="mySidebar" class="sidebar">
-    <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-    <a href="panel.html">PANEL DE CONTROL</a>
-    <a href="crear-viaje.html">CREAR VIAJES</a>
-    <a href="mis-viajes.html">MIS VIAJES</a>
-    <a href="choferes.html">CHOFERES</a>
-    <a href="pagos-pendientes.html">PAGOS PENDIENTES</a>
-    <a href="pagos-aprobar.html">PAGOS POR APROBAR</a>
-    <a href="tarjetas.html">TARJETAS</a>
-    <a href="transferencias.html">TRANSFERENCIAS</a>
-    <a href="colaboracion.html">COLABORACIÓN</a>
-    <a href="usuarios.html">USUARIOS</a>
-    <a href="clientes.html">CLIENTES</a>
-    <hr style="border:0.5px solid #333; margin:20px;">
-    <a href="#" onclick="cerrarSesion()" style="color: red">CERRAR SESIÓN</a>
-</div>
-
-<div class="header-nav-universal">
-    <button class="openbtn" onclick="openNav()">&#9776;</button>
-    <div class="logo-txt-universal">RF <span style="color: var(--dorado);">TransGestión</span></div>
-</div>
-
 <div class="contenedor-principal">
     <div class="form-container">
         <h2>Elaborar Viaje</h2>
@@ -289,6 +267,7 @@
             obs: document.getElementById('observacion').value
         };
 
+        // PLANILLA CHOFER
         let txtChofer = `*DATOS DEL VIAJE*\n`;
         if(datos.colab && datos.colab !== 'Directo') txtChofer += `Agencia: ${datos.colab} (${datos.tipo})\n`;
         if(datos.precio) txtChofer += `Precio: ${datos.precio}\n`;
@@ -299,30 +278,36 @@
         if(datos.pax) txtChofer += `Pax: ${datos.pax}\n`;
         if(datos.fondo) txtChofer += `Fondo Actual: ${datos.fondo}\n`;
         if(datos.obs) txtChofer += `Obs: ${datos.obs}\n`;
-        txtChofer += `\n⚠️ IMPORTANTE ⚠️\n\n•usted tiene 15 minutos máximo para llegar a la dirección de recojida del cliente.
-‎•El cliente tiene 15 minutos para abordar su vehículo,por encima de este tiempo se le cobrará 25 cup el minuto extra
-‎•En caso de llegada tarde a un servicio programado se le descontará el 50% del precio del servicio. 
-‎•Recuerde mantener su auto limpio y en perfectas condiciones técnicas al igual que un trato cordial con cada cliente.
+        txtChofer += `\n⚠️ IMPORTANTE ⚠️\n\n•Usted tiene 15 minutos máximo para llegar a la dirección de recogida del cliente.\n•El cliente tiene 15 minutos para abordar su vehículo, por encima de este tiempo se le cobrará 25 cup el minuto extra.\n•En caso de llegada tarde a un servicio programado se le descontará el 50% del precio del servicio.\n•Recuerde mantener su auto limpio y en perfectas condiciones técnicas al igual que un trato cordial con cada cliente.`;
         document.getElementById('p-chofer').innerText = txtChofer;
 
+        // PLANILLA CLIENTE
         let txtCliente = `*Taxi En Camino*\n`;
         if(datos.precio) txtCliente += `Precio: ${datos.precio}\n`;
         if(datos.chofer) txtCliente += `Chofer: ${datos.chofer}\n`;
         if(datos.auto) txtCliente += `Auto: ${datos.auto}\n`;
         if(datos.color) txtCliente += `Color: ${datos.color}\n`;
+        txtCliente += `\n⚠️ *IMPORTANTE* ⚠️\n\n•Cada parada extra se recalcula la ruta y modifica el costo.\n•Al llegar el taxi a su origen usted tiene 10min de espera como cortesía, pasado este tiempo debe pagar por cada minuto extra.\n•Tiempo de espera extra: 25cup x minutos.\n•En caso de cancelar estando el auto en el lugar de recogida, deberá pagar la mitad del costo del servicio.`;
         document.getElementById('p-cliente').innerText = txtCliente;
-        txtCliente += `\n⚠️ IMPORTANTE ⚠️\n\n‎•Cada parada extra se recalcula la ruta y modifica el costo.
-‎•Al llegar el taxi a su origen usted tiene 10min de espera como cortesía, pasado este tiempo debe pagar por cada minuto extra.
-‎•Tiempo de espera extra:  25cup x minutos. 
-‎•En caso de cancelar estando el auto en el lugar de recogida, deberá pagar la mitad del costo del servicio
 
-        let txtResumen = `Precio: ${datos.precio || ''}\nKM: ${km || ''}\n⏰ Horario: ${reservado ? (fechaHoraReserva.replace('T', ' ')) : 'Ahora'}\n📍Origen: ${datos.origen}\n📍 Destino: ${datos.destino}\n#LEGION # ${usuarioActual} #${grupo || 'G'}`;
+        // NUEVO RESUMEN SOLICITADO
+        let txtResumen = `Precio: ${datos.precio || ''}\n`;
+        txtResumen += `KM: ${km || ''}\n`;
+        txtResumen += `⏰ Horario: ${reservado ? (fechaHoraReserva.replace('T', ' ')) : 'Ahora'}\n`;
+        txtResumen += `👥 Pasajeros: ${datos.pax}\n\n`;
+        txtResumen += `📍Origen: ${datos.origen}\n`;
+        txtResumen += `📍Paradas: ${datos.paradas || 'Ninguna'}\n`;
+        txtResumen += `📍 Destino: ${datos.destino}\n\n`;
+        if(datos.obs) txtResumen += `⚠️ Observación: ${datos.obs}\n\n`;
+        txtResumen += `#LEGION # ${usuarioActual} #${grupo || 'G'}`;
+        
         document.getElementById('p-resumen').innerText = txtResumen;
         document.getElementById('modalPlanillas').style.display = 'block';
     }
 
     function enviarWS(tipo) {
         const num = tipo === 'chofer' ? document.getElementById('tel-chofer').value : document.getElementById('tel-cliente').value;
+        if(tipo === 'cliente' && !num) return alert("No hay número de cliente para enviar.");
         const msg = encodeURIComponent(document.getElementById(tipo === 'chofer' ? 'p-chofer' : 'p-cliente').innerText);
         window.open(`https://wa.me/${num}?text=${msg}`, '_blank');
     }
@@ -332,7 +317,6 @@
         navigator.clipboard.writeText(texto).then(() => alert("Copiado al portapapeles"));
     }
 
-    // FUNCIÓN CREAR VIAJE CON REGISTRO EN HISTORIAL
     async function crearViaje() {
         const colabValue = document.getElementById('colaboracion').value;
         const usuarioActual = JSON.parse(localStorage.getItem('usuario_activo'))?.nombre || 'Gestor';
@@ -346,12 +330,11 @@
         btn.disabled = true;
 
         const precioViaje = parseFloat(document.getElementById('precio-final').value);
-        const porcentaje = choferData.tiene_licencia_operativa ? 0.12 : 0.15;
-        let descuento = (!choferData.libre_de_fondo) ? precioViaje * porcentaje : 0;
+        const porc = choferData.tiene_licencia_operativa ? 0.12 : 0.15;
+        let descuento = (!choferData.libre_de_fondo) ? precioViaje * porc : 0;
         const nuevoFondo = choferData.fondo_actual - descuento;
 
-        // 1. Insertar el Viaje
-        const { error: errV } = await supabaseClient.from('viajes').insert([{
+        const { error } = await supabaseClient.from('viajes').insert([{
             colaboracion: colabValue,
             tipo_agencia: tipoSeleccionado,
             chofer_id: choferData.id,
@@ -369,29 +352,25 @@
             observaciones: document.getElementById('observacion').value
         }]);
 
-        if (!errV) {
-            // 2. Registrar en Historial de Fondos (Lo nuevo)
+        if (!error) {
             if (!choferData.libre_de_fondo && descuento > 0) {
                 await supabaseClient.from('historial_fondos').insert([{
                     chofer_id: choferData.id,
                     usuario: usuarioActual,
-                    metodo: 'SISTEMA',
-                    operacion: `Descuento ${porcentaje * 100}%`,
+                    metodo: 'Sistema',
+                    operacion: `Descuento ${porc * 100}%`,
                     saldo: -descuento,
                     fondo_anterior: choferData.fondo_actual,
                     activo: nuevoFondo,
                     fecha: new Date().toISOString()
                 }]);
             }
-
-            // 3. Actualizar Saldo del Chófer
             await supabaseClient.from('choferes').update({ fondo_actual: nuevoFondo }).eq('id', choferData.id);
-            alert("Viaje registrado correctamente.");
             location.reload();
         } else {
-            alert("Error: " + errV.message);
-            btn.disabled = false;
+            alert("Error: " + error.message);
             btn.innerText = "CREAR VIAJE";
+            btn.disabled = false;
         }
     }
 </script>
