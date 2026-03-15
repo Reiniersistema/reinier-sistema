@@ -28,7 +28,6 @@
         label { display: block; font-size: 10px; color: var(--dorado); margin-bottom: 5px; text-transform: uppercase; font-weight: bold; }
         input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: white; box-sizing: border-box; }
         .foto-grande { width: 100%; height: 280px; object-fit: cover; border-radius: 15px; border: 2px solid var(--dorado); margin-bottom: 15px; }
-        /* Ajuste a 4 columnas para que quepa el nuevo contador */
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin: 15px 0; }
         .stat-box { background: #1a1a1a; padding: 10px; border-radius: 10px; text-align: center; border: 1px solid #333; }
         .stat-box small { font-size: 9px; color: var(--dorado); display: block; }
@@ -149,12 +148,11 @@
         const ahora = new Date();
         const hoy = ahora.toISOString().split('T')[0];
         const primerDiaMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1).toISOString();
-
-        // Contadores funcionales
+        
         const { count: t_h } = await supabaseClient.from('viajes').select('*',{count:'exact',head:true}).eq('chofer_id',id).gte('created_at', hoy);
         const { count: t_m } = await supabaseClient.from('viajes').select('*',{count:'exact',head:true}).eq('chofer_id',id).gte('created_at', primerDiaMes);
         const { count: t_a } = await supabaseClient.from('viajes').select('*',{count:'exact',head:true}).eq('chofer_id',id);
-
+        
         document.getElementById('v-content').innerHTML = `
             <button onclick="cerrarModal('modalVer')" style="float:right; background:none; border:none; color:var(--dorado); font-size:30px;">&times;</button>
             <img src="${sel.foto_chofer}" class="foto-grande">
@@ -185,8 +183,34 @@
         if(t==='f') { c.innerHTML = `<div class="btn-flex"><button class="btn-accion" style="background:var(--verde); color:black;" onclick="mov('ADD')">AGREGAR</button><button class="btn-accion" style="background:var(--rojo); color:white;" onclick="mov('SUB')">RETIRAR</button><button class="btn-accion" style="background:var(--dorado); color:black;" onclick="rectificar()">RECTIFICAR</button></div><div id="op-area"></div><table><thead><tr><th>USER</th><th>MÉTODO</th><th>OPERACIÓN</th><th>FECHA</th><th>SALDO</th><th>FONDO</th><th>ACTIVO</th></tr></thead><tbody id="h-body"></tbody></table>`; cargarH(sel.id); }
     }
 
+    async function activarEdicion() {
+        const esMoto = sel.grupo === 'Moto';
+        document.getElementById('v-content').innerHTML = `
+            <h2 style="color:var(--dorado); text-align:center;">EDITAR</h2>
+            <div class="field"><label>Cambiar Foto</label><input type="file" id="e_fot_c"></div>
+            <div class="field"><label>Nombre</label><input type="text" id="e_nom" value="${sel.nombre}"></div>
+            <div class="field"><label>Apellido</label><input type="text" id="e_ape" value="${sel.apellido || ''}"></div>
+            <div class="field"><label>Teléfono</label><input type="tel" id="e_tel" value="${sel.telefono}"></div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px;"><label>Licencia Operativa</label><input type="checkbox" id="e_lic" ${sel.tiene_licencia_operativa?'checked':''} style="width:20px;"></div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px;"><label>Sin Créditos</label><input type="checkbox" id="e_lib" ${sel.libre_de_fondo?'checked':''} style="width:20px;"></div>
+            <div class="field"><label>Grupo</label><div style="display:flex; gap:20px;"><label><input type="radio" name="e_gp" value="Auto" ${!esMoto?'checked':''}> AUTO</label><label><input type="radio" name="e_gp" value="Moto" ${esMoto?'checked':''}> MOTO</label></div></div>
+            <hr style="border:0.5px solid #333;"><div class="field"><label>Cambiar Foto Carro</label><input type="file" id="e_fot_v"></div>
+            <div class="field"><label>Marca</label><input type="text" id="e_mar" value="${sel.marca_carro}"></div>
+            <div class="field"><label>Modelo</label><input type="text" id="e_mod" value="${sel.modelo_carro}"></div>
+            <div class="field"><label>Color</label><input type="text" id="e_col" value="${sel.color_carro}"></div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px;"><label>Aire</label><input type="checkbox" id="e_air" ${sel.tiene_aire_acondicionado?'checked':''} style="width:20px;"></div>
+            <div class="btn-flex"><button class="btn-accion" style="background:var(--verde); color:black;" onclick="guardarE()">GUARDAR CAMBIOS</button><button class="btn-accion" style="background:#333; color:white;" onclick="abrirV('${sel.id}')">CANCELAR</button></div>`;
+    }
+
+    async function guardarE() {
+        const uC = await subirImg('e_fot_c','fotos_choferes') || sel.foto_chofer;
+        const uV = await subirImg('e_fot_v','fotos_carros') || sel.foto_carro;
+        const upd = { nombre: document.getElementById('e_nom').value, apellido: document.getElementById('e_ape').value, telefono: document.getElementById('e_tel').value, tiene_licencia_operativa: document.getElementById('e_lic').checked, libre_de_fondo: document.getElementById('e_lib').checked, grupo: document.querySelector('input[name="e_gp"]:checked').value, marca_carro: document.getElementById('e_mar').value, modelo_carro: document.getElementById('e_mod').value, color_carro: document.getElementById('e_col').value, tiene_aire_acondicionado: document.getElementById('e_air').checked, foto_chofer: uC, foto_carro: uV };
+        const { error } = await supabaseClient.from('choferes').update(upd).eq('id', sel.id);
+        if(!error) location.reload(); else alert("Error: " + error.message);
+    }
+
     async function mov(tipo) {
-        // Corrección de las tarjetas: ahora se generan correctamente desde tjs
         const opts = tjs.map(t => `<option value="${t.id}">${t.nombre_tarjeta}</option>`).join('');
         document.getElementById('op-area').innerHTML = `<div style="background:#222; padding:15px; border-radius:10px; border:1px solid var(--dorado); margin:10px 0;"><label>MONTO</label><input type="number" id="m_cant">${tipo === 'ADD' ? `<label>MÉTODO</label><select id="m_met" onchange="this.value=='Transferencia'?document.getElementById('sel-tj').hidden=false:document.getElementById('sel-tj').hidden=true"><option>Efectivo</option><option>Transferencia</option></select><div id="sel-tj" hidden class="field" style="margin-top:10px;"><label>TARJETA DESTINO</label><select id="m_tj">${opts}</select></div>` : ''}<button class="btn-add-main" style="margin-top:10px; padding:10px;" onclick="eMov('${tipo}')">PROCESAR</button></div>`;
     }
