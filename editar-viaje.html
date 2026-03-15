@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Viaje - RF TransGestión</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; --verde: #25d366; }
+        body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding: 20px; }
+        .contenedor-edit { max-width: 500px; margin: auto; background: var(--gris); padding: 20px; border-radius: 15px; border: 1px solid var(--dorado); }
+        h2 { color: var(--dorado); text-align: center; text-transform: uppercase; font-size: 18px; }
+        .field { margin-bottom: 15px; }
+        label { display: block; font-size: 10px; color: var(--dorado); margin-bottom: 5px; text-transform: uppercase; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: white; box-sizing: border-box; font-family: 'Montserrat'; }
+        .btn-guardar { background: var(--dorado); color: black; border: none; padding: 15px; border-radius: 10px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-cancelar { background: #333; color: white; border: none; padding: 10px; border-radius: 10px; width: 100%; margin-top: 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="contenedor-edit">
+    <h2>Editar Información del Viaje</h2>
+    <hr style="border: 0.5px solid #333; margin-bottom: 20px;">
+    
+    <div id="form-editar">
+        <div class="field">
+            <label>Chófer</label>
+            <select id="e_chofer"></select>
+        </div>
+        <div class="field">
+            <label>Precio ($)</label>
+            <input type="number" id="e_precio">
+        </div>
+        <div class="field">
+            <label>Origen</label>
+            <input type="text" id="e_origen">
+        </div>
+        <div class="field">
+            <label>Destino</label>
+            <input type="text" id="e_destino">
+        </div>
+        <div class="field">
+            <label>Observaciones</label>
+            <textarea id="e_obs" rows="3"></textarea>
+        </div>
+
+        <button class="btn-guardar" onclick="actualizarViaje()">ACTUALIZAR VIAJE</button>
+        <button class="btn-cancelar" onclick="window.location.href='mis-viajes.html'">CANCELAR</button>
+    </div>
+</div>
+
+<script src="config.js"></script>
+<script>
+    // Obtener el ID del viaje desde la URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const viajeId = urlParams.get('id');
+
+    async function cargarDatos() {
+        if (!viajeId) {
+            alert("No se encontró el ID del viaje");
+            window.location.href = 'mis-viajes.html';
+            return;
+        }
+
+        // 1. Cargar lista de choferes para el select
+        const { data: choferes } = await supabaseClient.from('choferes').select('id, nombre, apellido');
+        const selectCh = document.getElementById('e_chofer');
+        choferes.forEach(c => {
+            let opt = document.createElement('option');
+            opt.value = c.id;
+            opt.text = `${c.nombre} ${c.apellido || ''}`;
+            selectCh.appendChild(opt);
+        });
+
+        // 2. Cargar los datos del viaje específico
+        const { data: viaje, error } = await supabaseClient
+            .from('viajes')
+            .select('*')
+            .eq('id', viajeId)
+            .single();
+
+        if (error) {
+            alert("Error al cargar el viaje");
+            return;
+        }
+
+        // 3. Rellenar los campos
+        document.getElementById('e_chofer').value = viaje.chofer_id;
+        document.getElementById('e_precio').value = viaje.precio;
+        document.getElementById('e_origen').value = viaje.origen;
+        document.getElementById('e_destino').value = viaje.destino;
+        document.getElementById('e_obs').value = viaje.observaciones || '';
+    }
+
+    async function actualizarViaje() {
+        const upd = {
+            chofer_id: document.getElementById('e_chofer').value,
+            precio: parseFloat(document.getElementById('e_precio').value),
+            origen: document.getElementById('e_origen').value,
+            destino: document.getElementById('e_destino').value,
+            observaciones: document.getElementById('e_obs').value
+        };
+
+        const { error } = await supabaseClient
+            .from('viajes')
+            .update(upd)
+            .eq('id', viajeId);
+
+        if (error) {
+            alert("Error al actualizar: " + error.message);
+        } else {
+            alert("¡Viaje actualizado con éxito!");
+            window.location.href = 'mis-viajes.html';
+        }
+    }
+
+    cargarDatos();
+</script>
+</body>
+</html>
