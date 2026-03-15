@@ -56,8 +56,7 @@
         .badge-user { background: #333; padding: 4px 8px; border-radius: 4px; font-size: 10px; color: var(--dorado); text-transform: uppercase; }
         
         /* BOTONES DE ACCIÓN */
-        .btn-accion { padding: 5px 8px; border-radius: 4px; border: none; font-size: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-right: 3px; }
-        .btn-ver { background: #555; color: white; }
+        .btn-accion { padding: 6px 10px; border-radius: 4px; border: none; font-size: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-right: 5px; }
         .btn-edit { background: var(--azul); color: white; }
         .btn-del { background: var(--rojo); color: white; }
 
@@ -146,7 +145,6 @@
         const userActivo = JSON.parse(localStorage.getItem('usuario_activo'));
         const nombreUsuarioActual = userActivo ? userActivo.nombre : '';
 
-        // Se agregó 'id' a la selección
         let query = supabaseClient
             .from('viajes')
             .select('id, precio, origen, destino, usuario_gestor, chofer_id, created_at')
@@ -187,7 +185,6 @@
             if(choferes) choferes.forEach(c => choferMap[c.id] = c.nombre);
 
             tbody.innerHTML = viajes.map(v => {
-                // Verificamos si el usuario del viaje es el mismo que está logueado
                 const esMio = (v.usuario_gestor === nombreUsuarioActual);
                 
                 return `
@@ -198,7 +195,6 @@
                     <td><span class="badge-user">${v.usuario_gestor || 'Admin'}</span></td>
                     <td>
                         ${esMio ? `
-                            <button class="btn-accion btn-ver" onclick="verViaje('${v.id}')">VER</button>
                             <button class="btn-accion btn-edit" onclick="editarViaje('${v.id}')">EDIT</button>
                             <button class="btn-accion btn-del" onclick="eliminarViaje('${v.id}')">ELIM</button>
                         ` : '<span style="color:#444; font-size:9px;">Sin permisos</span>'}
@@ -213,13 +209,7 @@
 
     // --- FUNCIONES DE ACCIÓN ---
 
-    function verViaje(id) {
-        // Redirigir a una página de detalles o abrir un modal
-        alert("Ver detalle del viaje: " + id);
-    }
-
     function editarViaje(id) {
-        // Redirigir a la página de edición pasando el ID
         window.location.href = `editar-viaje.html?id=${id}`;
     }
 
