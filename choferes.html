@@ -211,21 +211,54 @@
     }
 
     async function mov(tipo) {
-        // Corrección aplicada: Usamos t.nombre para que lea la columna correcta de Supabase
         const opts = tjs.map(t => `<option value="${t.id}">${t.nombre}</option>`).join('');
         document.getElementById('op-area').innerHTML = `<div style="background:#222; padding:15px; border-radius:10px; border:1px solid var(--dorado); margin:10px 0;"><label>MONTO</label><input type="number" id="m_cant">${tipo === 'ADD' ? `<label>MÉTODO</label><select id="m_met" onchange="this.value=='Transferencia'?document.getElementById('sel-tj').hidden=false:document.getElementById('sel-tj').hidden=true"><option>Efectivo</option><option>Transferencia</option></select><div id="sel-tj" hidden class="field" style="margin-top:10px;"><label>TARJETA DESTINO</label><select id="m_tj">${opts}</select></div>` : ''}<button class="btn-add-main" style="margin-top:10px; padding:10px;" onclick="eMov('${tipo}')">PROCESAR</button></div>`;
     }
 
     async function eMov(tipo) {
-        const cant = parseFloat(document.getElementById('m_cant').value); if (isNaN(cant) || cant <= 0) return alert("Ingresa un monto válido");
+        const cant = parseFloat(document.getElementById('m_cant').value); 
+        if (isNaN(cant) || cant <= 0) return alert("Ingresa un monto válido");
+        
         const met = document.getElementById('m_met')?.value || 'Caja';
         const op = (tipo === 'ADD') ? 'Ingreso' : 'Retiro';
         const valorMovimiento = (tipo === 'ADD') ? cant : -cant;
         const nuevoF = sel.fondo_actual + valorMovimiento;
         const user = JSON.parse(localStorage.getItem('usuario_activo'))?.nombre || 'Gestor';
         const fechaISO = new Date().toISOString();
-        const { error: errH } = await supabaseClient.from('historial_fondos').insert([{ chofer_id: sel.id, usuario: user, metodo: met, operacion: op, saldo: valorMovimiento, fondo_anterior: sel.fondo_actual, activo: nuevoF, fecha: fechaISO }]);
-        if(!errH) { await supabaseClient.from('choferes').update({ fondo_actual: nuevoF }).eq('id', sel.id); location.reload(); }
+        const fechaSoloDia = new Date().toISOString().split('T')[0];
+
+        // 1. Guardar en historial_fondos (Control de saldo del chofer)
+        const { error: errH } = await supabaseClient.from('historial_fondos').insert([{ 
+            chofer_id: sel.id, 
+            usuario: user, 
+            metodo: met, 
+            operacion: op, 
+            saldo: valorMovimiento, 
+            fondo_anterior: sel.fondo_actual, 
+            activo: nuevoF, 
+            fecha: fechaISO 
+        }]);
+
+        if(errH) return alert("Error en historial: " + errH.message);
+
+        // 2. Registro en la tabla transferencias (Solo si es ingreso por transferencia)
+        if (met === 'Transferencia' && tipo === 'ADD') {
+            const { error: errT } = await supabaseClient.from('transferencias').insert([{
+                fecha: fechaSoloDia,
+                monto: cant,
+                nombre_chofer: `${sel.nombre} ${sel.apellido || ''}`,
+                nombre_usuario: user,
+                tipo_pago: 'Ingreso de Fondo',
+                chofer_id: sel.id,
+                aprobado: true 
+            }]);
+            
+            if(errT) console.error("Error al registrar transferencia:", errT.message);
+        }
+
+        // 3. Actualizar saldo real en la tabla choferes
+        const { error: errUpd } = await supabaseClient.from('choferes').update({ fondo_actual: nuevoF }).eq('id', sel.id);
+        if(!errUpd) location.reload(); else alert("Error al actualizar saldo: " + errUpd.message);
     }
 
     async function rectificar() {
