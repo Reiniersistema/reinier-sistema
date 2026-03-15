@@ -50,16 +50,16 @@
         .rango-fechas input { background: #000; border: 1px solid #333; color: white; padding: 8px; border-radius: 5px; font-family: 'Montserrat'; }
 
         .tabla-contenedor { overflow-x: auto; background: var(--gris); border-radius: 15px; padding: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        table { width: 100%; border-collapse: collapse; min-width: 700px; } /* Aumentado un poco el min-width por la nueva columna */
         th { color: var(--dorado); text-align: left; padding: 12px; border-bottom: 2px solid #333; font-size: 11px; text-transform: uppercase; }
         td { padding: 12px; border-bottom: 1px solid #222; font-size: 13px; }
         .badge-user { background: #333; padding: 4px 8px; border-radius: 4px; font-size: 10px; color: var(--dorado); text-transform: uppercase; }
         
-        /* BOTONES DE ACCIÓN */
         .btn-accion { padding: 6px 10px; border-radius: 4px; border: none; font-size: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-right: 5px; }
         .btn-edit { background: var(--azul); color: white; }
         .btn-del { background: var(--rojo); color: white; }
 
+        .fecha-txt { color: #aaa; font-size: 11px; }
         small { display: block; margin-top: 4px; }
     </style>
 </head>
@@ -91,6 +91,7 @@
         <table>
             <thead>
                 <tr>
+                    <th>Fecha / Hora</th>
                     <th>Chofer</th>
                     <th>Precio</th>
                     <th>Ruta</th>
@@ -99,7 +100,7 @@
                 </tr>
             </thead>
             <tbody id="lista-viajes">
-                <tr><td colspan="5" style="text-align:center; padding:20px;">Cargando viajes...</td></tr>
+                <tr><td colspan="6" style="text-align:center; padding:20px;">Cargando viajes...</td></tr>
             </tbody>
         </table>
     </div>
@@ -140,6 +141,19 @@
         cargarViajes(filtroTiempoActual);
     }
 
+    // Función para formatear la fecha de Supabase
+    function formatearFecha(isoString) {
+        const fecha = new Date(isoString);
+        return fecha.toLocaleDateString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        }) + ' <br> <span class="fecha-txt">' + fecha.toLocaleTimeString('es-ES', {
+            hour: '2-digit',
+            minute: '2-digit'
+        }) + '</span>';
+    }
+
     async function cargarViajes(filtro = 'todos', inicio = null, fin = null) {
         filtroTiempoActual = filtro;
         const userActivo = JSON.parse(localStorage.getItem('usuario_activo'));
@@ -175,7 +189,7 @@
         const tbody = document.getElementById('lista-viajes');
         
         if (error) {
-            tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; color:red;'>Error</td></tr>";
+            tbody.innerHTML = "<tr><td colspan='6' style='text-align:center; color:red;'>Error</td></tr>";
             return;
         }
 
@@ -189,6 +203,7 @@
                 
                 return `
                 <tr>
+                    <td style="font-size: 11px; line-height: 1.2;">${formatearFecha(v.created_at)}</td>
                     <td><b>${choferMap[v.chofer_id] || 'Chófer #' + v.chofer_id}</b></td>
                     <td style="color:var(--dorado); font-weight:bold;">$${v.precio}</td>
                     <td>${v.origen} <br> <small style="color:#888">→ ${v.destino}</small></td>
@@ -203,11 +218,9 @@
                 `;
             }).join('');
         } else {
-            tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:20px;'>No se encontraron viajes</td></tr>";
+            tbody.innerHTML = "<tr><td colspan='6' style='text-align:center; padding:20px;'>No se encontraron viajes</td></tr>";
         }
     }
-
-    // --- FUNCIONES DE ACCIÓN ---
 
     function editarViaje(id) {
         window.location.href = `editar-viaje.html?id=${id}`;
