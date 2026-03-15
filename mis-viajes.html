@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; }
+        :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; --rojo: #ff4d4d; --azul: #3498db; }
         body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding-bottom: 50px; }
         
         /* ESTILOS DEL MENÚ UNIVERSAL */
@@ -50,11 +50,17 @@
         .rango-fechas input { background: #000; border: 1px solid #333; color: white; padding: 8px; border-radius: 5px; font-family: 'Montserrat'; }
 
         .tabla-contenedor { overflow-x: auto; background: var(--gris); border-radius: 15px; padding: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        table { width: 100%; border-collapse: collapse; min-width: 500px; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
         th { color: var(--dorado); text-align: left; padding: 12px; border-bottom: 2px solid #333; font-size: 11px; text-transform: uppercase; }
         td { padding: 12px; border-bottom: 1px solid #222; font-size: 13px; }
         .badge-user { background: #333; padding: 4px 8px; border-radius: 4px; font-size: 10px; color: var(--dorado); text-transform: uppercase; }
         
+        /* BOTONES DE ACCIÓN */
+        .btn-accion { padding: 5px 8px; border-radius: 4px; border: none; font-size: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-right: 3px; }
+        .btn-ver { background: #555; color: white; }
+        .btn-edit { background: var(--azul); color: white; }
+        .btn-del { background: var(--rojo); color: white; }
+
         small { display: block; margin-top: 4px; }
     </style>
 </head>
@@ -90,10 +96,11 @@
                     <th>Precio</th>
                     <th>Ruta</th>
                     <th>Usuario</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody id="lista-viajes">
-                <tr><td colspan="4" style="text-align:center; padding:20px;">Cargando viajes...</td></tr>
+                <tr><td colspan="5" style="text-align:center; padding:20px;">Cargando viajes...</td></tr>
             </tbody>
         </table>
     </div>
@@ -102,7 +109,6 @@
 <script src="config.js"></script>
 <script src="menu.js"></script>
 <script>
-    // Variables para controlar el estado de los filtros
     let filtroSoloMio = false;
     let filtroTiempoActual = 'todos';
 
@@ -116,7 +122,6 @@
         r.style.display = (r.style.display === 'flex') ? 'none' : 'flex';
     }
 
-    // Nueva función para alternar el filtro de usuario
     function toggleFiltroUsuario() {
         const btn = document.getElementById('btn-solo-mio');
         const titulo = document.getElementById('titulo-historial');
@@ -133,23 +138,22 @@
             btn.innerText = "👤 VER SOLO MIS VIAJES";
             titulo.innerText = "Historial de Viajes";
         }
-        // Recargar con el filtro de tiempo que ya esté seleccionado
         cargarViajes(filtroTiempoActual);
     }
 
     async function cargarViajes(filtro = 'todos', inicio = null, fin = null) {
         filtroTiempoActual = filtro;
+        const userActivo = JSON.parse(localStorage.getItem('usuario_activo'));
+        const nombreUsuarioActual = userActivo ? userActivo.nombre : '';
+
+        // Se agregó 'id' a la selección
         let query = supabaseClient
             .from('viajes')
-            .select('precio, origen, destino, usuario_gestor, chofer_id, created_at')
+            .select('id, precio, origen, destino, usuario_gestor, chofer_id, created_at')
             .order('created_at', { ascending: false });
 
-        // APLICAR FILTRO DE USUARIO (SI ESTÁ ACTIVO)
-        if (filtroSoloMio) {
-            const userActivo = JSON.parse(localStorage.getItem('usuario_activo'));
-            if (userActivo && userActivo.nombre) {
-                query = query.eq('usuario_gestor', userActivo.nombre);
-            }
+        if (filtroSoloMio && nombreUsuarioActual) {
+            query = query.eq('usuario_gestor', nombreUsuarioActual);
         }
 
         const hoy = new Date();
@@ -173,8 +177,7 @@
         const tbody = document.getElementById('lista-viajes');
         
         if (error) {
-            console.error("Error Supabase:", error);
-            tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; color:red;'>Error</td></tr>";
+            tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; color:red;'>Error</td></tr>";
             return;
         }
 
@@ -183,16 +186,53 @@
             const choferMap = {};
             if(choferes) choferes.forEach(c => choferMap[c.id] = c.nombre);
 
-            tbody.innerHTML = viajes.map(v => `
+            tbody.innerHTML = viajes.map(v => {
+                // Verificamos si el usuario del viaje es el mismo que está logueado
+                const esMio = (v.usuario_gestor === nombreUsuarioActual);
+                
+                return `
                 <tr>
                     <td><b>${choferMap[v.chofer_id] || 'Chófer #' + v.chofer_id}</b></td>
                     <td style="color:var(--dorado); font-weight:bold;">$${v.precio}</td>
                     <td>${v.origen} <br> <small style="color:#888">→ ${v.destino}</small></td>
                     <td><span class="badge-user">${v.usuario_gestor || 'Admin'}</span></td>
+                    <td>
+                        ${esMio ? `
+                            <button class="btn-accion btn-ver" onclick="verViaje('${v.id}')">VER</button>
+                            <button class="btn-accion btn-edit" onclick="editarViaje('${v.id}')">EDIT</button>
+                            <button class="btn-accion btn-del" onclick="eliminarViaje('${v.id}')">ELIM</button>
+                        ` : '<span style="color:#444; font-size:9px;">Sin permisos</span>'}
+                    </td>
                 </tr>
-            `).join('');
+                `;
+            }).join('');
         } else {
-            tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding:20px;'>No se encontraron viajes</td></tr>";
+            tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:20px;'>No se encontraron viajes</td></tr>";
+        }
+    }
+
+    // --- FUNCIONES DE ACCIÓN ---
+
+    function verViaje(id) {
+        // Redirigir a una página de detalles o abrir un modal
+        alert("Ver detalle del viaje: " + id);
+    }
+
+    function editarViaje(id) {
+        // Redirigir a la página de edición pasando el ID
+        window.location.href = `editar-viaje.html?id=${id}`;
+    }
+
+    async function eliminarViaje(id) {
+        if (!confirm("¿Estás seguro de que deseas eliminar este viaje permanentemente?")) return;
+        
+        const { error } = await supabaseClient.from('viajes').delete().eq('id', id);
+        
+        if (error) {
+            alert("Error al eliminar: " + error.message);
+        } else {
+            alert("Viaje eliminado correctamente.");
+            cargarViajes(filtroTiempoActual);
         }
     }
 
