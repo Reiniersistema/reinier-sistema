@@ -85,7 +85,7 @@
             <input type="tel" id="tel-cliente" placeholder="Número del cliente">
         </div>
 
-        <div class="field">
+        <div class="field" id="campo-chofer">
             <label>Chofer (Teléfono)</label>
             <div class="row">
                 <input type="tel" id="tel-chofer" placeholder="Número del Chófer">
@@ -186,13 +186,16 @@
     function actualizarInterfazColab() {
         const colab = document.getElementById('colaboracion').value;
         const campoCliente = document.getElementById('campo-cliente');
+        const campoChofer = document.getElementById('campo-chofer');
         const tipoContainer = document.getElementById('tipo-colab-container');
+        
         if (colab !== "" && colab !== "Directo") {
             campoCliente.style.display = "none";
             document.getElementById('tel-cliente').value = "";
             tipoContainer.style.display = "flex";
         } else {
             campoCliente.style.display = "block";
+            campoChofer.style.display = "block"; // Asegurar que se vea si vuelve a Directo
             tipoContainer.style.display = "none";
             tipoSeleccionado = "";
             desmarcarBotones();
@@ -202,8 +205,22 @@
     function seleccionarTipo(tipo) {
         tipoSeleccionado = tipo;
         desmarcarBotones();
-        if (tipo === 'Entrada') document.getElementById('btn-entrada').classList.add('active');
-        if (tipo === 'Salida') document.getElementById('btn-salida').classList.add('active');
+        
+        const campoChofer = document.getElementById('campo-chofer');
+        
+        if (tipo === 'Entrada') {
+            document.getElementById('btn-entrada').classList.add('active');
+            campoChofer.style.display = "block";
+        }
+        
+        if (tipo === 'Salida') {
+            document.getElementById('btn-salida').classList.add('active');
+            campoChofer.style.display = "none";
+            // Limpiamos datos de chofer si los había
+            choferData = null;
+            document.getElementById('tel-chofer').value = "";
+            document.getElementById('res-chofer').style.display = "none";
+        }
     }
 
     function desmarcarBotones() {
@@ -321,23 +338,33 @@
         const colabValue = document.getElementById('colaboracion').value;
         const usuarioActual = JSON.parse(localStorage.getItem('usuario_activo'))?.nombre || 'Gestor';
         
-        if(!choferData || !document.getElementById('precio-final').value) return alert("Faltan datos");
+        // Ajuste en validación: Si es "Salida", no exigimos choferData obligatoriamente aquí si el flujo lo permite
+        if(tipoSeleccionado !== "Salida" && !choferData) return alert("Falta buscar el Chófer");
+        if(!document.getElementById('precio-final').value) return alert("Falta el Precio");
         if(colabValue !== "" && colabValue !== "Directo" && !tipoSeleccionado) return alert("Seleccione si es Entrada o Salida");
-        if (choferData.fondo_actual < 150 && !choferData.libre_de_fondo) return alert(`❌ Chófer Bloqueado: Fondo insuficiente.`);
+        
+        // Validación de fondo solo si hay chofer
+        if (choferData && choferData.fondo_actual < 150 && !choferData.libre_de_fondo) return alert(`❌ Chófer Bloqueado: Fondo insuficiente.`);
 
         const btn = document.querySelector('button[onclick="crearViaje()"]');
         btn.innerText = "PROCESANDO...";
         btn.disabled = true;
 
         const precioViaje = parseFloat(document.getElementById('precio-final').value);
-        const porc = choferData.tiene_licencia_operativa ? 0.12 : 0.15;
-        let descuento = (!choferData.libre_de_fondo) ? precioViaje * porc : 0;
-        const nuevoFondo = choferData.fondo_actual - descuento;
+        let descuento = 0;
+        let nuevoFondo = 0;
+        let porc = 0;
+
+        if (choferData) {
+            porc = choferData.tiene_licencia_operativa ? 0.12 : 0.15;
+            descuento = (!choferData.libre_de_fondo) ? precioViaje * porc : 0;
+            nuevoFondo = choferData.fondo_actual - descuento;
+        }
 
         const { error } = await supabaseClient.from('viajes').insert([{
             colaboracion: colabValue,
             tipo_agencia: tipoSeleccionado,
-            chofer_id: choferData.id,
+            chofer_id: choferData ? choferData.id : null,
             precio: precioViaje,
             cliente_telefono: document.getElementById('tel-cliente').value,
             origen: document.getElementById('origen').value,
@@ -353,7 +380,7 @@
         }]);
 
         if (!error) {
-            if (!choferData.libre_de_fondo && descuento > 0) {
+            if (choferData && !choferData.libre_de_fondo && descuento > 0) {
                 await supabaseClient.from('historial_fondos').insert([{
                     chofer_id: choferData.id,
                     usuario: usuarioActual,
@@ -364,8 +391,8 @@
                     activo: nuevoFondo,
                     fecha: new Date().toISOString()
                 }]);
+                await supabaseClient.from('choferes').update({ fondo_actual: nuevoFondo }).eq('id', choferData.id);
             }
-            await supabaseClient.from('choferes').update({ fondo_actual: nuevoFondo }).eq('id', choferData.id);
             location.reload();
         } else {
             alert("Error: " + error.message);
