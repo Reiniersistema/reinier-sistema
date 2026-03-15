@@ -46,15 +46,17 @@
         .opciones-filtro { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .btn-filtro { background: transparent; border: 1px solid var(--dorado); color: white; padding: 8px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: bold; }
         .btn-filtro:hover { background: var(--dorado); color: black; }
-        .rango-fechas { grid-column: span 2; display: none; flex-direction: column; gap: 5px; margin-top: 10px; }
-        .rango-fechas input { background: #000; border: 1px solid #333; color: white; padding: 8px; border-radius: 5px; font-family: 'Montserrat'; }
 
         .tabla-contenedor { overflow-x: auto; background: var(--gris); border-radius: 15px; padding: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        table { width: 100%; border-collapse: collapse; min-width: 700px; } /* Aumentado un poco el min-width por la nueva columna */
+        table { width: 100%; border-collapse: collapse; min-width: 850px; }
         th { color: var(--dorado); text-align: left; padding: 12px; border-bottom: 2px solid #333; font-size: 11px; text-transform: uppercase; }
         td { padding: 12px; border-bottom: 1px solid #222; font-size: 13px; }
-        .badge-user { background: #333; padding: 4px 8px; border-radius: 4px; font-size: 10px; color: var(--dorado); text-transform: uppercase; }
         
+        .badge-user { background: #333; padding: 4px 8px; border-radius: 4px; font-size: 10px; color: var(--dorado); text-transform: uppercase; }
+        .badge-tipo { font-size: 9px; padding: 2px 5px; border-radius: 3px; font-weight: bold; text-transform: uppercase; }
+        .tipo-entrada { background: #2ecc71; color: black; }
+        .tipo-salida { background: #e67e22; color: white; }
+
         .btn-accion { padding: 6px 10px; border-radius: 4px; border: none; font-size: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-right: 5px; }
         .btn-edit { background: var(--azul); color: white; }
         .btn-del { background: var(--rojo); color: white; }
@@ -73,17 +75,11 @@
 
     <div id="panelFiltros" class="panel-filtros">
         <button id="btn-solo-mio" class="btn-filtro" style="width: 100%; margin-bottom: 15px; border-style: dashed;" onclick="toggleFiltroUsuario()">👤 VER SOLO MIS VIAJES</button>
-        
         <div class="opciones-filtro">
             <button class="btn-filtro" onclick="aplicarFiltro('hoy')">HOY</button>
             <button class="btn-filtro" onclick="aplicarFiltro('semana')">ESTA SEMANA</button>
             <button class="btn-filtro" onclick="aplicarFiltro('mes')">ESTE MES</button>
             <button class="btn-filtro" onclick="toggleRango()">PERSONALIZADO</button>
-        </div>
-        <div id="rangoFechas" class="rango-fechas">
-            <input type="date" id="fecha-inicio">
-            <input type="date" id="fecha-fin">
-            <button class="btn-filtro" style="background: var(--dorado); color: black; margin-top:5px;" onclick="aplicarFiltro('rango')">FILTRAR RANGO</button>
         </div>
     </div>
 
@@ -92,6 +88,7 @@
             <thead>
                 <tr>
                     <th>Fecha / Hora</th>
+                    <th>Colaboración</th>
                     <th>Chofer</th>
                     <th>Precio</th>
                     <th>Ruta</th>
@@ -100,7 +97,7 @@
                 </tr>
             </thead>
             <tbody id="lista-viajes">
-                <tr><td colspan="6" style="text-align:center; padding:20px;">Cargando viajes...</td></tr>
+                <tr><td colspan="7" style="text-align:center; padding:20px;">Cargando viajes...</td></tr>
             </tbody>
         </table>
     </div>
@@ -117,79 +114,30 @@
         p.style.display = (p.style.display === 'block') ? 'none' : 'block';
     }
 
-    function toggleRango() {
-        const r = document.getElementById('rangoFechas');
-        r.style.display = (r.style.display === 'flex') ? 'none' : 'flex';
-    }
-
-    function toggleFiltroUsuario() {
-        const btn = document.getElementById('btn-solo-mio');
-        const titulo = document.getElementById('titulo-historial');
-        filtroSoloMio = !filtroSoloMio;
-
-        if (filtroSoloMio) {
-            btn.style.background = "var(--dorado)";
-            btn.style.color = "black";
-            btn.innerText = "✔️ VIENDO MIS VIAJES";
-            titulo.innerText = "Mis Viajes";
-        } else {
-            btn.style.background = "transparent";
-            btn.style.color = "white";
-            btn.innerText = "👤 VER SOLO MIS VIAJES";
-            titulo.innerText = "Historial de Viajes";
-        }
-        cargarViajes(filtroTiempoActual);
-    }
-
-    // Función para formatear la fecha de Supabase
     function formatearFecha(isoString) {
         const fecha = new Date(isoString);
-        return fecha.toLocaleDateString('es-ES', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        }) + ' <br> <span class="fecha-txt">' + fecha.toLocaleTimeString('es-ES', {
-            hour: '2-digit',
-            minute: '2-digit'
-        }) + '</span>';
+        return fecha.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }) + 
+               ' <br> <span class="fecha-txt">' + fecha.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) + '</span>';
     }
 
-    async function cargarViajes(filtro = 'todos', inicio = null, fin = null) {
+    async function cargarViajes(filtro = 'todos') {
         filtroTiempoActual = filtro;
         const userActivo = JSON.parse(localStorage.getItem('usuario_activo'));
         const nombreUsuarioActual = userActivo ? userActivo.nombre : '';
 
+        // Importante: seleccionamos 'colaboracion' y 'tipo_agencia'
         let query = supabaseClient
             .from('viajes')
-            .select('id, precio, origen, destino, usuario_gestor, chofer_id, created_at')
+            .select('id, precio, origen, destino, usuario_gestor, chofer_id, created_at, colaboracion, tipo_agencia')
             .order('created_at', { ascending: false });
 
-        if (filtroSoloMio && nombreUsuarioActual) {
-            query = query.eq('usuario_gestor', nombreUsuarioActual);
-        }
-
-        const hoy = new Date();
-        hoy.setHours(0,0,0,0);
-
-        if (filtro === 'hoy') {
-            query = query.gte('created_at', hoy.toISOString());
-        } else if (filtro === 'semana') {
-            const semana = new Date();
-            semana.setDate(hoy.getDate() - 7);
-            query = query.gte('created_at', semana.toISOString());
-        } else if (filtro === 'mes') {
-            const mes = new Date();
-            mes.setMonth(hoy.getMonth() - 1);
-            query = query.gte('created_at', mes.toISOString());
-        } else if (filtro === 'rango' && inicio && fin) {
-            query = query.gte('created_at', inicio + "T00:00:00").lte('created_at', fin + "T23:59:59");
-        }
+        if (filtroSoloMio) query = query.eq('usuario_gestor', nombreUsuarioActual);
 
         const { data: viajes, error } = await query;
         const tbody = document.getElementById('lista-viajes');
         
         if (error) {
-            tbody.innerHTML = "<tr><td colspan='6' style='text-align:center; color:red;'>Error</td></tr>";
+            tbody.innerHTML = "<tr><td colspan='7'>Error al cargar</td></tr>";
             return;
         }
 
@@ -200,11 +148,18 @@
 
             tbody.innerHTML = viajes.map(v => {
                 const esMio = (v.usuario_gestor === nombreUsuarioActual);
-                
+                const colabNombre = v.colaboracion || 'Directo';
+                const tipoClase = v.tipo_agencia === 'Entrada' ? 'tipo-entrada' : 'tipo-salida';
+                const tipoBadge = v.tipo_agencia ? `<br><span class="badge-tipo ${tipoClase}">${v.tipo_agencia}</span>` : '';
+
                 return `
                 <tr>
-                    <td style="font-size: 11px; line-height: 1.2;">${formatearFecha(v.created_at)}</td>
-                    <td><b>${choferMap[v.chofer_id] || 'Chófer #' + v.chofer_id}</b></td>
+                    <td style="font-size: 11px;">${formatearFecha(v.created_at)}</td>
+                    <td>
+                        <b style="color:white; font-size:12px;">${colabNombre}</b>
+                        ${tipoBadge}
+                    </td>
+                    <td><b>${choferMap[v.chofer_id] || 'Chófer'}</b></td>
                     <td style="color:var(--dorado); font-weight:bold;">$${v.precio}</td>
                     <td>${v.origen} <br> <small style="color:#888">→ ${v.destino}</small></td>
                     <td><span class="badge-user">${v.usuario_gestor || 'Admin'}</span></td>
@@ -218,37 +173,16 @@
                 `;
             }).join('');
         } else {
-            tbody.innerHTML = "<tr><td colspan='6' style='text-align:center; padding:20px;'>No se encontraron viajes</td></tr>";
+            tbody.innerHTML = "<tr><td colspan='7' style='text-align:center;'>No hay viajes</td></tr>";
         }
     }
 
-    function editarViaje(id) {
-        window.location.href = `editar-viaje.html?id=${id}`;
-    }
+    function editarViaje(id) { window.location.href = `editar-viaje.html?id=${id}`; }
 
     async function eliminarViaje(id) {
-        if (!confirm("¿Estás seguro de que deseas eliminar este viaje permanentemente?")) return;
-        
+        if (!confirm("¿Eliminar viaje?")) return;
         const { error } = await supabaseClient.from('viajes').delete().eq('id', id);
-        
-        if (error) {
-            alert("Error al eliminar: " + error.message);
-        } else {
-            alert("Viaje eliminado correctamente.");
-            cargarViajes(filtroTiempoActual);
-        }
-    }
-
-    function aplicarFiltro(tipo) {
-        if (tipo === 'rango') {
-            const inicio = document.getElementById('fecha-inicio').value;
-            const fin = document.getElementById('fecha-fin').value;
-            if(!inicio || !fin) return alert("Seleccione ambas fechas");
-            cargarViajes('rango', inicio, fin);
-        } else {
-            cargarViajes(tipo);
-        }
-        toggleFiltros();
+        if (!error) cargarViajes(filtroTiempoActual);
     }
 
     cargarViajes();
