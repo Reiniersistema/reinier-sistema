@@ -211,7 +211,8 @@
     }
 
     async function mov(tipo) {
-        const opts = tjs.map(t => `<option value="${t.id}">${t.nombre_tarjeta}</option>`).join('');
+        // Corrección aplicada: Usamos t.nombre para que lea la columna correcta de Supabase
+        const opts = tjs.map(t => `<option value="${t.id}">${t.nombre}</option>`).join('');
         document.getElementById('op-area').innerHTML = `<div style="background:#222; padding:15px; border-radius:10px; border:1px solid var(--dorado); margin:10px 0;"><label>MONTO</label><input type="number" id="m_cant">${tipo === 'ADD' ? `<label>MÉTODO</label><select id="m_met" onchange="this.value=='Transferencia'?document.getElementById('sel-tj').hidden=false:document.getElementById('sel-tj').hidden=true"><option>Efectivo</option><option>Transferencia</option></select><div id="sel-tj" hidden class="field" style="margin-top:10px;"><label>TARJETA DESTINO</label><select id="m_tj">${opts}</select></div>` : ''}<button class="btn-add-main" style="margin-top:10px; padding:10px;" onclick="eMov('${tipo}')">PROCESAR</button></div>`;
     }
 
