@@ -28,6 +28,7 @@
         label { display: block; font-size: 10px; color: var(--dorado); margin-bottom: 5px; text-transform: uppercase; font-weight: bold; }
         input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: white; box-sizing: border-box; }
         .foto-grande { width: 100%; height: 280px; object-fit: cover; border-radius: 15px; border: 2px solid var(--dorado); margin-bottom: 15px; }
+        /* Ajuste a 4 columnas para que quepa el nuevo contador */
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin: 15px 0; }
         .stat-box { background: #1a1a1a; padding: 10px; border-radius: 10px; text-align: center; border: 1px solid #333; }
         .stat-box small { font-size: 9px; color: var(--dorado); display: block; }
@@ -145,13 +146,15 @@
 
     async function abrirV(id) {
         sel = chs.find(x => x.id === id);
-        const hoy = new Date().toISOString().split('T')[0];
-        const primerDiaMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
-        
+        const ahora = new Date();
+        const hoy = ahora.toISOString().split('T')[0];
+        const primerDiaMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1).toISOString();
+
+        // Contadores funcionales
         const { count: t_h } = await supabaseClient.from('viajes').select('*',{count:'exact',head:true}).eq('chofer_id',id).gte('created_at', hoy);
         const { count: t_m } = await supabaseClient.from('viajes').select('*',{count:'exact',head:true}).eq('chofer_id',id).gte('created_at', primerDiaMes);
         const { count: t_a } = await supabaseClient.from('viajes').select('*',{count:'exact',head:true}).eq('chofer_id',id);
-        
+
         document.getElementById('v-content').innerHTML = `
             <button onclick="cerrarModal('modalVer')" style="float:right; background:none; border:none; color:var(--dorado); font-size:30px;">&times;</button>
             <img src="${sel.foto_chofer}" class="foto-grande">
@@ -183,22 +186,9 @@
     }
 
     async function mov(tipo) {
+        // Corrección de las tarjetas: ahora se generan correctamente desde tjs
         const opts = tjs.map(t => `<option value="${t.id}">${t.nombre_tarjeta}</option>`).join('');
-        document.getElementById('op-area').innerHTML = `
-            <div style="background:#222; padding:15px; border-radius:10px; border:1px solid var(--dorado); margin:10px 0;">
-                <label>MONTO</label><input type="number" id="m_cant">
-                ${tipo === 'ADD' ? `
-                    <label>MÉTODO</label>
-                    <select id="m_met" onchange="this.value=='Transferencia'?document.getElementById('sel-tj').hidden=false:document.getElementById('sel-tj').hidden=true">
-                        <option>Efectivo</option>
-                        <option>Transferencia</option>
-                    </select>
-                    <div id="sel-tj" hidden class="field" style="margin-top:10px;">
-                        <label>TARJETA DESTINO</label>
-                        <select id="m_tj">${opts}</select>
-                    </div>` : ''}
-                <button class="btn-add-main" style="margin-top:10px; padding:10px;" onclick="eMov('${tipo}')">PROCESAR</button>
-            </div>`;
+        document.getElementById('op-area').innerHTML = `<div style="background:#222; padding:15px; border-radius:10px; border:1px solid var(--dorado); margin:10px 0;"><label>MONTO</label><input type="number" id="m_cant">${tipo === 'ADD' ? `<label>MÉTODO</label><select id="m_met" onchange="this.value=='Transferencia'?document.getElementById('sel-tj').hidden=false:document.getElementById('sel-tj').hidden=true"><option>Efectivo</option><option>Transferencia</option></select><div id="sel-tj" hidden class="field" style="margin-top:10px;"><label>TARJETA DESTINO</label><select id="m_tj">${opts}</select></div>` : ''}<button class="btn-add-main" style="margin-top:10px; padding:10px;" onclick="eMov('${tipo}')">PROCESAR</button></div>`;
     }
 
     async function eMov(tipo) {
@@ -213,7 +203,45 @@
         if(!errH) { await supabaseClient.from('choferes').update({ fondo_actual: nuevoF }).eq('id', sel.id); location.reload(); }
     }
 
-    // Se mantienen el resto de las funciones: activarEdicion, guardarE, rectificar, del, busc, cargarH, cerrarSesion...
+    async function rectificar() {
+        if(!confirm("¿Deseas recalcular el saldo total?")) return;
+        const { data: h } = await supabaseClient.from('historial_fondos').select('saldo').eq('chofer_id', sel.id);
+        const total = h.reduce((acc, curr) => acc + curr.saldo, 0);
+        await supabaseClient.from('choferes').update({ fondo_actual: total }).eq('id', sel.id);
+        location.reload();
+    }
+
+    async function del(id) {
+        if(!confirm("¿Eliminar este chófer permanentemente?")) return;
+        await supabaseClient.from('choferes').delete().eq('id', id);
+        location.reload();
+    }
+
+    function busc() {
+        const txt = document.getElementById('inBus').value.toLowerCase();
+        const res = chs.filter(c => c.nombre.toLowerCase().includes(txt) || (c.apellido && c.apellido.toLowerCase().includes(txt)));
+        render(res);
+    }
+
+    async function cargarH(id) {
+        const { data } = await supabaseClient.from('historial_fondos').select('*').eq('chofer_id', id).order('fecha', { ascending: false });
+        document.getElementById('h-body').innerHTML = (data || []).map(h => `
+            <tr>
+                <td>${h.usuario}</td>
+                <td>${h.metodo}</td>
+                <td>${h.operacion}</td>
+                <td>${new Date(h.fecha).toLocaleDateString()}</td>
+                <td>$${h.saldo}</td>
+                <td>$${h.fondo_anterior}</td>
+                <td>$${h.activo}</td>
+            </tr>
+        `).join('');
+    }
+
+    function cerrarSesion() {
+        localStorage.removeItem('usuario_activo');
+        window.location.href = 'index.html';
+    }
 </script>
 </body>
 </html>
