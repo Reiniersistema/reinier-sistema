@@ -4,119 +4,287 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editar Viaje - RF TransGestión</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; --verde: #25d366; }
-        body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding: 20px; }
-        .contenedor-edit { max-width: 500px; margin: auto; background: var(--gris); padding: 20px; border-radius: 15px; border: 1px solid var(--dorado); }
-        h2 { color: var(--dorado); text-align: center; text-transform: uppercase; font-size: 18px; }
-        .field { margin-bottom: 15px; }
-        label { display: block; font-size: 10px; color: var(--dorado); margin-bottom: 5px; text-transform: uppercase; font-weight: bold; }
-        input, select, textarea { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: white; box-sizing: border-box; font-family: 'Montserrat'; }
-        .btn-guardar { background: var(--dorado); color: black; border: none; padding: 15px; border-radius: 10px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .btn-cancelar { background: #333; color: white; border: none; padding: 10px; border-radius: 10px; width: 100%; margin-top: 10px; cursor: pointer; }
+        :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; }
+        body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding-bottom: 50px; }
+        
+        .header-nav-universal { 
+            display: flex; align-items: center; gap: 15px; 
+            padding: 15px; background: #121212; 
+            border-bottom: 1px solid #d4af37; margin-bottom: 20px;
+        }
+        .logo-txt-universal { font-family: 'Playfair Display', serif; font-size: 20px; color: white; width: 100%; text-align: center; }
+
+        .contenedor-principal { padding: 0 15px; }
+        .form-container { max-width: 600px; margin: auto; background: var(--gris); padding: 20px; border-radius: 15px; border: 1px solid #333; }
+        h2 { color: var(--dorado); text-align: center; text-transform: uppercase; font-size: 18px; margin-bottom: 20px; margin-top: 0; }
+        
+        .field { margin-bottom: 18px; }
+        label { display: block; font-size: 11px; color: var(--dorado); margin-bottom: 5px; text-transform: uppercase; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #000; color: white; box-sizing: border-box; font-family: 'Montserrat'; }
+        
+        .row { display: flex; gap: 10px; align-items: flex-end; }
+        .btn-action { background: var(--dorado); border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; color: black; transition: 0.3s; }
+        
+        .info-chofer { background: #080808; padding: 15px; margin-top: 10px; border-radius: 8px; display: none; border-left: 4px solid var(--dorado); font-size: 14px; line-height: 1.6; }
+        .calculadora { background: #1a1a1a; padding: 15px; border-radius: 10px; margin-top: 10px; border: 1px dashed #444; }
+        
+        .checkbox-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
+        .check-item { display: flex; align-items: center; font-size: 12px; color: #ccc; }
+        .check-item input { width: auto; margin-right: 8px; cursor: pointer; }
+
+        .tipo-colab-group { display: none; gap: 10px; margin-top: 10px; }
+        .btn-tipo { flex: 1; background: #333; color: white; border: 1px solid #444; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: bold; }
+        .btn-tipo.active { background: var(--dorado); color: black; border-color: var(--dorado); }
+
+        .btn-save { background: var(--dorado); color: black; padding: 16px; border-radius: 10px; border: none; width: 100%; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-top: 10px; }
+        .btn-cancel { background: #333; color: white; padding: 12px; border-radius: 10px; border: none; width: 100%; cursor: pointer; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-<div class="contenedor-edit">
-    <h2>Editar Información del Viaje</h2>
-    <hr style="border: 0.5px solid #333; margin-bottom: 20px;">
-    
-    <div id="form-editar">
+<div class="header-nav-universal">
+    <div class="logo-txt-universal">RF <span style="color: var(--dorado);">TransGestión</span></div>
+</div>
+
+<div class="contenedor-principal">
+    <div class="form-container">
+        <h2>Modificar Viaje</h2>
+
         <div class="field">
-            <label>Chófer</label>
-            <select id="e_chofer"></select>
-        </div>
-        <div class="field">
-            <label>Precio ($)</label>
-            <input type="number" id="e_precio">
-        </div>
-        <div class="field">
-            <label>Origen</label>
-            <input type="text" id="e_origen">
-        </div>
-        <div class="field">
-            <label>Destino</label>
-            <input type="text" id="e_destino">
-        </div>
-        <div class="field">
-            <label>Observaciones</label>
-            <textarea id="e_obs" rows="3"></textarea>
+            <label>Colaboración</label>
+            <select id="colaboracion" onchange="actualizarInterfazColab()">
+                <option value="">Cargando agencias...</option>
+            </select>
+            <div id="tipo-colab-container" class="tipo-colab-group">
+                <button id="btn-entrada" class="btn-tipo" onclick="seleccionarTipo('Entrada')">ENTRADA</button>
+                <button id="btn-salida" class="btn-tipo" onclick="seleccionarTipo('Salida')">SALIDA</button>
+            </div>
         </div>
 
-        <button class="btn-guardar" onclick="actualizarViaje()">ACTUALIZAR VIAJE</button>
-        <button class="btn-cancelar" onclick="window.location.href='mis-viajes.html'">CANCELAR</button>
+        <div class="field" id="campo-cliente">
+            <label>Cliente (Teléfono)</label>
+            <input type="tel" id="tel-cliente">
+        </div>
+
+        <div class="field">
+            <label>Chofer (Teléfono)</label>
+            <div class="row">
+                <input type="tel" id="tel-chofer">
+                <button class="btn-action" onclick="buscarChofer()">BUSCAR</button>
+            </div>
+            <div id="res-chofer" class="info-chofer"></div>
+        </div>
+
+        <div class="field">
+            <label>Precio</label>
+            <input type="number" id="precio-final">
+            <div class="calculadora">
+                <div class="row">
+                    <input type="number" id="tarifa" placeholder="Tarifa">
+                    <input type="number" id="distancia" placeholder="KM">
+                    <button class="btn-action" onclick="calcularPrecio()">CALCULAR</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="field">
+            <label>Pasajeros (PAX)</label>
+            <input type="number" id="pax">
+        </div>
+
+        <div class="field">
+            <label>Origen</label>
+            <input type="text" id="origen">
+            <button class="btn-action" style="margin-top:8px; font-size:11px; background: #333; color: var(--dorado);" onclick="addParada()">+ AÑADIR PARADA</button>
+            <div id="contenedor-paradas"></div>
+        </div>
+
+        <div class="field">
+            <label>Destino</label>
+            <input type="text" id="destino">
+        </div>
+
+        <div class="field">
+            <label>Grupo de WhatsApp</label>
+            <input type="text" id="grupo">
+        </div>
+
+        <div class="checkbox-group">
+            <div class="check-item"><input type="checkbox" id="pago_transf"> Pago transferencia</div>
+            <div class="check-item"><input type="checkbox" id="precio_cliente"> Precio cliente</div>
+            <div class="check-item"><input type="checkbox" id="aire"> Aire acondicionado</div>
+            <div class="check-item"><input type="checkbox" id="ida_vuelta"> Ida y vuelta</div>
+            <div class="check-item"><input type="checkbox" id="reservado" onchange="toggleReserva()"> Viaje Reservado</div>
+        </div>
+
+        <div id="seccion-reserva" style="display:none;" class="field">
+            <label>Fecha y Hora</label>
+            <input type="datetime-local" id="fecha-reserva">
+        </div>
+
+        <div class="field">
+            <label>Observación</label>
+            <textarea id="observacion" rows="3"></textarea>
+        </div>
+
+        <button class="btn-save" onclick="actualizarViaje()">GUARDAR CAMBIOS</button>
+        <button class="btn-cancel" onclick="window.location.href='mis-viajes.html'">CANCELAR</button>
     </div>
 </div>
 
 <script src="config.js"></script>
 <script>
-    // Obtener el ID del viaje desde la URL
+    let choferData = null;
+    let tipoSeleccionado = "";
     const urlParams = new URLSearchParams(window.location.search);
     const viajeId = urlParams.get('id');
 
-    async function cargarDatos() {
-        if (!viajeId) {
-            alert("No se encontró el ID del viaje");
-            window.location.href = 'mis-viajes.html';
-            return;
+    async function cargarTodo() {
+        if(!viajeId) return window.location.href = 'mis-viajes.html';
+        
+        // 1. Cargar Agencias
+        const { data: agencias } = await supabaseClient.from('colaboraciones').select('nombre').order('nombre');
+        let opciones = '<option value="">Seleccionar colaboración...</option><option value="Directo">Directo</option>';
+        agencias.forEach(item => { opciones += `<option value="${item.nombre}">${item.nombre}</option>`; });
+        document.getElementById('colaboracion').innerHTML = opciones;
+
+        // 2. Cargar Datos del Viaje
+        const { data: viaje, error } = await supabaseClient.from('viajes').select('*').eq('id', viajeId).single();
+        if(error) return alert("Error al cargar viaje");
+
+        // 3. Rellenar Campos Básicos
+        document.getElementById('colaboracion').value = viaje.colaboracion;
+        document.getElementById('tel-cliente').value = viaje.cliente_telefono || '';
+        document.getElementById('precio-final').value = viaje.precio;
+        document.getElementById('distancia').value = viaje.distancia_km;
+        document.getElementById('pax').value = viaje.pasajeros;
+        document.getElementById('origen').value = viaje.origen;
+        document.getElementById('destino').value = viaje.destino;
+        document.getElementById('grupo').value = viaje.grupo_whatsapp || '';
+        document.getElementById('observacion').value = viaje.observaciones || '';
+        
+        // Checkboxes
+        document.getElementById('pago_transf').checked = viaje.pago_transferencia;
+        document.getElementById('precio_cliente').checked = viaje.precio_cliente;
+        document.getElementById('aire').checked = viaje.aire_acondicionado;
+        document.getElementById('ida_vuelta').checked = viaje.ida_vuelta;
+        document.getElementById('reservado').checked = viaje.es_reservado;
+        
+        if(viaje.es_reservado) {
+            document.getElementById('seccion-reserva').style.display = 'block';
+            document.getElementById('fecha-reserva').value = viaje.fecha_reserva ? viaje.fecha_reserva.substring(0,16) : '';
         }
 
-        // 1. Cargar lista de choferes para el select
-        const { data: choferes } = await supabaseClient.from('choferes').select('id, nombre, apellido');
-        const selectCh = document.getElementById('e_chofer');
-        choferes.forEach(c => {
-            let opt = document.createElement('option');
-            opt.value = c.id;
-            opt.text = `${c.nombre} ${c.apellido || ''}`;
-            selectCh.appendChild(opt);
-        });
-
-        // 2. Cargar los datos del viaje específico
-        const { data: viaje, error } = await supabaseClient
-            .from('viajes')
-            .select('*')
-            .eq('id', viajeId)
-            .single();
-
-        if (error) {
-            alert("Error al cargar el viaje");
-            return;
+        // Paradas
+        if(viaje.paradas_intermedias) {
+            viaje.paradas_intermedias.split(', ').forEach(p => addParada(p));
         }
 
-        // 3. Rellenar los campos
-        document.getElementById('e_chofer').value = viaje.chofer_id;
-        document.getElementById('e_precio').value = viaje.precio;
-        document.getElementById('e_origen').value = viaje.origen;
-        document.getElementById('e_destino').value = viaje.destino;
-        document.getElementById('e_obs').value = viaje.observaciones || '';
+        // Tipo de Agencia (Entrada/Salida)
+        tipoSeleccionado = viaje.tipo_agencia;
+        actualizarInterfazColab();
+        if(tipoSeleccionado) seleccionarTipo(tipoSeleccionado);
+
+        // Buscar Chófer por ID inicialmente
+        const { data: ch } = await supabaseClient.from('choferes').select('*').eq('id', viaje.chofer_id).single();
+        if(ch) {
+            choferData = ch;
+            document.getElementById('tel-chofer').value = ch.telefono;
+            mostrarInfoChofer(ch);
+        }
+    }
+
+    function actualizarInterfazColab() {
+        const colab = document.getElementById('colaboracion').value;
+        const campoCliente = document.getElementById('campo-cliente');
+        const tipoContainer = document.getElementById('tipo-colab-container');
+        if (colab !== "" && colab !== "Directo") {
+            campoCliente.style.display = "none";
+            tipoContainer.style.display = "flex";
+        } else {
+            campoCliente.style.display = "block";
+            tipoContainer.style.display = "none";
+        }
+    }
+
+    function seleccionarTipo(tipo) {
+        tipoSeleccionado = tipo;
+        document.getElementById('btn-entrada').classList.remove('active');
+        document.getElementById('btn-salida').classList.remove('active');
+        if (tipo === 'Entrada') document.getElementById('btn-entrada').classList.add('active');
+        if (tipo === 'Salida') document.getElementById('btn-salida').classList.add('active');
+    }
+
+    async function buscarChofer() {
+        const tel = document.getElementById('tel-chofer').value;
+        const { data } = await supabaseClient.from('choferes').select('*').eq('telefono', tel).single();
+        if (data) {
+            choferData = data;
+            mostrarInfoChofer(data);
+        } else { alert("Chofer no encontrado"); }
+    }
+
+    function mostrarInfoChofer(data) {
+        const res = document.getElementById('res-chofer');
+        res.style.display = 'block';
+        res.innerHTML = `<b>Nombre:</b> ${data.nombre} ${data.apellido || ''}<br><b>Auto:</b> ${data.marca_carro}<br><b>Fondo:</b> $${data.fondo_actual}`;
+    }
+
+    function calcularPrecio() {
+        const t = parseFloat(document.getElementById('tarifa').value);
+        const d = parseFloat(document.getElementById('distancia').value);
+        if(t && d) document.getElementById('precio-final').value = (t * d).toFixed(0);
+    }
+
+    function addParada(valor = "") {
+        const div = document.createElement('div');
+        div.style.marginTop = "8px";
+        div.innerHTML = `<input type="text" class="parada-extra" value="${valor}" placeholder="Dirección de parada">`;
+        document.getElementById('contenedor-paradas').appendChild(div);
+    }
+
+    function toggleReserva() {
+        document.getElementById('seccion-reserva').style.display = document.getElementById('reservado').checked ? 'block' : 'none';
     }
 
     async function actualizarViaje() {
+        if(!choferData || !document.getElementById('precio-final').value) return alert("Faltan datos críticos");
+
         const upd = {
-            chofer_id: document.getElementById('e_chofer').value,
-            precio: parseFloat(document.getElementById('e_precio').value),
-            origen: document.getElementById('e_origen').value,
-            destino: document.getElementById('e_destino').value,
-            observaciones: document.getElementById('e_obs').value
+            colaboracion: document.getElementById('colaboracion').value,
+            tipo_agencia: tipoSeleccionado,
+            chofer_id: choferData.id,
+            precio: parseFloat(document.getElementById('precio-final').value),
+            cliente_telefono: document.getElementById('tel-cliente').value,
+            origen: document.getElementById('origen').value,
+            paradas_intermedias: Array.from(document.querySelectorAll('.parada-extra')).map(i => i.value).filter(v => v.trim() !== "").join(", "),
+            destino: document.getElementById('destino').value,
+            grupo_whatsapp: document.getElementById('grupo').value,
+            distancia_km: parseFloat(document.getElementById('distancia').value) || 0,
+            pasajeros: parseInt(document.getElementById('pax').value) || 1,
+            es_reservado: document.getElementById('reservado').checked,
+            fecha_reserva: document.getElementById('fecha-reserva').value || null,
+            pago_transferencia: document.getElementById('pago_transf').checked,
+            precio_cliente: document.getElementById('precio_cliente').checked,
+            aire_acondicionado: document.getElementById('aire').checked,
+            ida_vuelta: document.getElementById('ida_vuelta').checked,
+            observaciones: document.getElementById('observacion').value
         };
 
-        const { error } = await supabaseClient
-            .from('viajes')
-            .update(upd)
-            .eq('id', viajeId);
+        const { error } = await supabaseClient.from('viajes').update(upd).eq('id', viajeId);
 
-        if (error) {
-            alert("Error al actualizar: " + error.message);
-        } else {
-            alert("¡Viaje actualizado con éxito!");
+        if (!error) {
+            alert("Viaje actualizado con éxito");
             window.location.href = 'mis-viajes.html';
+        } else {
+            alert("Error: " + error.message);
         }
     }
 
-    cargarDatos();
+    cargarTodo();
 </script>
 </body>
 </html>
