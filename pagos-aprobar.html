@@ -4,86 +4,177 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aprobaciones - RF TransGestión</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; --verde: #28a745; --rojo: #dc3545; }
         body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding-bottom: 50px; }
-        .contenedor-principal { padding: 20px; }
-        h2 { color: var(--dorado); font-size: 14px; text-transform: uppercase; border-left: 4px solid var(--dorado); padding-left: 10px; margin-top: 30px; }
+        
+        /* Sidebar y Nav */
+        .sidebar { height: 100%; width: 0; position: fixed; z-index: 3000; top: 0; left: 0; background-color: #1e1e1e; overflow-x: hidden; transition: 0.5s; padding-top: 60px; border-right: 1px solid #d4af37; }
+        .sidebar a { padding: 12px 24px; text-decoration: none; font-size: 15px; color: #818181; display: block; transition: 0.3s; text-transform: uppercase; }
+        .sidebar a:hover { color: #d4af37; background: rgba(212, 175, 55, 0.1); }
+        .sidebar .closebtn { position: absolute; top: 10px; right: 25px; font-size: 36px; color: #d4af37; }
+        .header-nav-universal { display: flex; align-items: center; gap: 15px; padding: 15px; background: #121212; border-bottom: 1px solid #d4af37; margin-bottom: 20px; }
+        .openbtn { font-size: 25px; cursor: pointer; background: none; border: none; color: #d4af37; }
+        .logo-txt-universal { font-family: 'Playfair Display', serif; font-size: 20px; color: white; }
+
+        .contenedor-principal { padding: 0 15px; }
+        h2 { color: var(--dorado); font-size: 14px; text-transform: uppercase; margin-top: 30px; border-left: 4px solid var(--dorado); padding-left: 10px; }
+        
         .tabla-contenedor { background: var(--gris); border-radius: 12px; overflow: hidden; margin-top: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 12px; color: var(--dorado); font-size: 10px; background: #1a1a1a; }
-        td { padding: 12px; border-bottom: 1px solid #222; font-size: 12px; }
-        .btn-aprobar { background: var(--verde); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 10px; }
-        .btn-eliminar { background: var(--rojo); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-left: 5px; font-size: 10px; }
+        th { text-align: left; padding: 12px 10px; color: var(--dorado); font-size: 9px; background: #1a1a1a; text-transform: uppercase; }
+        td { padding: 15px 10px; border-bottom: 1px solid #222; font-size: 12px; }
+        
+        .btn-aprobar { background: var(--verde); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-family: 'Montserrat'; font-size: 10px; }
+        .btn-eliminar { background: var(--rojo); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-left: 5px; font-family: 'Montserrat'; font-size: 10px; }
     </style>
 </head>
 <body>
 
+<div id="mySidebar" class="sidebar">
+    <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+    <a href="panel.html">PANEL DE CONTROL</a>
+    <a href="choferes.html">CHOFERES</a>
+    <a href="transferencias.html">TRANSFERENCIAS</a>
+    <a href="pagos-aprobar.html" style="color:var(--dorado)">APROBACIONES</a>
+</div>
+
+<div class="header-nav-universal">
+    <button class="openbtn" onclick="openNav()">&#9776;</button>
+    <div class="logo-txt-universal">RF <span style="color: var(--dorado);">Gestión de Pagos</span></div>
+</div>
+
 <div class="contenedor-principal">
-    <h2>1. Nuevos Choferes</h2>
+    <h2>1. Nuevos Choferes (Esperando Activación)</h2>
     <div class="tabla-contenedor">
         <table>
-            <thead><tr><th>Nombre</th><th>Acciones</th></tr></thead>
-            <tbody id="lista-choferes-pendientes"></tbody>
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Teléfono</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="lista-choferes-pendientes">
+                <tr><td colspan="3" style="text-align:center; padding:15px; color:#666;">Cargando...</td></tr>
+            </tbody>
         </table>
     </div>
 
-    <h2>2. Transferencias por Aprobar</h2>
+    <h2>2. Recargas de Fondos (Por Validar)</h2>
     <div class="tabla-contenedor">
         <table>
-            <thead><tr><th>Chófer</th><th>Monto</th><th>Método</th><th>Acciones</th></tr></thead>
-            <tbody id="lista-pagos-pendientes"></tbody>
+            <thead>
+                <tr>
+                    <th>Chófer</th>
+                    <th>Monto</th>
+                    <th>Método</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="lista-pagos-pendientes">
+                <tr><td colspan="4" style="text-align:center; padding:15px; color:#666;">Cargando...</td></tr>
+            </tbody>
         </table>
     </div>
 </div>
 
 <script src="config.js"></script>
 <script>
+    const openNav = () => document.getElementById("mySidebar").style.width = "280px";
+    const closeNav = () => document.getElementById("mySidebar").style.width = "0";
+
     async function cargarTodo() {
-        // Choferes
-        const { data: chs } = await supabaseClient.from('choferes').select('*').eq('aprobado', false);
-        document.getElementById('lista-choferes-pendientes').innerHTML = (chs || []).map(c => `<tr><td>${c.nombre}</td><td><button class="btn-aprobar" onclick="aprobarCh(${c.id})">ACTIVAR</button></td></tr>`).join('');
-
-        // Transferencias
-        const { data: pgs } = await supabaseClient.from('transferencias').select('*').eq('aprobado', false);
-        document.getElementById('lista-pagos-pendientes').innerHTML = (pgs || []).map(p => `
-            <tr>
-                <td><b>${p.nombre_chofer}</b></td>
-                <td style="color:var(--dorado)">$${p.monto}</td>
-                <td style="font-size:10px;">${p.tipo_pago}</td>
-                <td>
-                    <button class="btn-aprobar" onclick="aprobarPg(${p.id}, '${p.nombre_chofer}', ${p.monto})">OK</button>
-                    <button class="btn-eliminar" onclick="borrar('transferencias', ${p.id})">X</button>
-                </td>
-            </tr>`).join('');
-    }
-
-    async function aprobarCh(id) {
-        await supabaseClient.from('choferes').update({ aprobado: true }).eq('id', id);
-        cargarTodo();
-    }
-
-    async function aprobarPg(pagoId, nombre, monto) {
-        // 1. Buscar al chófer por nombre (usamos ilike para que no importe mayúsculas/minúsculas)
-        const { data: chofer } = await supabaseClient.from('choferes').select('*').ilike('nombre', `%${nombre}%`).maybeSingle();
-
-        if (!chofer) return alert("No se encontró al chófer: " + nombre);
-
-        const nuevoF = (chofer.fondo_actual || 0) + monto;
-        const admin = JSON.parse(localStorage.getItem('usuario_activo'))?.nombre || "Admin";
-
-        // Actualizar fondo, historial y marcar transferencia
-        await supabaseClient.from('choferes').update({ fondo_actual: nuevoF }).eq('id', chofer.id);
-        await supabaseClient.from('transferencias').update({ aprobado: true }).eq('id', pagoId);
-        await supabaseClient.from('historial_fondos').insert([{ chofer_id: chofer.id, usuario: admin, metodo: 'Transf. Aprobada', saldo: monto, fondo_anterior: chofer.fondo_actual, activo: nuevoF }]);
+        // 1. Cargar Choferes no aprobados
+        const { data: choferes } = await supabaseClient.from('choferes').select('*').eq('aprobado', false);
+        const tbodyCh = document.getElementById('lista-choferes-pendientes');
         
-        alert("Aprobado correctamente");
-        cargarTodo();
+        tbodyCh.innerHTML = (choferes && choferes.length > 0) 
+            ? choferes.map(c => `
+                <tr>
+                    <td><b>${c.nombre} ${c.apellido || ''}</b></td>
+                    <td>${c.telefono}</td>
+                    <td>
+                        <button class="btn-aprobar" onclick="aprobarChofer('${c.id}')">ACTIVAR</button>
+                        <button class="btn-eliminar" onclick="borrarRegistro('choferes', '${c.id}')">BORRAR</button>
+                    </td>
+                </tr>`).join('')
+            : `<tr><td colspan="3" style="text-align:center; padding:20px; color:#666;">No hay nuevos choferes.</td></tr>`;
+
+        // 2. Cargar Transferencias no aprobadas
+        const { data: pagos } = await supabaseClient.from('transferencias').select('*').eq('aprobado', false);
+        const tbodyPg = document.getElementById('lista-pagos-pendientes');
+
+        tbodyPg.innerHTML = (pagos && pagos.length > 0)
+            ? pagos.map(p => `
+                <tr>
+                    <td><b>${p.nombre_chofer}</b></td>
+                    <td style="color:var(--dorado); font-weight:bold;">$${parseFloat(p.monto).toFixed(2)}</td>
+                    <td style="font-size:10px;">${p.tipo_pago}</td>
+                    <td style="display:flex;">
+                        <button class="btn-aprobar" onclick="aprobarPago('${p.id}', '${p.chofer_id}', ${p.monto})">APROBAR</button>
+                        <button class="btn-eliminar" onclick="borrarRegistro('transferencias', '${p.id}')">RECHAZAR</button>
+                    </td>
+                </tr>`).join('')
+            : `<tr><td colspan="4" style="text-align:center; padding:20px; color:#666;">No hay pagos por aprobar.</td></tr>`;
     }
 
-    async function borrar(tabla, id) { if(confirm("¿Eliminar?")) { await supabaseClient.from(tabla).delete().eq('id', id); cargarTodo(); } }
+    async function aprobarChofer(id) {
+        const { error } = await supabaseClient.from('choferes').update({ aprobado: true }).eq('id', id);
+        if(!error) {
+            alert("✅ Chófer activado.");
+            cargarTodo();
+        }
+    }
+
+    async function aprobarPago(pagoId, choferId, monto) {
+        if (!choferId) return alert("Error: La transferencia no tiene un ID de chófer válido.");
+
+        // Obtener fondo actual del chófer
+        const { data: chofer, error: errC } = await supabaseClient
+            .from('choferes')
+            .select('fondo_actual, nombre')
+            .eq('id', choferId)
+            .single();
+
+        if (errC || !chofer) return alert("No se pudo encontrar al chófer en la base de datos.");
+
+        const fondoAnterior = parseFloat(chofer.fondo_actual || 0);
+        const nuevoFondo = fondoAnterior + parseFloat(monto);
+        
+        // 1. Actualizar fondo del chófer
+        const { error: errorFondo } = await supabaseClient.from('choferes').update({ fondo_actual: nuevoFondo }).eq('id', choferId);
+        
+        // 2. Marcar transferencia como aprobada
+        const { error: errorTrans } = await supabaseClient.from('transferencias').update({ aprobado: true }).eq('id', pagoId);
+
+        if (!errorFondo && !errorTrans) {
+            // 3. Registrar en historial para auditoría
+            const admin = JSON.parse(localStorage.getItem('usuario_activo'))?.nombre || "Admin";
+            await supabaseClient.from('historial_fondos').insert([{
+                chofer_id: choferId, 
+                usuario: admin, 
+                metodo: 'Recarga Aprobada',
+                saldo: monto, 
+                fondo_anterior: fondoAnterior, 
+                activo: nuevoFondo
+            }]);
+            
+            alert(`✅ Recarga exitosa para ${chofer.nombre}. Nuevo Saldo: $${nuevoFondo.toFixed(2)}`);
+            cargarTodo();
+        } else {
+            alert("Error al procesar: " + (errorFondo?.message || errorTrans?.message));
+        }
+    }
+
+    async function borrarRegistro(tabla, id) {
+        if(confirm("¿Estás seguro de eliminar este registro?")) {
+            const { error } = await supabaseClient.from(tabla).delete().eq('id', id);
+            if(!error) cargarTodo();
+        }
+    }
 
     cargarTodo();
 </script>
