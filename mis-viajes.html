@@ -11,75 +11,73 @@
         body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding-bottom: 50px; }
         
         /* ESTILOS DEL MENÚ UNIVERSAL */
-        .sidebar {
-            height: 100%; width: 0; position: fixed;
-            z-index: 3000; top: 0; left: 0;
-            background-color: #1e1e1e;
-            overflow-x: hidden; transition: 0.5s;
-            padding-top: 60px; border-right: 1px solid #d4af37;
-        }
-        .sidebar a {
-            padding: 12px 24px; text-decoration: none;
-            font-size: 15px; color: #818181;
-            display: block; transition: 0.3s;
-            text-transform: uppercase;
-        }
+        .sidebar { height: 100%; width: 0; position: fixed; z-index: 3000; top: 0; left: 0; background-color: #1e1e1e; overflow-x: hidden; transition: 0.5s; padding-top: 60px; border-right: 1px solid #d4af37; }
+        .sidebar a { padding: 12px 24px; text-decoration: none; font-size: 15px; color: #818181; display: block; transition: 0.3s; text-transform: uppercase; }
         .sidebar a:hover { color: #d4af37; background: rgba(212, 175, 55, 0.1); }
         .sidebar .closebtn { position: absolute; top: 10px; right: 25px; font-size: 36px; color: #d4af37; }
 
-        .header-nav-universal { 
-            display: flex; align-items: center; gap: 15px; 
-            padding: 15px; background: #121212; 
-            border-bottom: 1px solid #d4af37; margin-bottom: 20px;
-        }
+        .header-nav-universal { display: flex; align-items: center; gap: 15px; padding: 15px; background: #121212; border-bottom: 1px solid #d4af37; margin-bottom: 20px; }
         .openbtn { font-size: 25px; cursor: pointer; background: none; border: none; color: #d4af37; }
         .logo-txt-universal { font-family: 'Playfair Display', serif; font-size: 20px; color: white; }
 
-        /* Estilos propios de la página */
+        /* Estilos propios */
         .contenedor-principal { padding: 0 15px; }
         .header-seccion { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         h2 { color: var(--dorado); text-transform: uppercase; font-size: 18px; margin: 0; }
 
-        .btn-embudo { background: var(--dorado); border: none; border-radius: 50%; width: 45px; height: 45px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .btn-embudo { background: var(--dorado); border: none; border-radius: 50%; width: 45px; height: 45px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; }
         
         .panel-filtros { display: none; background: var(--gris); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--dorado); }
         .opciones-filtro { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn-filtro { background: transparent; border: 1px solid var(--dorado); color: white; padding: 8px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: bold; transition: 0.3s; }
+        .btn-filtro { background: transparent; border: 1px solid var(--dorado); color: white; padding: 8px; border-radius: 5px; cursor: pointer; font-size: 11px; font-weight: bold; transition: 0.3s; }
         .btn-filtro.active { background: var(--dorado); color: black; }
 
-        .tabla-contenedor { overflow-x: auto; background: var(--gris); border-radius: 15px; padding: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        /* Rango personalizado */
+        #seccion-rango { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #444; }
+        .rango-inputs { display: flex; gap: 5px; margin-bottom: 10px; }
+        .rango-inputs input { background: #000; border: 1px solid #444; color: white; padding: 5px; border-radius: 5px; flex: 1; font-size: 12px; }
+
+        .tabla-contenedor { overflow-x: auto; background: var(--gris); border-radius: 15px; padding: 10px; }
         table { width: 100%; border-collapse: collapse; min-width: 850px; }
-        th { color: var(--dorado); text-align: left; padding: 12px; border-bottom: 2px solid #333; font-size: 11px; text-transform: uppercase; }
+        th { color: var(--dorado); text-align: left; padding: 12px; border-bottom: 2px solid #333; font-size: 11px; }
         td { padding: 12px; border-bottom: 1px solid #222; font-size: 13px; }
         
-        .badge-user { background: #333; padding: 4px 8px; border-radius: 4px; font-size: 10px; color: var(--dorado); text-transform: uppercase; }
-        .badge-tipo { font-size: 9px; padding: 2px 5px; border-radius: 3px; font-weight: bold; text-transform: uppercase; display: inline-block; margin-top: 5px; }
+        .badge-user { background: #333; padding: 4px 8px; border-radius: 4px; font-size: 10px; color: var(--dorado); }
+        .badge-tipo { font-size: 9px; padding: 2px 5px; border-radius: 3px; font-weight: bold; margin-top: 5px; display: inline-block; }
         .tipo-entrada { background: #2ecc71; color: black; }
         .tipo-salida { background: #e67e22; color: white; }
 
-        .btn-accion { padding: 6px 10px; border-radius: 4px; border: none; font-size: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-right: 5px; }
+        .btn-accion { padding: 6px 10px; border-radius: 4px; border: none; font-size: 10px; font-weight: bold; cursor: pointer; margin-right: 5px; }
         .btn-edit { background: var(--azul); color: white; }
         .btn-del { background: var(--rojo); color: white; }
-
-        .fecha-txt { color: #aaa; font-size: 11px; }
-        small { display: block; margin-top: 4px; }
     </style>
 </head>
 <body>
 
 <div class="contenedor-principal">
     <div class="header-seccion">
-        <h2 id="titulo-historial">Historial de Viajes</h2>
+        <h2>Historial de Viajes</h2>
         <button class="btn-embudo" onclick="toggleFiltros()">⏳</button>
     </div>
 
     <div id="panelFiltros" class="panel-filtros">
         <button id="btn-solo-mio" class="btn-filtro" style="width: 100%; margin-bottom: 15px; border-style: dashed;" onclick="toggleFiltroUsuario()">👤 VER SOLO MIS VIAJES</button>
+        
         <div class="opciones-filtro">
             <button id="f-hoy" class="btn-filtro" onclick="aplicarFiltro('hoy')">HOY</button>
-            <button id="f-semana" class="btn-filtro" onclick="aplicarFiltro('semana')">ESTA SEMANA</button>
-            <button id="f-mes" class="btn-filtro" onclick="aplicarFiltro('mes')">ESTE MES</button>
+            <button id="f-semana" class="btn-filtro" onclick="aplicarFiltro('semana')">SEMANA</button>
+            <button id="f-mes" class="btn-filtro" onclick="aplicarFiltro('mes')">MES</button>
             <button id="f-todos" class="btn-filtro active" onclick="aplicarFiltro('todos')">TODOS</button>
+        </div>
+
+        <button class="btn-filtro" style="width: 100%; margin-top: 10px;" onclick="toggleRango()">📅 RANGO PERSONALIZADO</button>
+
+        <div id="seccion-rango">
+            <div class="rango-inputs">
+                <input type="date" id="fecha-inicio">
+                <input type="date" id="fecha-fin">
+            </div>
+            <button class="btn-filtro active" style="width: 100%;" onclick="aplicarFiltro('rango')">APLICAR RANGO</button>
         </div>
     </div>
 
@@ -114,48 +112,36 @@
         p.style.display = (p.style.display === 'block') ? 'none' : 'block';
     }
 
+    function toggleRango() {
+        const s = document.getElementById('seccion-rango');
+        s.style.display = (s.style.display === 'block') ? 'none' : 'block';
+    }
+
     function toggleFiltroUsuario() {
         filtroSoloMio = !filtroSoloMio;
         const btn = document.getElementById('btn-solo-mio');
         btn.classList.toggle('active');
-        btn.style.background = filtroSoloMio ? 'var(--dorado)' : 'transparent';
-        btn.style.color = filtroSoloMio ? 'black' : 'white';
         cargarViajes(filtroTiempoActual);
     }
 
     function aplicarFiltro(tipo) {
         filtroTiempoActual = tipo;
-        // Actualizar UI de botones
-        document.querySelectorAll('.opciones-filtro .btn-filtro').forEach(b => b.classList.remove('active'));
-        document.getElementById(`f-${tipo}`).classList.add('active');
+        document.querySelectorAll('.btn-filtro').forEach(b => b.classList.remove('active'));
+        
+        if(tipo !== 'rango' && tipo !== 'solo-mio') {
+            const btnActivo = document.getElementById(`f-${tipo}`);
+            if(btnActivo) btnActivo.classList.add('active');
+        }
+        
+        if (filtroSoloMio) document.getElementById('btn-solo-mio').classList.add('active');
+        
         cargarViajes(tipo);
     }
 
     function formatearFecha(isoString) {
         const fecha = new Date(isoString);
         return fecha.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }) + 
-               ' <br> <span class="fecha-txt">' + fecha.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) + '</span>';
-    }
-
-    // Lógica para calcular rangos de fecha
-    function obtenerFechasFiltro(tipo) {
-        const ahora = new Date();
-        let inicio = new Date();
-        
-        if (tipo === 'hoy') {
-            inicio.setHours(0, 0, 0, 0);
-        } else if (tipo === 'semana') {
-            const dia = inicio.getDay(); // 0 (Dom) a 6 (Sab)
-            const diff = inicio.getDate() - dia + (dia === 0 ? -6 : 1); // Lunes
-            inicio = new Date(inicio.setDate(diff));
-            inicio.setHours(0, 0, 0, 0);
-        } else if (tipo === 'mes') {
-            inicio = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
-            inicio.setHours(0, 0, 0, 0);
-        } else {
-            return null; // Para 'todos'
-        }
-        return inicio.toISOString();
+               ' <br> <span style="color:#aaa; font-size:11px;">' + fecha.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) + '</span>';
     }
 
     async function cargarViajes(filtro = 'todos') {
@@ -163,80 +149,68 @@
         const userActivo = JSON.parse(localStorage.getItem('usuario_activo'));
         const nombreUsuarioActual = userActivo ? userActivo.nombre : '';
 
-        let query = supabaseClient
-            .from('viajes')
-            .select('id, precio, origen, destino, usuario_gestor, chofer_id, created_at, colaboracion, tipo_agencia')
-            .order('created_at', { ascending: false });
+        let query = supabaseClient.from('viajes').select('*').order('created_at', { ascending: false });
 
-        // Aplicar filtro de Usuario
-        if (filtroSoloMio) {
-            query = query.eq('usuario_gestor', nombreUsuarioActual);
-        }
+        // 1. Filtro de Usuario
+        if (filtroSoloMio) query = query.eq('usuario_gestor', nombreUsuarioActual);
 
-        // Aplicar filtro de Tiempo
-        const fechaInicio = obtenerFechasFiltro(filtro);
-        if (fechaInicio) {
-            query = query.gte('created_at', fechaInicio);
+        // 2. Filtro de Tiempo
+        const ahora = new Date();
+        let inicio = new Date();
+
+        if (filtro === 'hoy') {
+            inicio.setHours(0, 0, 0, 0);
+            query = query.gte('created_at', inicio.toISOString());
+        } else if (filtro === 'semana') {
+            inicio.setDate(ahora.getDate() - 7);
+            query = query.gte('created_at', inicio.toISOString());
+        } else if (filtro === 'mes') {
+            inicio.setMonth(ahora.getMonth() - 1);
+            query = query.gte('created_at', inicio.toISOString());
+        } else if (filtro === 'rango') {
+            const fIn = document.getElementById('fecha-inicio').value;
+            const fOut = document.getElementById('fecha-fin').value;
+            if(fIn) query = query.gte('created_at', fIn + "T00:00:00");
+            if(fOut) query = query.lte('created_at', fOut + "T23:59:59");
         }
 
         const { data: viajes, error } = await query;
-        
-        if (error) {
-            tbody.innerHTML = "<tr><td colspan='7'>Error al cargar datos.</td></tr>";
-            return;
-        }
+        if (error) { tbody.innerHTML = "<tr><td colspan='7'>Error.</td></tr>"; return; }
 
         if (viajes && viajes.length > 0) {
-            // Traer nombres de choferes para el mapeo
             const { data: choferes } = await supabaseClient.from('choferes').select('id, nombre');
             const choferMap = {};
             if(choferes) choferes.forEach(c => choferMap[c.id] = c.nombre);
 
             tbody.innerHTML = viajes.map(v => {
                 const esMio = (v.usuario_gestor === nombreUsuarioActual);
-                const colabNombre = v.colaboracion || 'Directo';
-                const tipoClase = v.tipo_agencia === 'Entrada' ? 'tipo-entrada' : 'tipo-salida';
-                const tipoBadge = v.tipo_agencia ? `<br><span class="badge-tipo ${tipoClase}">${v.tipo_agencia}</span>` : '';
+                const colab = v.colaboracion || 'Directo';
+                const tBadge = v.tipo_agencia ? `<br><span class="badge-tipo ${v.tipo_agencia==='Entrada'?'tipo-entrada':'tipo-salida'}">${v.tipo_agencia}</span>` : '';
 
-                return `
-                <tr>
-                    <td style="font-size: 11px;">${formatearFecha(v.created_at)}</td>
-                    <td>
-                        <b style="color:white; font-size:12px;">${colabNombre}</b>
-                        ${tipoBadge}
-                    </td>
-                    <td><b>${choferMap[v.chofer_id] || 'Chófer'}</b></td>
+                return `<tr>
+                    <td>${formatearFecha(v.created_at)}</td>
+                    <td><b>${colab}</b>${tBadge}</td>
+                    <td>${choferMap[v.chofer_id] || 'Chófer'}</td>
                     <td style="color:var(--dorado); font-weight:bold;">$${v.precio}</td>
                     <td>${v.origen} <br> <small style="color:#888">→ ${v.destino}</small></td>
-                    <td><span class="badge-user">${v.usuario_gestor || 'Admin'}</span></td>
+                    <td><span class="badge-user">${v.usuario_gestor}</span></td>
                     <td>
-                        ${esMio ? `
-                            <button class="btn-accion btn-edit" onclick="editarViaje('${v.id}')">EDIT</button>
-                            <button class="btn-accion btn-del" onclick="eliminarViaje('${v.id}')">ELIM</button>
-                        ` : '<span style="color:#444; font-size:9px;">Sin permisos</span>'}
+                        ${esMio ? `<button class="btn-accion btn-edit" onclick="location.href='editar-viaje.html?id=${v.id}'">EDIT</button>
+                        <button class="btn-accion btn-del" onclick="eliminarViaje('${v.id}')">ELIM</button>` : '-'}
                     </td>
-                </tr>
-                `;
+                </tr>`;
             }).join('');
         } else {
-            tbody.innerHTML = "<tr><td colspan='7' style='text-align:center;'>No se encontraron viajes para este filtro.</td></tr>";
+            tbody.innerHTML = "<tr><td colspan='7' style='text-align:center;'>Sin resultados.</td></tr>";
         }
     }
-
-    function editarViaje(id) { window.location.href = `editar-viaje.html?id=${id}`; }
 
     async function eliminarViaje(id) {
-        if (!confirm("¿Deseas eliminar este viaje permanentemente?")) return;
-        const { error } = await supabaseClient.from('viajes').delete().eq('id', id);
-        if (!error) {
-            alert("Viaje eliminado");
-            cargarViajes(filtroTiempoActual);
-        } else {
-            alert("Error al eliminar");
-        }
+        if (!confirm("¿Eliminar?")) return;
+        await supabaseClient.from('viajes').delete().eq('id', id);
+        cargarViajes(filtroTiempoActual);
     }
 
-    // Carga inicial
     cargarViajes();
 </script>
 </body>
