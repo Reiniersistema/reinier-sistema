@@ -20,8 +20,8 @@
         .card-chofer { background: var(--gris); border-radius: 18px; padding: 15px; display: flex; align-items: center; gap: 15px; position: relative; border: 1px solid #333; margin-bottom: 15px; cursor: pointer; }
         .foto-perfil-mini { width: 75px; height: 75px; border-radius: 50%; border: 2px solid var(--dorado); object-fit: cover; }
         .fondo-monto { position: absolute; bottom: 15px; right: 20px; color: var(--dorado); font-weight: bold; font-size: 18px; }
-        .badge-container { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
-        .badge { font-size: 8px; padding: 3px 6px; border-radius: 4px; font-weight: bold; background: #333; color: var(--dorado); border: 0.5px solid var(--dorado); }
+        .badge-container { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+        .badge { font-size: 8px; padding: 3px 6px; border-radius: 4px; font-weight: bold; background: #333; color: var(--dorado); border: 0.5px solid var(--dorado); text-transform: uppercase; }
         .modal { display: none; position: fixed; z-index: 6000; top: 0; left: 0; width: 100%; height: 100%; background: #000; overflow-y: auto; }
         .modal-body { padding: 20px; max-width: 500px; margin: auto; }
         .field { margin-bottom: 15px; }
@@ -109,19 +109,26 @@
     }
     cargar();
 
+    // Generador de etiquetas basado en los datos del chófer
+    function generarBadges(c) {
+        return `
+            <div class="badge-container">
+                ${c.grupo ? `<span class="badge">${c.grupo}</span>` : ''}
+                ${c.tiene_licencia_operativa ? '<span class="badge">Licencia Operativa</span>' : ''}
+                ${c.libre_de_fondo ? '<span class="badge">Sin Créditos</span>' : ''}
+                ${c.tiene_aire_acondicionado ? '<span class="badge">Aire Acondicionado</span>' : ''}
+            </div>
+        `;
+    }
+
     function render(l) {
         document.getElementById('lista-choferes').innerHTML = l.map(c => `
             <div class="card-chofer" onclick="abrirV('${c.id}')">
                 <img src="${c.foto_chofer || ''}" class="foto-perfil-mini">
                 <div style="flex:1">
                     <h3 style="margin:0; font-size:14px;">${c.nombre} ${c.apellido || ''}</h3>
-                    <p style="margin:2px 0; font-size:11px; color:#888;">${c.telefono}</p>
-                    <div class="badge-container">
-                        ${c.tiene_licencia_operativa ? '<span class="badge">LICENCIA</span>' : ''}
-                        ${c.libre_de_fondo ? '<span class="badge">SIN CRÉDITOS</span>' : ''}
-                        ${c.grupo ? `<span class="badge">${c.grupo.toUpperCase()}</span>` : ''}
-                        ${c.tiene_aire_acondicionado ? '<span class="badge">AIRE</span>' : ''}
-                    </div>
+                    ${generarBadges(c)}
+                    <p style="margin:5px 0 0 0; font-size:11px; color:#888;">${c.telefono}</p>
                 </div>
                 <div class="fondo-monto">$${c.fondo_actual}</div>
             </div>
@@ -132,19 +139,16 @@
         sel = chs.find(x => x.id === id);
         const ahora = new Date();
         const hoy = ahora.toISOString().split('T')[0];
-        const primerDiaMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1).toISOString();
-        
         const { count: t_h } = await supabaseClient.from('viajes').select('*',{count:'exact',head:true}).eq('chofer_id',id).gte('created_at', hoy);
-        const { count: t_m } = await supabaseClient.from('viajes').select('*',{count:'exact',head:true}).eq('chofer_id',id).gte('created_at', primerDiaMes);
         const { count: t_a } = await supabaseClient.from('viajes').select('*',{count:'exact',head:true}).eq('chofer_id',id);
         
         document.getElementById('v-content').innerHTML = `
             <button onclick="cerrarModal('modalVer')" style="float:right; background:none; border:none; color:var(--dorado); font-size:30px;">&times;</button>
             <img src="${sel.foto_chofer}" class="foto-grande">
-            <h2 style="text-align:center; margin:0;">${sel.nombre} ${sel.apellido}</h2>
+            <h2 style="text-align:center; margin:0;">${sel.nombre} ${sel.apellido || ''}</h2>
+            <div style="display:flex; justify-content:center; margin-bottom:10px;">${generarBadges(sel)}</div>
             <div class="stats-grid">
                 <div class="stat-box"><small>HOY</small><b>${t_h}</b></div>
-                <div class="stat-box"><small>MES</small><b>${t_m}</b></div>
                 <div class="stat-box"><small>TOTAL</small><b>${t_a}</b></div>
                 <div class="stat-box"><small>SALDO</small><b>$${sel.fondo_actual}</b></div>
             </div>
@@ -158,7 +162,6 @@
         abrirModal('modalVer'); tab('i', document.querySelector('.tab-btn.active'));
     }
 
-    // --- FUNCIÓN EDITAR (PLANILLA COMPLETA) ---
     function activarEdicion() {
         const c = sel;
         document.getElementById('v-content').innerHTML = `
@@ -206,17 +209,16 @@
     }
 
     async function eliminarChofer(id) {
-        if(confirm("¿Estás seguro de que deseas eliminar este chófer permanentemente?")) {
+        if(confirm("¿Eliminar este chófer permanentemente?")) {
             const { error } = await supabaseClient.from('choferes').delete().eq('id', id);
-            if(!error) location.reload(); else alert("No se pudo eliminar el registro.");
+            if(!error) location.reload();
         }
     }
 
-    // --- RESTO DE FUNCIONES ---
     function tab(t, b) {
         document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active')); b.classList.add('active');
         const c = document.getElementById('t-cont');
-        if(t==='i') c.innerHTML = `<p><b>Tel:</b> ${sel.telefono}</p><p><b>Grupo:</b> ${sel.grupo}</p><p><b>Licencia:</b> ${sel.tiene_licencia_operativa ? 'SI' : 'NO'}</p>`;
+        if(t==='i') c.innerHTML = `<p><b>Tel:</b> ${sel.telefono}</p><p><b>Grupo:</b> ${sel.grupo}</p>`;
         if(t==='a') c.innerHTML = `<img src="${sel.foto_carro}" style="width:100%; border-radius:10px;"><p><b>Marca:</b> ${sel.marca_carro} ${sel.modelo_carro}</p>`;
         if(t==='f') { 
             c.innerHTML = `<div class="btn-flex"><button class="btn-accion" style="background:var(--verde); color:black;" onclick="mov('ADD')">AGREGAR</button><button class="btn-accion" style="background:var(--rojo); color:white;" onclick="mov('SUB')">RETIRAR</button><button class="btn-accion" style="background:var(--dorado); color:black;" onclick="rectificar()">RECTIFICAR</button></div><div id="op-area"></div><table class="tabla-historial"><thead><tr><th>USUARIO</th><th>MÉTODO</th><th>FECHA</th><th>SALDO</th><th>FONDO</th><th>ACTIVO</th></tr></thead><tbody id="h-body"></tbody></table>`; 
@@ -242,7 +244,7 @@
         });
         const saldoActual = parseFloat(sel.fondo_actual);
         if (Math.abs(suma - saldoActual) < 0.01) area.innerHTML = `<div style="color:var(--verde); text-align:center; padding:10px; font-size:11px;">✅ Cuentas al día.</div>`;
-        else area.innerHTML = `<div style="color:var(--rojo); text-align:center; padding:10px; font-size:11px;">⚠️ Desfase detectado. Historial: $${suma.toFixed(2)} | Actual: $${saldoActual}. <br><button onclick="corregirSaldo(${suma})">IGUALAR</button></div>`;
+        else area.innerHTML = `<div style="color:var(--rojo); text-align:center; padding:10px; font-size:11px;">⚠️ Desfase. Historial: $${suma.toFixed(2)} | Actual: $${saldoActual}. <br><button onclick="corregirSaldo(${suma})">IGUALAR</button></div>`;
     }
 
     async function corregirSaldo(nuevo) {
