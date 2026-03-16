@@ -175,8 +175,8 @@
         const select = document.getElementById('colaboracion');
         const { data, error } = await supabaseClient.from('colaboraciones').select('nombre').order('nombre', { ascending: true });
         if (!error) {
-            let opciones = '<option value="">Seleccionar colaboración...</option>';
-            opciones += '<option value="Directo">Directo</option>';
+            let opciones = '<option value="">Seleccionar colaboración (Directo)...</option>';
+            // Quitamos la opción "Directo" fija, el valor vacío "" ahora representa Directo
             data.forEach(item => { opciones += `<option value="${item.nombre}">${item.nombre}</option>`; });
             select.innerHTML = opciones;
         }
@@ -189,13 +189,15 @@
         const campoChofer = document.getElementById('campo-chofer');
         const tipoContainer = document.getElementById('tipo-colab-container');
         
-        if (colab !== "" && colab !== "Directo") {
+        // Si el valor es diferente de vacío, es una colaboración
+        if (colab !== "") {
             campoCliente.style.display = "none";
             document.getElementById('tel-cliente').value = "";
             tipoContainer.style.display = "flex";
         } else {
+            // Si el valor es vacío, es un viaje Directo
             campoCliente.style.display = "block";
-            campoChofer.style.display = "block"; // Asegurar que se vea si vuelve a Directo
+            campoChofer.style.display = "block";
             tipoContainer.style.display = "none";
             tipoSeleccionado = "";
             desmarcarBotones();
@@ -216,7 +218,6 @@
         if (tipo === 'Salida') {
             document.getElementById('btn-salida').classList.add('active');
             campoChofer.style.display = "none";
-            // Limpiamos datos de chofer si los había
             choferData = null;
             document.getElementById('tel-chofer').value = "";
             document.getElementById('res-chofer').style.display = "none";
@@ -269,7 +270,7 @@
         const usuarioActual = JSON.parse(localStorage.getItem('usuario_activo'))?.nombre || 'Gestor';
 
         const datos = {
-            colab: document.getElementById('colaboracion').value,
+            colab: document.getElementById('colaboracion').value || 'Directo',
             tipo: tipoSeleccionado,
             precio: document.getElementById('precio-final').value,
             cliente: document.getElementById('tel-cliente').value,
@@ -286,7 +287,7 @@
 
         // PLANILLA CHOFER
         let txtChofer = `*DATOS DEL VIAJE*\n`;
-        if(datos.colab && datos.colab !== 'Directo') txtChofer += `Agencia: ${datos.colab} (${datos.tipo})\n`;
+        if(datos.colab !== 'Directo') txtChofer += `Agencia: ${datos.colab} (${datos.tipo})\n`;
         if(datos.precio) txtChofer += `Precio: ${datos.precio}\n`;
         if(datos.cliente) txtChofer += `Cliente: ${datos.cliente}\n`;
         if(datos.origen) txtChofer += `Origen: ${datos.origen}\n`;
@@ -335,15 +336,13 @@
     }
 
     async function crearViaje() {
-        const colabValue = document.getElementById('colaboracion').value;
+        const colabValue = document.getElementById('colaboracion').value || 'Directo';
         const usuarioActual = JSON.parse(localStorage.getItem('usuario_activo'))?.nombre || 'Gestor';
         
-        // Ajuste en validación: Si es "Salida", no exigimos choferData obligatoriamente aquí si el flujo lo permite
         if(tipoSeleccionado !== "Salida" && !choferData) return alert("Falta buscar el Chófer");
         if(!document.getElementById('precio-final').value) return alert("Falta el Precio");
-        if(colabValue !== "" && colabValue !== "Directo" && !tipoSeleccionado) return alert("Seleccione si es Entrada o Salida");
+        if(colabValue !== "Directo" && !tipoSeleccionado) return alert("Seleccione si es Entrada o Salida");
         
-        // Validación de fondo solo si hay chofer
         if (choferData && choferData.fondo_actual < 150 && !choferData.libre_de_fondo) return alert(`❌ Chófer Bloqueado: Fondo insuficiente.`);
 
         const btn = document.querySelector('button[onclick="crearViaje()"]');
