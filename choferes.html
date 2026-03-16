@@ -36,8 +36,6 @@
         .tab-btn.active { background: var(--dorado); color: black; }
         .btn-flex { display: flex; gap: 10px; margin: 15px 0; }
         .btn-accion { flex: 1; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 10px; text-transform: uppercase; }
-        
-        /* Ajuste para tabla de historial */
         .tabla-historial { width: 100%; border-collapse: collapse; font-size: 8px; margin-top: 10px; }
         .tabla-historial th { background: #111; color: var(--dorado); padding: 8px 5px; text-align: left; text-transform: uppercase; border-bottom: 1px solid #333; }
         .tabla-historial td { padding: 10px 5px; border-bottom: 1px solid #222; color: #eee; }
@@ -70,7 +68,7 @@
 
 <div class="contenedor">
     <button class="btn-add-main" onclick="abrirModal('modalNuevo')">+ AÑADIR NUEVO CHÓFER</button>
-    <div id="search-c" hidden style="margin-bottom:15px;"><input type="text" id="inBus" placeholder="Buscar por nombre..." oninput="busc()"></div>
+    <div id="search-c" hidden style="margin-bottom:15px;"><input type="text" id="inBus" placeholder="Buscar por nombre o teléfono..." oninput="busc()"></div>
     <div id="lista-choferes">Cargando...</div>
 </div>
 
@@ -130,21 +128,6 @@
         `).join('');
     }
 
-    async function subirImg(inp, buck) {
-        const f = document.getElementById(inp).files[0]; if(!f) return null;
-        const n = Date.now()+"_"+f.name;
-        const { data, error } = await supabaseClient.storage.from(buck).upload(n, f);
-        if(error) return null;
-        const { data: { publicUrl } } = supabaseClient.storage.from(buck).getPublicUrl(n);
-        return publicUrl;
-    }
-
-    async function crearTodo() {
-        const uC = await subirImg('n_fot_c','fotos_choferes'); const uV = await subirImg('n_fot_v','fotos_carros');
-        const p = { nombre: document.getElementById('n_nom').value, apellido: document.getElementById('n_ape').value, telefono: document.getElementById('n_tel').value, tiene_licencia_operativa: document.getElementById('n_lic').checked, libre_de_fondo: document.getElementById('n_lib').checked, fondo_actual: 0, grupo: document.querySelector('input[name="n_gp"]:checked').value, marca_carro: document.getElementById('n_mar').value, modelo_carro: document.getElementById('n_mod').value, color_carro: document.getElementById('n_col').value, tiene_aire_acondicionado: document.getElementById('n_air').checked, foto_chofer: uC, foto_carro: uV, aprobado: false };
-        await supabaseClient.from('choferes').insert([p]); location.reload();
-    }
-
     async function abrirV(id) {
         sel = chs.find(x => x.id === id);
         const ahora = new Date();
@@ -159,12 +142,6 @@
             <button onclick="cerrarModal('modalVer')" style="float:right; background:none; border:none; color:var(--dorado); font-size:30px;">&times;</button>
             <img src="${sel.foto_chofer}" class="foto-grande">
             <h2 style="text-align:center; margin:0;">${sel.nombre} ${sel.apellido}</h2>
-            <div class="badge-container" style="justify-content:center; margin-bottom:15px;">
-                ${sel.tiene_licencia_operativa ? '<span class="badge">LICENCIA</span>' : ''}
-                ${sel.libre_de_fondo ? '<span class="badge">SIN CRÉDITOS</span>' : ''}
-                ${sel.grupo ? `<span class="badge">${sel.grupo.toUpperCase()}</span>` : ''}
-                ${sel.tiene_aire_acondicionado ? '<span class="badge">AIRE</span>' : ''}
-            </div>
             <div class="stats-grid">
                 <div class="stat-box"><small>HOY</small><b>${t_h}</b></div>
                 <div class="stat-box"><small>MES</small><b>${t_m}</b></div>
@@ -181,7 +158,7 @@
         document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active')); b.classList.add('active');
         const c = document.getElementById('t-cont');
         if(t==='i') c.innerHTML = `<p><b>Tel:</b> ${sel.telefono}</p><p><b>Grupo:</b> ${sel.grupo}</p><p><b>Licencia:</b> ${sel.tiene_licencia_operativa ? 'SI' : 'NO'}</p>`;
-        if(t==='a') c.innerHTML = `<img src="${sel.foto_carro}" style="width:100%; border-radius:10px;"><p><b>Marca:</b> ${sel.marca_carro} ${sel.modelo_carro}</p><p><b>Aire:</b> ${sel.tiene_aire_acondicionado ? 'SI' : 'NO'}</p>`;
+        if(t==='a') c.innerHTML = `<img src="${sel.foto_carro}" style="width:100%; border-radius:10px;"><p><b>Marca:</b> ${sel.marca_carro} ${sel.modelo_carro}</p>`;
         if(t==='f') { 
             c.innerHTML = `
                 <div class="btn-flex">
@@ -191,16 +168,7 @@
                 </div>
                 <div id="op-area"></div>
                 <table class="tabla-historial">
-                    <thead>
-                        <tr>
-                            <th>USUARIO</th>
-                            <th>MÉTODO</th>
-                            <th>FECHA</th>
-                            <th>SALDO</th>
-                            <th>FONDO</th>
-                            <th>ACTIVO</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>USUARIO</th><th>MÉTODO</th><th>FECHA</th><th>SALDO</th><th>FONDO</th><th>ACTIVO</th></tr></thead>
                     <tbody id="h-body"></tbody>
                 </table>`; 
             cargarH(sel.id); 
@@ -208,55 +176,58 @@
     }
 
     async function cargarH(id) {
-        const { data, error } = await supabaseClient
-            .from('historial_fondos')
-            .select('*')
-            .eq('chofer_id', id)
-            .order('created_at', { ascending: false });
-
+        const { data, error } = await supabaseClient.from('historial_fondos').select('*').eq('chofer_id', id).order('created_at', { ascending: false });
         const tbody = document.getElementById('h-body');
-        if (error || !data) {
+        if (error || !data || data.length === 0) {
             tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Sin movimientos</td></tr>`;
             return;
         }
-
-        tbody.innerHTML = data.map(h => `
-            <tr>
-                <td>${h.usuario || 'Admin'}</td>
-                <td>${h.metodo || 'N/A'}</td>
-                <td>${h.created_at ? h.created_at.split('T')[0] : (h.fecha || '-')}</td>
-                <td style="color:var(--verde); font-weight:bold;">$${h.saldo || 0}</td>
-                <td style="color:#888;">$${h.fondo_anterior || 0}</td>
-                <td style="color:var(--dorado); font-weight:bold;">$${h.activo || 0}</td>
-            </tr>
-        `).join('');
+        tbody.innerHTML = data.map(h => `<tr><td>${h.usuario || 'Admin'}</td><td>${h.metodo || 'N/A'}</td><td>${h.created_at ? h.created_at.split('T')[0] : '-'}</td><td style="color:var(--verde)">$${h.saldo}</td><td>$${h.fondo_anterior}</td><td style="color:var(--dorado)">$${h.activo}</td></tr>`).join('');
     }
 
-    async function activarEdicion() {
-        const esMoto = sel.grupo === 'Moto';
-        document.getElementById('v-content').innerHTML = `
-            <h2 style="color:var(--dorado); text-align:center;">EDITAR</h2>
-            <div class="field"><label>Cambiar Foto</label><input type="file" id="e_fot_c"></div>
-            <div class="field"><label>Nombre</label><input type="text" id="e_nom" value="${sel.nombre}"></div>
-            <div class="field"><label>Apellido</label><input type="text" id="e_ape" value="${sel.apellido || ''}"></div>
-            <div class="field"><label>Teléfono</label><input type="tel" id="e_tel" value="${sel.telefono}"></div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:15px;"><label>Licencia Operativa</label><input type="checkbox" id="e_lic" ${sel.tiene_licencia_operativa?'checked':''} style="width:20px;"></div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:15px;"><label>Sin Créditos</label><input type="checkbox" id="e_lib" ${sel.libre_de_fondo?'checked':''} style="width:20px;"></div>
-            <div class="field"><label>Grupo</label><div style="display:flex; gap:20px;"><label><input type="radio" name="e_gp" value="Auto" ${!esMoto?'checked':''}> AUTO</label><label><input type="radio" name="e_gp" value="Moto" ${esMoto?'checked':''}> MOTO</label></div></div>
-            <hr style="border:0.5px solid #333;"><div class="field"><label>Cambiar Foto Carro</label><input type="file" id="e_fot_v"></div>
-            <div class="field"><label>Marca</label><input type="text" id="e_mar" value="${sel.marca_carro}"></div>
-            <div class="field"><label>Modelo</label><input type="text" id="e_mod" value="${sel.modelo_carro}"></div>
-            <div class="field"><label>Color</label><input type="text" id="e_col" value="${sel.color_carro}"></div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:15px;"><label>Aire</label><input type="checkbox" id="e_air" ${sel.tiene_aire_acondicionado?'checked':''} style="width:20px;"></div>
-            <div class="btn-flex"><button class="btn-accion" style="background:var(--verde); color:black;" onclick="guardarE()">GUARDAR CAMBIOS</button><button class="btn-accion" style="background:#333; color:white;" onclick="abrirV('${sel.id}')">CANCELAR</button></div>`;
+    // --- FUNCIÓN RECTIFICAR (AUDITORÍA MATEMÁTICA) ---
+    async function rectificar() {
+        const area = document.getElementById('op-area');
+        area.innerHTML = `<p style="text-align:center; font-size:10px; color:var(--dorado);">⏳ Auditando historial...</p>`;
+        
+        // Traer todo el historial para sumar
+        const { data: historial, error } = await supabaseClient.from('historial_fondos').select('*').eq('chofer_id', sel.id).order('created_at', { ascending: true });
+
+        if (error) return alert("Error al auditar");
+
+        let sumaCalculada = 0;
+        historial.forEach(h => {
+            // Si el método es retiro o tiene saldo negativo, resta, sino suma
+            if (h.metodo === 'Retiro' || h.metodo === 'SUB') {
+                sumaCalculada -= parseFloat(h.saldo);
+            } else if (h.metodo === 'Rectificación') {
+                // En rectificación, el "activo" es el nuevo punto de partida
+                sumaCalculada = parseFloat(h.activo);
+            } else {
+                sumaCalculada += parseFloat(h.saldo);
+            }
+        });
+
+        const saldoActualEnBD = parseFloat(sel.fondo_actual);
+        const diferencia = sumaCalculada - saldoActualEnBD;
+
+        if (Math.abs(diferencia) < 0.01) {
+            area.innerHTML = `<div style="padding:10px; border:1px solid var(--verde); border-radius:8px; text-align:center; color:var(--verde); font-size:11px;">✅ Operaciones correctas. El historial coincide con el saldo.</div>`;
+        } else {
+            area.innerHTML = `
+                <div style="padding:10px; border:1px solid var(--rojo); border-radius:8px; text-align:center; font-size:11px;">
+                    <p style="color:var(--rojo); margin:0;">⚠️ ¡ERROR DETECTADO!</p>
+                    <p style="margin:5px 0;">Historial dice: <b>$${sumaCalculada.toFixed(2)}</b></p>
+                    <p style="margin:5px 0;">Saldo actual: <b>$${saldoActualEnBD.toFixed(2)}</b></p>
+                    <button class="btn-add-main" style="padding:8px; font-size:10px;" onclick="corregirSaldo(${sumaCalculada})">CORREGIR SALDO A $${sumaCalculada.toFixed(2)}</button>
+                </div>`;
+        }
     }
 
-    async function guardarE() {
-        const uC = await subirImg('e_fot_c','fotos_choferes') || sel.foto_chofer;
-        const uV = await subirImg('e_fot_v','fotos_carros') || sel.foto_carro;
-        const upd = { nombre: document.getElementById('e_nom').value, apellido: document.getElementById('e_ape').value, telefono: document.getElementById('e_tel').value, tiene_licencia_operativa: document.getElementById('e_lic').checked, libre_de_fondo: document.getElementById('e_lib').checked, grupo: document.querySelector('input[name="e_gp"]:checked').value, marca_carro: document.getElementById('e_mar').value, modelo_carro: document.getElementById('e_mod').value, color_carro: document.getElementById('e_col').value, tiene_aire_acondicionado: document.getElementById('e_air').checked, foto_chofer: uC, foto_carro: uV };
-        const { error } = await supabaseClient.from('choferes').update(upd).eq('id', sel.id);
-        if(!error) location.reload(); else alert("Error: " + error.message);
+    async function corregirSaldo(nuevo) {
+        if(!confirm(`¿Actualizar saldo a $${nuevo}? Esto igualará el saldo con el historial.`)) return;
+        const { error } = await supabaseClient.from('choferes').update({ fondo_actual: nuevo }).eq('id', sel.id);
+        if(!error) location.reload();
     }
 
     async function mov(tipo) {
@@ -267,54 +238,34 @@
     async function eMov(tipo) {
         const cant = parseFloat(document.getElementById('m_cant').value); 
         if (isNaN(cant) || cant <= 0) return alert("Ingresa un monto válido");
-        
         const met = document.getElementById('m_met')?.value || 'Efectivo';
         const user = JSON.parse(localStorage.getItem('usuario_activo'))?.nombre || 'Gestor';
-        
         const fondoPrevio = parseFloat(sel.fondo_actual || 0);
         let nuevoFondo = tipo === 'ADD' ? fondoPrevio + cant : fondoPrevio - cant;
 
-        // Si es transferencia ADD, no se suma directo, va a tabla transferencias
         if (tipo === 'ADD' && met === 'Transferencia') {
             const tjNom = document.getElementById('m_tj').options[document.getElementById('m_tj').selectedIndex].text;
-            const { error: errT } = await supabaseClient.from('transferencias').insert([{
-                chofer_id: sel.id,
-                nombre_chofer: sel.nombre + " " + (sel.apellido || ""),
-                nombre_usuario: user,
-                monto: cant,
-                tipo_pago: 'Transferencia a ' + tjNom,
-                fecha: new Date().toISOString().split('T')[0],
-                aprobado: false
-            }]);
-            if(!errT) { alert("Transferencia enviada a revisión"); location.reload(); }
+            await supabaseClient.from('transferencias').insert([{ chofer_id: sel.id, nombre_chofer: sel.nombre + " " + (sel.apellido || ""), nombre_usuario: user, monto: cant, tipo_pago: 'Transferencia a ' + tjNom, aprobado: false }]);
+            alert("Transferencia enviada a revisión"); location.reload();
             return;
         }
 
-        // Si es Efectivo o SUB, se procesa directo
         const { error: errC } = await supabaseClient.from('choferes').update({ fondo_actual: nuevoFondo }).eq('id', sel.id);
         if(!errC) {
-            await supabaseClient.from('historial_fondos').insert([{
-                chofer_id: sel.id,
-                usuario: user,
-                metodo: tipo === 'ADD' ? 'Efectivo' : 'Retiro',
-                saldo: cant,
-                fondo_anterior: fondoPrevio,
-                activo: nuevoFondo
-            }]);
-            location.reload();
-        }
-    }
-
-    async function del(id) {
-        if(confirm("¿Eliminar chófer?")) {
-            await supabaseClient.from('choferes').delete().eq('id', id);
+            await supabaseClient.from('historial_fondos').insert([{ chofer_id: sel.id, usuario: user, metodo: tipo === 'ADD' ? 'Efectivo' : 'Retiro', saldo: cant, fondo_anterior: fondoPrevio, activo: nuevoFondo }]);
             location.reload();
         }
     }
 
     function busc() {
         const val = document.getElementById('inBus').value.toLowerCase();
-        render(chs.filter(x => (x.nombre + " " + x.apellido).toLowerCase().includes(val)));
+        render(chs.filter(x => (x.nombre + " " + (x.apellido || "")).toLowerCase().includes(val) || (x.telefono || "").includes(val)));
+    }
+
+    async function crearTodo() {
+        const uC = await subirImg('n_fot_c','fotos_choferes'); const uV = await subirImg('n_fot_v','fotos_carros');
+        const p = { nombre: document.getElementById('n_nom').value, apellido: document.getElementById('n_ape').value, telefono: document.getElementById('n_tel').value, tiene_licencia_operativa: document.getElementById('n_lic').checked, libre_de_fondo: document.getElementById('n_lib').checked, fondo_actual: 0, grupo: document.querySelector('input[name="n_gp"]:checked').value, marca_carro: document.getElementById('n_mar').value, modelo_carro: document.getElementById('n_mod').value, color_carro: document.getElementById('n_col').value, tiene_aire_acondicionado: document.getElementById('n_air').checked, foto_chofer: uC, foto_carro: uV, aprobado: false };
+        await supabaseClient.from('choferes').insert([p]); location.reload();
     }
 </script>
 </body>
