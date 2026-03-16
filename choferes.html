@@ -36,9 +36,11 @@
         .tab-btn.active { background: var(--dorado); color: black; }
         .btn-flex { display: flex; gap: 10px; margin: 15px 0; }
         .btn-accion { flex: 1; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 10px; text-transform: uppercase; }
-        table { width: 100%; border-collapse: collapse; font-size: 9px; }
-        th { background: #111; color: var(--dorado); padding: 10px; text-align: left; }
-        td { padding: 10px; border-bottom: 1px solid #222; }
+        
+        /* Ajuste para tabla de historial */
+        .tabla-historial { width: 100%; border-collapse: collapse; font-size: 8px; margin-top: 10px; }
+        .tabla-historial th { background: #111; color: var(--dorado); padding: 8px 5px; text-align: left; text-transform: uppercase; border-bottom: 1px solid #333; }
+        .tabla-historial td { padding: 10px 5px; border-bottom: 1px solid #222; color: #eee; }
     </style>
 </head>
 <body>
@@ -181,9 +183,53 @@
         if(t==='i') c.innerHTML = `<p><b>Tel:</b> ${sel.telefono}</p><p><b>Grupo:</b> ${sel.grupo}</p><p><b>Licencia:</b> ${sel.tiene_licencia_operativa ? 'SI' : 'NO'}</p>`;
         if(t==='a') c.innerHTML = `<img src="${sel.foto_carro}" style="width:100%; border-radius:10px;"><p><b>Marca:</b> ${sel.marca_carro} ${sel.modelo_carro}</p><p><b>Aire:</b> ${sel.tiene_aire_acondicionado ? 'SI' : 'NO'}</p>`;
         if(t==='f') { 
-            c.innerHTML = `<div class="btn-flex"><button class="btn-accion" style="background:var(--verde); color:black;" onclick="mov('ADD')">AGREGAR</button><button class="btn-accion" style="background:var(--rojo); color:white;" onclick="mov('SUB')">RETIRAR</button><button class="btn-accion" style="background:var(--dorado); color:black;" onclick="rectificar()">RECTIFICAR</button></div><div id="op-area"></div><table><thead><tr><th>USER</th><th>MÉTODO</th><th>MONTO</th><th>FECHA</th><th>SALDO ACT.</th></tr></thead><tbody id="h-body"></tbody></table>`; 
+            c.innerHTML = `
+                <div class="btn-flex">
+                    <button class="btn-accion" style="background:var(--verde); color:black;" onclick="mov('ADD')">AGREGAR</button>
+                    <button class="btn-accion" style="background:var(--rojo); color:white;" onclick="mov('SUB')">RETIRAR</button>
+                    <button class="btn-accion" style="background:var(--dorado); color:black;" onclick="rectificar()">RECTIFICAR</button>
+                </div>
+                <div id="op-area"></div>
+                <table class="tabla-historial">
+                    <thead>
+                        <tr>
+                            <th>USUARIO</th>
+                            <th>MÉTODO</th>
+                            <th>FECHA</th>
+                            <th>SALDO</th>
+                            <th>FONDO</th>
+                            <th>ACTIVO</th>
+                        </tr>
+                    </thead>
+                    <tbody id="h-body"></tbody>
+                </table>`; 
             cargarH(sel.id); 
         }
+    }
+
+    async function cargarH(id) {
+        const { data, error } = await supabaseClient
+            .from('historial_fondos')
+            .select('*')
+            .eq('chofer_id', id)
+            .order('created_at', { ascending: false });
+
+        const tbody = document.getElementById('h-body');
+        if (error || !data) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Sin movimientos</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = data.map(h => `
+            <tr>
+                <td>${h.usuario || 'Admin'}</td>
+                <td>${h.metodo || 'N/A'}</td>
+                <td>${h.created_at ? h.created_at.split('T')[0] : (h.fecha || '-')}</td>
+                <td style="color:var(--verde); font-weight:bold;">$${h.saldo || 0}</td>
+                <td style="color:#888;">$${h.fondo_anterior || 0}</td>
+                <td style="color:var(--dorado); font-weight:bold;">$${h.activo || 0}</td>
+            </tr>
+        `).join('');
     }
 
     async function activarEdicion() {
@@ -224,54 +270,51 @@
         
         const met = document.getElementById('m_met')?.value || 'Efectivo';
         const user = JSON.parse(localStorage.getItem('usuario_activo'))?.nombre || 'Gestor';
-        const fecha = new Date().toISOString().split('T')[0];
+        
+        const fondoPrevio = parseFloat(sel.fondo_actual || 0);
+        let nuevoFondo = tipo === 'ADD' ? fondoPrevio + cant : fondoPrevio - cant;
 
-        // LOGICA PARA TRANSFERENCIAS (Aprobación Pendiente)
+        // Si es transferencia ADD, no se suma directo, va a tabla transferencias
         if (tipo === 'ADD' && met === 'Transferencia') {
             const tjNom = document.getElementById('m_tj').options[document.getElementById('m_tj').selectedIndex].text;
-            const datosTrans = {
+            const { error: errT } = await supabaseClient.from('transferencias').insert([{
+                chofer_id: sel.id,
                 nombre_chofer: sel.nombre + " " + (sel.apellido || ""),
                 nombre_usuario: user,
-                tipo_pago: `Transferencia (${tjNom})`,
                 monto: cant,
-                fecha: fecha,
-                aprobado: false,
-                chofer_id: sel.id
-            };
-            const { error } = await supabaseClient.from('transferencias').insert([datosTrans]);
-            if(!error) { alert("Transferencia enviada a aprobación"); abrirV(sel.id); }
+                tipo_pago: 'Transferencia a ' + tjNom,
+                fecha: new Date().toISOString().split('T')[0],
+                aprobado: false
+            }]);
+            if(!errT) { alert("Transferencia enviada a revisión"); location.reload(); }
             return;
         }
 
-        // LOGICA PARA EFECTIVO O RETIRO (Inmediato)
-        const valorMovimiento = (tipo === 'ADD') ? cant : -cant;
-        const nuevoF = sel.fondo_actual + valorMovimiento;
-        
-        const { error: err1 } = await supabaseClient.from('historial_fondos').insert([{ 
-            chofer_id: sel.id, 
-            usuario: user, 
-            metodo: met, 
-            saldo: valorMovimiento, 
-            fondo_anterior: sel.fondo_actual, 
-            activo: nuevoF,
-            operacion: tipo === 'ADD' ? 'Ingreso' : 'Retiro'
-        }]);
-
-        const { error: err2 } = await supabaseClient.from('choferes').update({ fondo_actual: nuevoF }).eq('id', sel.id);
-        
-        if(!err1 && !err2) location.reload();
+        // Si es Efectivo o SUB, se procesa directo
+        const { error: errC } = await supabaseClient.from('choferes').update({ fondo_actual: nuevoFondo }).eq('id', sel.id);
+        if(!errC) {
+            await supabaseClient.from('historial_fondos').insert([{
+                chofer_id: sel.id,
+                usuario: user,
+                metodo: tipo === 'ADD' ? 'Efectivo' : 'Retiro',
+                saldo: cant,
+                fondo_anterior: fondoPrevio,
+                activo: nuevoFondo
+            }]);
+            location.reload();
+        }
     }
 
-    async function cargarH(id) {
-        const { data } = await supabaseClient.from('historial_fondos').select('*').eq('chofer_id', id).order('created_at', { ascending: false });
-        document.getElementById('h-body').innerHTML = (data || []).map(h => `<tr><td>${h.usuario}</td><td>${h.metodo}</td><td>$${h.saldo}</td><td>${h.created_at.split('T')[0]}</td><td>$${h.activo}</td></tr>`).join('');
+    async function del(id) {
+        if(confirm("¿Eliminar chófer?")) {
+            await supabaseClient.from('choferes').delete().eq('id', id);
+            location.reload();
+        }
     }
 
-    async function del(id) { if(confirm("¿Eliminar chófer?")) { await supabaseClient.from('choferes').delete().eq('id', id); location.reload(); } }
-    
-    const busc = () => {
-        const v = document.getElementById('inBus').value.toLowerCase();
-        render(chs.filter(c => c.nombre.toLowerCase().includes(v) || (c.apellido && c.apellido.toLowerCase().includes(v))));
+    function busc() {
+        const val = document.getElementById('inBus').value.toLowerCase();
+        render(chs.filter(x => (x.nombre + " " + x.apellido).toLowerCase().includes(val)));
     }
 </script>
 </body>
