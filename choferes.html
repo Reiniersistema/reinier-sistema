@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; --rojo: #ff4d4d; --verde: #25d366; }
+        :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; --rojo: #ff4d4d; --verde: #25d366; --azul: #3498db; }
         body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding-bottom: 30px; }
         .sidebar { height: 100%; width: 0; position: fixed; z-index: 5000; top: 0; left: 0; background-color: #1a1a1a; overflow-x: hidden; transition: 0.5s; padding-top: 60px; border-right: 1px solid var(--dorado); }
         .sidebar a { padding: 12px 25px; text-decoration: none; font-size: 14px; color: #888; display: block; text-transform: uppercase; border-bottom: 1px solid #222; }
@@ -139,38 +139,24 @@
 
     async function crearTodo() {
         const uC = await subirImg('n_fot_c','fotos_choferes'); const uV = await subirImg('n_fot_v','fotos_carros');
-        const p = { nombre: document.getElementById('n_nom').value, apellido: document.getElementById('n_ape').value, telefono: document.getElementById('n_tel').value, tiene_licencia_operativa: document.getElementById('n_lic').checked, libre_de_fondo: document.getElementById('n_lib').checked, fondo_actual: 0, grupo: document.querySelector('input[name="n_gp"]:checked').value, marca_carro: document.getElementById('n_mar').value, modelo_carro: document.getElementById('n_mod').value, color_carro: document.getElementById('n_col').value, tiene_aire_acondicionado: document.getElementById('n_air').checked, foto_chofer: uC, foto_carro: uV };
+        const p = { nombre: document.getElementById('n_nom').value, apellido: document.getElementById('n_ape').value, telefono: document.getElementById('n_tel').value, tiene_licencia_operativa: document.getElementById('n_lic').checked, libre_de_fondo: document.getElementById('n_lib').checked, fondo_actual: 0, grupo: document.querySelector('input[name="n_gp"]:checked').value, marca_carro: document.getElementById('n_mar').value, modelo_carro: document.getElementById('n_mod').value, color_carro: document.getElementById('n_col').value, tiene_aire_acondicionado: document.getElementById('n_air').checked, foto_chofer: uC, foto_carro: uV, aprobado: false };
         await supabaseClient.from('choferes').insert([p]); location.reload();
     }
 
     async function abrirV(id) {
         sel = chs.find(x => x.id === id);
-        const ahora = new Date();
-        const hoy = ahora.toISOString().split('T')[0];
-        const primerDiaMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1).toISOString();
-        
+        const hoy = new Date().toISOString().split('T')[0];
         const { count: t_h } = await supabaseClient.from('viajes').select('*',{count:'exact',head:true}).eq('chofer_id',id).gte('created_at', hoy);
-        const { count: t_m } = await supabaseClient.from('viajes').select('*',{count:'exact',head:true}).eq('chofer_id',id).gte('created_at', primerDiaMes);
-        const { count: t_a } = await supabaseClient.from('viajes').select('*',{count:'exact',head:true}).eq('chofer_id',id);
         
         document.getElementById('v-content').innerHTML = `
             <button onclick="cerrarModal('modalVer')" style="float:right; background:none; border:none; color:var(--dorado); font-size:30px;">&times;</button>
             <img src="${sel.foto_chofer}" class="foto-grande">
             <h2 style="text-align:center; margin:0;">${sel.nombre} ${sel.apellido}</h2>
-            <div class="badge-container" style="justify-content:center; margin-bottom:15px;">
-                ${sel.tiene_licencia_operativa ? '<span class="badge">LICENCIA</span>' : ''}
-                ${sel.libre_de_fondo ? '<span class="badge">SIN CRÉDITOS</span>' : ''}
-                ${sel.grupo ? `<span class="badge">${sel.grupo.toUpperCase()}</span>` : ''}
-                ${sel.tiene_aire_acondicionado ? '<span class="badge">AIRE</span>' : ''}
-            </div>
             <div class="stats-grid">
                 <div class="stat-box"><small>HOY</small><b>${t_h}</b></div>
-                <div class="stat-box"><small>MES</small><b>${t_m}</b></div>
-                <div class="stat-box"><small>TOTAL</small><b>${t_a}</b></div>
                 <div class="stat-box"><small>SALDO</small><b>$${sel.fondo_actual}</b></div>
             </div>
-            <div class="btn-flex"><button class="btn-accion" style="background:#333; color:white;" onclick="activarEdicion()">EDITAR</button><button class="btn-accion" style="background:var(--verde); color:white;" onclick="window.open('https://wa.me/${sel.telefono}')">WHATSAPP</button><button class="btn-accion" style="background:var(--rojo); color:white;" onclick="del('${sel.id}')">ELIMINAR</button></div>
-            <div class="tabs-container"><button class="tab-btn active" onclick="tab('i', this)">INFO</button><button class="tab-btn" onclick="tab('a', this)">AUTO</button><button class="tab-btn" onclick="tab('f', this)">FONDO</button></div>
+            <div class="tabs-container"><button class="tab-btn active" onclick="tab('i', this)">INFO</button><button class="tab-btn" onclick="tab('f', this)">FONDO</button></div>
             <div id="t-cont"></div>`;
         abrirModal('modalVer'); tab('i', document.querySelector('.tab-btn.active'));
     }
@@ -178,127 +164,77 @@
     function tab(t, b) {
         document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active')); b.classList.add('active');
         const c = document.getElementById('t-cont');
-        if(t==='i') c.innerHTML = `<p><b>Tel:</b> ${sel.telefono}</p><p><b>Grupo:</b> ${sel.grupo}</p><p><b>Licencia:</b> ${sel.tiene_licencia_operativa ? 'SI' : 'NO'}</p>`;
-        if(t==='a') c.innerHTML = `<img src="${sel.foto_carro}" style="width:100%; border-radius:10px;"><p><b>Marca:</b> ${sel.marca_carro} ${sel.modelo_carro}</p><p><b>Aire:</b> ${sel.tiene_aire_acondicionado ? 'SI' : 'NO'}</p>`;
-        if(t==='f') { c.innerHTML = `<div class="btn-flex"><button class="btn-accion" style="background:var(--verde); color:black;" onclick="mov('ADD')">AGREGAR</button><button class="btn-accion" style="background:var(--rojo); color:white;" onclick="mov('SUB')">RETIRAR</button><button class="btn-accion" style="background:var(--dorado); color:black;" onclick="rectificar()">RECTIFICAR</button></div><div id="op-area"></div><table><thead><tr><th>USER</th><th>MÉTODO</th><th>OPERACIÓN</th><th>FECHA</th><th>SALDO</th><th>FONDO</th><th>ACTIVO</th></tr></thead><tbody id="h-body"></tbody></table>`; cargarH(sel.id); }
-    }
-
-    async function activarEdicion() {
-        const esMoto = sel.grupo === 'Moto';
-        document.getElementById('v-content').innerHTML = `
-            <h2 style="color:var(--dorado); text-align:center;">EDITAR</h2>
-            <div class="field"><label>Cambiar Foto</label><input type="file" id="e_fot_c"></div>
-            <div class="field"><label>Nombre</label><input type="text" id="e_nom" value="${sel.nombre}"></div>
-            <div class="field"><label>Apellido</label><input type="text" id="e_ape" value="${sel.apellido || ''}"></div>
-            <div class="field"><label>Teléfono</label><input type="tel" id="e_tel" value="${sel.telefono}"></div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:15px;"><label>Licencia Operativa</label><input type="checkbox" id="e_lic" ${sel.tiene_licencia_operativa?'checked':''} style="width:20px;"></div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:15px;"><label>Sin Créditos</label><input type="checkbox" id="e_lib" ${sel.libre_de_fondo?'checked':''} style="width:20px;"></div>
-            <div class="field"><label>Grupo</label><div style="display:flex; gap:20px;"><label><input type="radio" name="e_gp" value="Auto" ${!esMoto?'checked':''}> AUTO</label><label><input type="radio" name="e_gp" value="Moto" ${esMoto?'checked':''}> MOTO</label></div></div>
-            <hr style="border:0.5px solid #333;"><div class="field"><label>Cambiar Foto Carro</label><input type="file" id="e_fot_v"></div>
-            <div class="field"><label>Marca</label><input type="text" id="e_mar" value="${sel.marca_carro}"></div>
-            <div class="field"><label>Modelo</label><input type="text" id="e_mod" value="${sel.modelo_carro}"></div>
-            <div class="field"><label>Color</label><input type="text" id="e_col" value="${sel.color_carro}"></div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:15px;"><label>Aire</label><input type="checkbox" id="e_air" ${sel.tiene_aire_acondicionado?'checked':''} style="width:20px;"></div>
-            <div class="btn-flex"><button class="btn-accion" style="background:var(--verde); color:black;" onclick="guardarE()">GUARDAR CAMBIOS</button><button class="btn-accion" style="background:#333; color:white;" onclick="abrirV('${sel.id}')">CANCELAR</button></div>`;
-    }
-
-    async function guardarE() {
-        const uC = await subirImg('e_fot_c','fotos_choferes') || sel.foto_chofer;
-        const uV = await subirImg('e_fot_v','fotos_carros') || sel.foto_carro;
-        const upd = { nombre: document.getElementById('e_nom').value, apellido: document.getElementById('e_ape').value, telefono: document.getElementById('e_tel').value, tiene_licencia_operativa: document.getElementById('e_lic').checked, libre_de_fondo: document.getElementById('e_lib').checked, grupo: document.querySelector('input[name="e_gp"]:checked').value, marca_carro: document.getElementById('e_mar').value, modelo_carro: document.getElementById('e_mod').value, color_carro: document.getElementById('e_col').value, tiene_aire_acondicionado: document.getElementById('e_air').checked, foto_chofer: uC, foto_carro: uV };
-        const { error } = await supabaseClient.from('choferes').update(upd).eq('id', sel.id);
-        if(!error) location.reload(); else alert("Error: " + error.message);
+        if(t==='i') c.innerHTML = `<p><b>Tel:</b> ${sel.telefono}</p><p><b>Grupo:</b> ${sel.grupo}</p>`;
+        if(t==='f') { 
+            c.innerHTML = `
+                <div class="btn-flex">
+                    <button class="btn-accion" style="background:var(--verde); color:black;" onclick="mov('ADD')">AGREGAR</button>
+                    <button class="btn-accion" style="background:var(--rojo); color:white;" onclick="mov('SUB')">RETIRAR</button>
+                </div>
+                <div id="op-area"></div>
+                <table><thead><tr><th>USER</th><th>MÉTODO</th><th>MONTO</th><th>FECHA</th><th>SALDO</th></tr></thead><tbody id="h-body"></tbody></table>`; 
+            cargarH(sel.id); 
+        }
     }
 
     async function mov(tipo) {
         const opts = tjs.map(t => `<option value="${t.id}">${t.nombre}</option>`).join('');
-        document.getElementById('op-area').innerHTML = `<div style="background:#222; padding:15px; border-radius:10px; border:1px solid var(--dorado); margin:10px 0;"><label>MONTO</label><input type="number" id="m_cant">${tipo === 'ADD' ? `<label>MÉTODO</label><select id="m_met" onchange="this.value=='Transferencia'?document.getElementById('sel-tj').hidden=false:document.getElementById('sel-tj').hidden=true"><option>Efectivo</option><option>Transferencia</option></select><div id="sel-tj" hidden class="field" style="margin-top:10px;"><label>TARJETA DESTINO</label><select id="m_tj">${opts}</select></div>` : ''}<button class="btn-add-main" style="margin-top:10px; padding:10px;" onclick="eMov('${tipo}')">PROCESAR</button></div>`;
+        document.getElementById('op-area').innerHTML = `
+            <div style="background:#222; padding:15px; border-radius:10px; border:1px solid var(--dorado); margin:10px 0;">
+                <label>MONTO</label><input type="number" id="m_cant">
+                ${tipo === 'ADD' ? `
+                <label>MÉTODO</label>
+                <select id="m_met" onchange="document.getElementById('sel-tj').hidden = (this.value !== 'Transferencia')">
+                    <option>Efectivo</option>
+                    <option>Transferencia</option>
+                </select>
+                <div id="sel-tj" hidden class="field" style="margin-top:10px;">
+                    <label>TARJETA DESTINO</label><select id="m_tj">${opts}</select>
+                </div>` : ''}
+                <button class="btn-add-main" style="margin-top:10px; padding:10px;" onclick="eMov('${tipo}')">PROCESAR</button>
+            </div>`;
     }
 
     async function eMov(tipo) {
         const cant = parseFloat(document.getElementById('m_cant').value); 
-        if (isNaN(cant) || cant <= 0) return alert("Ingresa un monto válido");
+        if (isNaN(cant) || cant <= 0) return alert("Monto inválido");
         
-        const met = document.getElementById('m_met')?.value || 'Caja';
-        const op = (tipo === 'ADD') ? 'Ingreso' : 'Retiro';
-        const valorMovimiento = (tipo === 'ADD') ? cant : -cant;
-        const nuevoF = sel.fondo_actual + valorMovimiento;
+        const met = document.getElementById('m_met')?.value || 'Efectivo';
         const user = JSON.parse(localStorage.getItem('usuario_activo'))?.nombre || 'Gestor';
-        const fechaISO = new Date().toISOString();
-        const fechaSoloDia = new Date().toISOString().split('T')[0];
+        const fecha = new Date().toISOString().split('T')[0];
 
-        // 1. Guardar en historial_fondos (Control de saldo del chofer)
-        const { error: errH } = await supabaseClient.from('historial_fondos').insert([{ 
-            chofer_id: sel.id, 
-            usuario: user, 
-            metodo: met, 
-            operacion: op, 
-            saldo: valorMovimiento, 
-            fondo_anterior: sel.fondo_actual, 
-            activo: nuevoF, 
-            fecha: fechaISO 
-        }]);
-
-        if(errH) return alert("Error en historial: " + errH.message);
-
-        // 2. Registro en la tabla transferencias (Solo si es ingreso por transferencia)
-        if (met === 'Transferencia' && tipo === 'ADD') {
-            const { error: errT } = await supabaseClient.from('transferencias').insert([{
-                fecha: fechaSoloDia,
-                monto: cant,
-                nombre_chofer: `${sel.nombre} ${sel.apellido || ''}`,
+        // LÓGICA DE TRANSFERENCIA (Aprobar después)
+        if (tipo === 'ADD' && met === 'Transferencia') {
+            const tjNom = document.getElementById('m_tj').options[document.getElementById('m_tj').selectedIndex].text;
+            const { error } = await supabaseClient.from('transferencias').insert([{
+                nombre_chofer: sel.nombre + " " + (sel.apellido || ""),
                 nombre_usuario: user,
-                tipo_pago: 'Ingreso de Fondo',
-                chofer_id: sel.id,
-                aprobado: true 
+                tipo_pago: `Transferencia (${tjNom})`,
+                monto: cant,
+                fecha: fecha,
+                aprobado: false
             }]);
-            
-            if(errT) console.error("Error al registrar transferencia:", errT.message);
+            if (!error) { alert("Enviado a aprobación"); abrirV(sel.id); }
+            return;
         }
 
-        // 3. Actualizar saldo real en la tabla choferes
-        const { error: errUpd } = await supabaseClient.from('choferes').update({ fondo_actual: nuevoF }).eq('id', sel.id);
-        if(!errUpd) location.reload(); else alert("Error al actualizar saldo: " + errUpd.message);
-    }
-
-    async function rectificar() {
-        if(!confirm("¿Deseas recalcular el saldo total?")) return;
-        const { data: h } = await supabaseClient.from('historial_fondos').select('saldo').eq('chofer_id', sel.id);
-        const total = h.reduce((acc, curr) => acc + curr.saldo, 0);
-        await supabaseClient.from('choferes').update({ fondo_actual: total }).eq('id', sel.id);
+        // LÓGICA EFECTIVO / RETIRO (Inmediato)
+        const valor = (tipo === 'ADD') ? cant : -cant;
+        const nuevoF = sel.fondo_actual + valor;
+        
+        await supabaseClient.from('historial_fondos').insert([{ chofer_id: sel.id, usuario: user, metodo: met, saldo: valor, fondo_anterior: sel.fondo_actual, activo: nuevoF }]);
+        await supabaseClient.from('choferes').update({ fondo_actual: nuevoF }).eq('id', sel.id);
         location.reload();
-    }
-
-    async function del(id) {
-        if(!confirm("¿Eliminar este chófer permanentemente?")) return;
-        await supabaseClient.from('choferes').delete().eq('id', id);
-        location.reload();
-    }
-
-    function busc() {
-        const txt = document.getElementById('inBus').value.toLowerCase();
-        const res = chs.filter(c => c.nombre.toLowerCase().includes(txt) || (c.apellido && c.apellido.toLowerCase().includes(txt)));
-        render(res);
     }
 
     async function cargarH(id) {
-        const { data } = await supabaseClient.from('historial_fondos').select('*').eq('chofer_id', id).order('fecha', { ascending: false });
-        document.getElementById('h-body').innerHTML = (data || []).map(h => `
-            <tr>
-                <td>${h.usuario}</td>
-                <td>${h.metodo}</td>
-                <td>${h.operacion}</td>
-                <td>${new Date(h.fecha).toLocaleDateString()}</td>
-                <td>$${h.saldo}</td>
-                <td>$${h.fondo_anterior}</td>
-                <td>$${h.activo}</td>
-            </tr>
-        `).join('');
+        const { data } = await supabaseClient.from('historial_fondos').select('*').eq('chofer_id', id).order('created_at', { ascending: false });
+        document.getElementById('h-body').innerHTML = (data || []).map(h => `<tr><td>${h.usuario}</td><td>${h.metodo}</td><td>$${h.saldo}</td><td>${h.created_at.split('T')[0]}</td><td>$${h.activo}</td></tr>`).join('');
     }
-
-    function cerrarSesion() {
-        localStorage.removeItem('usuario_activo');
-        window.location.href = 'index.html';
+    
+    const busc = () => {
+        const v = document.getElementById('inBus').value.toLowerCase();
+        render(chs.filter(c => c.nombre.toLowerCase().includes(v)));
     }
 </script>
 </body>
