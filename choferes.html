@@ -21,7 +21,7 @@
         .foto-perfil-mini { width: 75px; height: 75px; border-radius: 50%; border: 2px solid var(--dorado); object-fit: cover; }
         .fondo-monto { position: absolute; bottom: 15px; right: 20px; color: var(--dorado); font-weight: bold; font-size: 18px; }
         .badge-container { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
-        .badge { font-size: 8px; padding: 3px 6px; border-radius: 4px; font-weight: bold; background: #333; color: var(--dorado); border: 0.5px solid var(--dorado); }
+        .badge { font-size: 8px; padding: 3px 6px; border-radius: 4px; font-weight: bold; background: #333; color: var(--dorado); border: 0.5px solid var(--dorado); text-transform: uppercase; }
         .modal { display: none; position: fixed; z-index: 6000; top: 0; left: 0; width: 100%; height: 100%; background: #000; overflow-y: auto; }
         .modal-body { padding: 20px; max-width: 500px; margin: auto; }
         .field { margin-bottom: 15px; }
@@ -37,7 +37,7 @@
         .btn-flex { display: flex; gap: 10px; margin: 15px 0; }
         .btn-accion { flex: 1; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 10px; text-transform: uppercase; }
         .tabla-historial { width: 100%; border-collapse: collapse; font-size: 8px; margin-top: 10px; }
-        .tabla-historial th { background: #111; color: var(--dorado); padding: 8px 5px; text-align: left; text-transform: uppercase; border-bottom: 1px solid #333; }
+        .tabla-historial th { background: #111; color: var(--dorado); padding: 8px 5px; text-align: left; border-bottom: 1px solid #333; }
         .tabla-historial td { padding: 10px 5px; border-bottom: 1px solid #222; color: #eee; }
     </style>
 </head>
@@ -46,16 +46,7 @@
 <div id="mySidebar" class="sidebar">
     <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
     <a href="panel.html">PANEL DE CONTROL</a>
-    <a href="crear-viaje.html">CREAR VIAJES</a>
-    <a href="mis-viajes.html">MIS VIAJES</a>
     <a href="choferes.html" style="color:var(--dorado)">CHOFERES</a>
-    <a href="pagos-pendientes.html">PAGOS PENDIENTES</a>
-    <a href="pagos-aprobar.html">PAGOS POR APROBAR</a>
-    <a href="tarjetas.html">TARJETAS</a>
-    <a href="transferencias.html">TRANSFERENCIAS</a>
-    <a href="colaboracion.html">COLABORACIÓN</a>
-    <a href="usuarios.html">USUARIOS</a>
-    <a href="clientes.html">CLIENTES</a>
     <hr style="border:0.5px solid #333; margin:20px;">
     <a href="#" onclick="cerrarSesion()" style="color: var(--rojo)">CERRAR SESIÓN</a>
 </div>
@@ -82,7 +73,8 @@
         <div style="display:flex; justify-content:space-between; margin-bottom:15px;"><label>Licencia Operativa</label><input type="checkbox" id="n_lic" style="width:20px;"></div>
         <div style="display:flex; justify-content:space-between; margin-bottom:15px;"><label>Sin Créditos</label><input type="checkbox" id="n_lib" style="width:20px;"></div>
         <div class="field"><label>Grupo</label><div style="display:flex; gap:20px;"><label><input type="radio" name="n_gp" value="Auto" checked> AUTO</label><label><input type="radio" name="n_gp" value="Moto"> MOTO</label></div></div>
-        <hr style="border:0.5px solid #333;"><div class="field"><label>Foto Carro</label><input type="file" id="n_fot_v"></div>
+        <hr style="border:0.5px solid #333;">
+        <div class="field"><label>Foto Carro</label><input type="file" id="n_fot_v"></div>
         <div class="field"><label>Marca</label><input type="text" id="n_mar"></div>
         <div class="field"><label>Modelo</label><input type="text" id="n_mod"></div>
         <div class="field"><label>Color</label><input type="text" id="n_col"></div>
@@ -109,6 +101,16 @@
     }
     cargar();
 
+    // Generador de Etiquetas (Badges) REUTILIZABLE
+    function generarBadges(c) {
+        return `
+            ${c.tiene_licencia_operativa ? '<span class="badge">LICENCIA</span>' : ''}
+            ${c.libre_de_fondo ? '<span class="badge">SIN CRÉDITOS</span>' : ''}
+            ${c.grupo ? `<span class="badge">${c.grupo}</span>` : ''}
+            ${c.tiene_aire_acondicionado ? '<span class="badge">AIRE</span>' : ''}
+        `;
+    }
+
     function render(l) {
         document.getElementById('lista-choferes').innerHTML = l.map(c => `
             <div class="card-chofer" onclick="abrirV('${c.id}')">
@@ -116,11 +118,7 @@
                 <div style="flex:1">
                     <h3 style="margin:0; font-size:14px;">${c.nombre} ${c.apellido || ''}</h3>
                     <p style="margin:2px 0; font-size:11px; color:#888;">${c.telefono}</p>
-                    <div class="badge-container">
-                        ${c.tiene_licencia_operativa ? '<span class="badge">LICENCIA</span>' : ''}
-                        ${c.libre_de_fondo ? '<span class="badge">SIN CRÉDITOS</span>' : ''}
-                        ${c.grupo ? `<span class="badge">${c.grupo.toUpperCase()}</span>` : ''}
-                    </div>
+                    <div class="badge-container">${generarBadges(c)}</div>
                 </div>
                 <div class="fondo-monto">$${c.fondo_actual}</div>
             </div>`).join('');
@@ -140,6 +138,7 @@
             <button onclick="cerrarModal('modalVer')" style="float:right; background:none; border:none; color:var(--dorado); font-size:30px;">&times;</button>
             <img src="${sel.foto_chofer}" class="foto-grande">
             <h2 style="text-align:center; margin:0;">${sel.nombre} ${sel.apellido}</h2>
+            <div class="badge-container" style="justify-content:center; margin-bottom:10px;">${generarBadges(sel)}</div>
             <div class="stats-grid">
                 <div class="stat-box"><small>HOY</small><b>${t_h}</b></div>
                 <div class="stat-box"><small>MES</small><b>${t_m}</b></div>
@@ -185,11 +184,16 @@
         const uC = await subirImg('e_fot_c','fotos_choferes') || sel.foto_chofer;
         const uV = await subirImg('e_fot_v','fotos_carros') || sel.foto_carro;
         const upd = { 
-            nombre: document.getElementById('e_nom').value, apellido: document.getElementById('e_ape').value, 
-            telefono: document.getElementById('e_tel').value, tiene_licencia_operativa: document.getElementById('e_lic').checked, 
-            libre_de_fondo: document.getElementById('e_lib').checked, grupo: document.querySelector('input[name="e_gp"]:checked').value, 
-            marca_carro: document.getElementById('e_mar').value, modelo_carro: document.getElementById('e_mod').value, 
-            color_carro: document.getElementById('e_col').value, tiene_aire_acondicionado: document.getElementById('e_air').checked, 
+            nombre: document.getElementById('e_nom').value, 
+            apellido: document.getElementById('e_ape').value, 
+            telefono: document.getElementById('e_tel').value, 
+            tiene_licencia_operativa: document.getElementById('e_lic').checked, 
+            libre_de_fondo: document.getElementById('e_lib').checked, 
+            grupo: document.querySelector('input[name="e_gp"]:checked').value, 
+            marca_carro: document.getElementById('e_mar').value, 
+            modelo_carro: document.getElementById('e_mod').value, 
+            color_carro: document.getElementById('e_col').value, 
+            tiene_aire_acondicionado: document.getElementById('e_air').checked, 
             foto_chofer: uC, foto_carro: uV 
         };
         const { error } = await supabaseClient.from('choferes').update(upd).eq('id', sel.id);
@@ -207,7 +211,7 @@
         document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active')); b.classList.add('active');
         const c = document.getElementById('t-cont');
         if(t==='i') c.innerHTML = `<p><b>Tel:</b> ${sel.telefono}</p><p><b>Grupo:</b> ${sel.grupo}</p><p><b>Licencia:</b> ${sel.tiene_licencia_operativa ? 'SI' : 'NO'}</p>`;
-        if(t==='a') c.innerHTML = `<img src="${sel.foto_carro}" style="width:100%; border-radius:10px;"><p><b>Marca:</b> ${sel.marca_carro} ${sel.modelo_carro}</p>`;
+        if(t==='a') c.innerHTML = `<img src="${sel.foto_carro}" style="width:100%; border-radius:10px;"><p><b>Marca:</b> ${sel.marca_carro} ${sel.modelo_carro}</p><p><b>Aire:</b> ${sel.tiene_aire_acondicionado ? 'SI' : 'NO'}</p>`;
         if(t==='f') { 
             c.innerHTML = `<div class="btn-flex"><button class="btn-accion" style="background:var(--verde); color:black;" onclick="mov('ADD')">AGREGAR</button><button class="btn-accion" style="background:var(--rojo); color:white;" onclick="mov('SUB')">RETIRAR</button><button class="btn-accion" style="background:var(--dorado); color:black;" onclick="rectificar()">RECTIFICAR</button></div><div id="op-area"></div><table class="tabla-historial"><thead><tr><th>USUARIO</th><th>MÉTODO</th><th>FECHA</th><th>SALDO</th><th>FONDO</th><th>ACTIVO</th></tr></thead><tbody id="h-body"></tbody></table>`; 
             cargarH(sel.id); 
@@ -224,11 +228,18 @@
             else suma += parseFloat(h.saldo);
         });
         const saldoActual = parseFloat(sel.fondo_actual);
-        if (Math.abs(suma - saldoActual) < 0.01) area.innerHTML = `<div style="color:var(--verde); text-align:center; padding:10px; font-size:11px;">✅ Cuentas correctas.</div>`;
+        if (Math.abs(suma - saldoActual) < 0.01) area.innerHTML = `<div style="color:var(--verde); text-align:center; padding:10px; font-size:11px;">✅ Cuentas al día.</div>`;
         else area.innerHTML = `<div style="color:var(--rojo); text-align:center; padding:10px; font-size:11px;">⚠️ Error: Historial $${suma.toFixed(2)} vs Perfil $${saldoActual}. <button onclick="corregirSaldo(${suma})">CORREGIR</button></div>`;
     }
 
     async function corregirSaldo(n) { await supabaseClient.from('choferes').update({ fondo_actual: n }).eq('id', sel.id); location.reload(); }
+
+    async function cargarH(id) {
+        const { data } = await supabaseClient.from('historial_fondos').select('*').eq('chofer_id', id).order('created_at', { ascending: false });
+        const tbody = document.getElementById('h-body');
+        if (!data || data.length === 0) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Sin movimientos</td></tr>`; return; }
+        tbody.innerHTML = data.map(h => `<tr><td>${h.usuario || 'Admin'}</td><td>${h.metodo || 'N/A'}</td><td>${h.created_at ? h.created_at.split('T')[0] : '-'}</td><td style="color:var(--verde)">$${h.saldo}</td><td>$${h.fondo_anterior}</td><td style="color:var(--dorado)">$${h.activo}</td></tr>`).join('');
+    }
 
     async function subirImg(inp, buck) {
         const f = document.getElementById(inp).files[0]; if(!f) return null;
@@ -241,15 +252,16 @@
 
     async function crearTodo() {
         const uC = await subirImg('n_fot_c','fotos_choferes'); const uV = await subirImg('n_fot_v','fotos_carros');
-        const p = { nombre: document.getElementById('n_nom').value, apellido: document.getElementById('n_ape').value, telefono: document.getElementById('n_tel').value, tiene_licencia_operativa: document.getElementById('n_lic').checked, libre_de_fondo: document.getElementById('n_lib').checked, fondo_actual: 0, grupo: document.querySelector('input[name="n_gp"]:checked').value, marca_carro: document.getElementById('n_mar').value, modelo_carro: document.getElementById('n_mod').value, color_carro: document.getElementById('n_col').value, tiene_aire_acondicionado: document.getElementById('n_air').checked, foto_chofer: uC, foto_carro: uV, aprobado: false };
+        const p = { 
+            nombre: document.getElementById('n_nom').value, apellido: document.getElementById('n_ape').value, 
+            telefono: document.getElementById('n_tel').value, tiene_licencia_operativa: document.getElementById('n_lic').checked, 
+            libre_de_fondo: document.getElementById('n_lib').checked, fondo_actual: 0, 
+            grupo: document.querySelector('input[name="n_gp"]:checked').value, 
+            marca_carro: document.getElementById('n_mar').value, modelo_carro: document.getElementById('n_mod').value, 
+            color_carro: document.getElementById('n_col').value, tiene_aire_acondicionado: document.getElementById('n_air').checked, 
+            foto_chofer: uC, foto_carro: uV, aprobado: false 
+        };
         await supabaseClient.from('choferes').insert([p]); location.reload();
-    }
-
-    async function cargarH(id) {
-        const { data } = await supabaseClient.from('historial_fondos').select('*').eq('chofer_id', id).order('created_at', { ascending: false });
-        const tbody = document.getElementById('h-body');
-        if (!data || data.length === 0) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Sin movimientos</td></tr>`; return; }
-        tbody.innerHTML = data.map(h => `<tr><td>${h.usuario || 'Admin'}</td><td>${h.metodo || 'N/A'}</td><td>${h.created_at ? h.created_at.split('T')[0] : '-'}</td><td style="color:var(--verde)">$${h.saldo}</td><td>$${h.fondo_anterior}</td><td style="color:var(--dorado)">$${h.activo}</td></tr>`).join('');
     }
 
     function busc() {
