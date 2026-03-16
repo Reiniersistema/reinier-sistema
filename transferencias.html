@@ -1,190 +1,216 @@
-‎<!DOCTYPE html>
-‎<html lang="es">
-‎<head>
-‎    <meta charset="UTF-8">
-‎    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-‎    <title>Transferencias - RF TransGestión</title>
-‎    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-‎    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-‎    <style>
-‎        :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; --rojo: #dc3545; --verde: #28a745; }
-‎        body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding-bottom: 50px; }
-‎        
-‎        /* ESTILOS DEL MENÚ UNIVERSAL */
-‎        .sidebar {
-‎            height: 100%; width: 0; position: fixed;
-‎            z-index: 3000; top: 0; left: 0;
-‎            background-color: #1e1e1e;
-‎            overflow-x: hidden; transition: 0.5s;
-‎            padding-top: 60px; border-right: 1px solid #d4af37;
-‎        }
-‎        .sidebar a {
-‎            padding: 12px 24px; text-decoration: none;
-‎            font-size: 15px; color: #818181;
-‎            display: block; transition: 0.3s;
-‎            text-transform: uppercase;
-‎        }
-‎        .sidebar a:hover { color: #d4af37; background: rgba(212, 175, 55, 0.1); }
-‎        .sidebar .closebtn { position: absolute; top: 10px; right: 25px; font-size: 36px; color: #d4af37; }
-‎
-‎        .header-nav-universal { 
-‎            display: flex; align-items: center; gap: 15px; 
-‎            padding: 15px; background: #121212; 
-‎            border-bottom: 1px solid #d4af37; margin-bottom: 20px;
-‎        }
-‎        .openbtn { font-size: 25px; cursor: pointer; background: none; border: none; color: #d4af37; }
-‎        .logo-txt-universal { font-family: 'Playfair Display', serif; font-size: 20px; color: white; }
-‎
-‎        /* Estilos propios de la página */
-‎        .contenedor-principal { padding: 0 15px; }
-‎        .header-seccion { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--dorado); padding-bottom: 10px; }
-‎        h2 { color: var(--dorado); font-size: 18px; text-transform: uppercase; margin: 0; }
-‎        
-‎        .btn-action { background: var(--dorado); color: black; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 11px; text-transform: uppercase; }
-‎
-‎        #formAdd { display: none; background: var(--gris); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--dorado); box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-‎        label { display: block; font-size: 10px; color: var(--dorado); margin-bottom: 5px; text-transform: uppercase; font-weight: 700; }
-‎        input, select { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #333; background: #000; color: white; box-sizing: border-box; font-family: 'Montserrat'; }
-‎
-‎        .tabla-contenedor { background: var(--gris); border-radius: 12px; overflow-x: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-‎        table { width: 100%; border-collapse: collapse; min-width: 500px; }
-‎        th { text-align: left; padding: 12px 10px; color: var(--dorado); font-size: 10px; text-transform: uppercase; border-bottom: 2px solid #333; background: #1a1a1a; }
-‎        td { padding: 15px 10px; border-bottom: 1px solid #222; font-size: 12px; }
-‎        
-‎        .status { font-size: 9px; font-weight: bold; text-transform: uppercase; padding: 4px 8px; border-radius: 4px; display: inline-block; }
-‎        .pendiente { background: #444; color: #bbb; }
-‎        .aprobado { background: var(--verde); color: white; }
-‎    </style>
-‎</head>
-‎<body>
-‎
-‎<div class="contenedor-principal">
-‎    <div class="header-seccion">
-‎        <h2>Registro de Pagos</h2>
-‎        <button class="btn-action" onclick="toggleForm()">+ Nuevo</button>
-‎    </div>
-‎
-‎    <div id="formAdd">
-‎        <label>Identificador del Chófer</label>
-‎        <input type="text" id="chofer-id" placeholder="Nombre exacto o Teléfono">
-‎        
-‎        <label>Nombre del Gestor</label>
-‎        <input type="text" id="usuario-nombre" placeholder="¿Quién registra?">
-‎        
-‎        <label>Método de Pago</label>
-‎        <select id="tipo-pago">
-‎            <option value="Transferencia">Transferencia Bancaria</option>
-‎            <option value="Efectivo">Efectivo</option>
-‎            <option value="Zelle / Otros">Zelle / Otros</option>
-‎        </select>
-‎        
-‎        <label>Monto del Depósito ($)</label>
-‎        <input type="number" id="monto-pago" placeholder="Ej: 50.00">
-‎        
-‎        <label>Fecha de Operación</label>
-‎        <input type="date" id="fecha-pago">
-‎        
-‎        <div style="display:flex; gap:10px;">
-‎            <button class="btn-action" onclick="guardarTransferencia()" style="flex:2; padding:15px;">ENVIAR A REVISIÓN</button>
-‎            <button class="btn-action" onclick="toggleForm()" style="flex:1; background:#444; color:white;">X</button>
-‎        </div>
-‎    </div>
-‎
-‎    <div class="tabla-contenedor">
-‎        <table>
-‎            <thead>
-‎                <tr>
-‎                    <th>Fecha</th>
-‎                    <th>Chófer</th>
-‎                    <th>Monto</th>
-‎                    <th>Método</th>
-‎                    <th>Estado</th>
-‎                </tr>
-‎            </thead>
-‎            <tbody id="lista-transferencias">
-‎                <tr><td colspan="5" style="text-align:center; padding:20px;">Cargando historial...</td></tr>
-‎            </tbody>
-‎        </table>
-‎    </div>
-‎</div>
-‎
-‎<script src="config.js"></script>
-‎<script src="menu.js"></script>
-‎<script>
-‎    // Al cargar, intentar pre-rellenar el nombre del gestor si existe en sesión
-‎    window.onload = () => {
-‎        const datosSesion = JSON.parse(localStorage.getItem('usuario_activo'));
-‎        if(datosSesion && datosSesion.nombre) {
-‎            document.getElementById('usuario-nombre').value = datosSesion.nombre;
-‎        }
-‎        document.getElementById('fecha-pago').valueAsDate = new Date();
-‎    };
-‎
-‎    function toggleForm() {
-‎        const f = document.getElementById('formAdd');
-‎        f.style.display = (f.style.display === 'block') ? 'none' : 'block';
-‎    }
-‎
-‎    async function cargarTransferencias() {
-‎        const { data, error } = await supabaseClient
-‎            .from('transferencias')
-‎            .select('*')
-‎            .order('created_at', { ascending: false })
-‎            .limit(50);
-‎
-‎        const tbody = document.getElementById('lista-transferencias');
-‎        if (error) {
-‎            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Error al cargar datos</td></tr>`;
-‎            return;
-‎        }
-‎
-‎        tbody.innerHTML = data.map(t => `
-‎            <tr>
-‎                <td style="font-size:10px;">${t.fecha}</td>
-‎                <td><b style="text-transform:uppercase;">${t.nombre_chofer}</b></td>
-‎                <td style="color:var(--dorado); font-weight:bold;">$${t.monto.toFixed(2)}</td>
-‎                <td style="font-size:10px; color:#888;">${t.tipo_pago}</td>
-‎                <td>
-‎                    <span class="status ${t.aprobado ? 'aprobado' : 'pendiente'}">
-‎                        ${t.aprobado ? '✓ Aprobado' : '⌛ En Espera'}
-‎                    </span>
-‎                </td>
-‎            </tr>
-‎        `).join('');
-‎    }
-‎
-‎    async function guardarTransferencia() {
-‎        const chofer = document.getElementById('chofer-id').value.trim();
-‎        const gestor = document.getElementById('usuario-nombre').value.trim();
-‎        const monto = parseFloat(document.getElementById('monto-pago').value);
-‎        const fecha = document.getElementById('fecha-pago').value;
-‎        const tipo = document.getElementById('tipo-pago').value;
-‎
-‎        if(!chofer || isNaN(monto) || !gestor) {
-‎            return alert("Por favor, rellena los campos obligatorios (Chófer, Gestor y Monto)");
-‎        }
-‎
-‎        const datos = {
-‎            nombre_chofer: chofer,
-‎            nombre_usuario: gestor,
-‎            tipo_pago: tipo,
-‎            monto: monto,
-‎            fecha: fecha,
-‎            aprobado: false
-‎        };
-‎
-‎        const { error } = await supabaseClient.from('transferencias').insert([datos]);
-‎        
-‎        if(!error) {
-‎            alert("✅ Registro enviado. El saldo se acreditará cuando el administrador lo apruebe.");
-‎            location.reload();
-‎        } else {
-‎            alert("Error al registrar: " + error.message);
-‎        }
-‎    }
-‎
-‎    cargarTransferencias();
-‎</script>
-‎</body>
-‎</html>
-‎
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transferencias - RF TransGestión</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --dorado: #d4af37; --oscuro: #121212; --gris: #1e1e1e; --rojo: #dc3545; --verde: #28a745; }
+        body { background: var(--oscuro); color: white; font-family: 'Montserrat', sans-serif; margin: 0; padding-bottom: 50px; }
+        
+        /* ESTILOS DEL MENÚ UNIVERSAL */
+        .sidebar {
+            height: 100%; width: 0; position: fixed;
+            z-index: 3000; top: 0; left: 0;
+            background-color: #1e1e1e;
+            overflow-x: hidden; transition: 0.5s;
+            padding-top: 60px; border-right: 1px solid #d4af37;
+        }
+        .sidebar a {
+            padding: 12px 24px; text-decoration: none;
+            font-size: 15px; color: #818181;
+            display: block; transition: 0.3s;
+            text-transform: uppercase;
+        }
+        .sidebar a:hover { color: #d4af37; background: rgba(212, 175, 55, 0.1); }
+        .sidebar .closebtn { position: absolute; top: 10px; right: 25px; font-size: 36px; color: #d4af37; }
+
+        .header-nav-universal { 
+            display: flex; align-items: center; gap: 15px; 
+            padding: 15px; background: #000; 
+            border-bottom: 1px solid #d4af37; margin-bottom: 20px;
+            position: sticky; top: 0; z-index: 1000;
+        }
+        .openbtn { font-size: 25px; cursor: pointer; background: none; border: none; color: #d4af37; }
+        .logo-txt-universal { font-family: 'Playfair Display', serif; font-size: 20px; color: white; }
+
+        .contenedor-principal { padding: 0 15px; max-width: 800px; margin: auto; }
+        .header-seccion { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--dorado); padding-bottom: 10px; }
+        h2 { color: var(--dorado); font-size: 18px; text-transform: uppercase; margin: 0; }
+        
+        .btn-action { background: var(--dorado); color: black; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 11px; text-transform: uppercase; }
+
+        #formAdd { display: none; background: var(--gris); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--dorado); }
+        label { display: block; font-size: 10px; color: var(--dorado); margin-bottom: 5px; text-transform: uppercase; font-weight: 700; }
+        input, select { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #333; background: #000; color: white; box-sizing: border-box; }
+
+        .tabla-contenedor { background: var(--gris); border-radius: 12px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 500px; }
+        th { text-align: left; padding: 12px 10px; color: var(--dorado); font-size: 10px; text-transform: uppercase; border-bottom: 2px solid #333; background: #1a1a1a; }
+        td { padding: 15px 10px; border-bottom: 1px solid #222; font-size: 12px; }
+        
+        .status { font-size: 9px; font-weight: bold; text-transform: uppercase; padding: 4px 8px; border-radius: 4px; display: inline-block; }
+        .pendiente { background: #444; color: #bbb; }
+        .aprobado { background: var(--verde); color: white; }
+    </style>
+</head>
+<body>
+
+<div id="mySidebar" class="sidebar">
+    <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+    <a href="panel.html">PANEL DE CONTROL</a>
+    <a href="crear-viaje.html">CREAR VIAJES</a>
+    <a href="mis-viajes.html">MIS VIAJES</a>
+    <a href="choferes.html">CHOFERES</a>
+    <a href="pagos-pendientes.html">PAGOS PENDIENTES</a>
+    <a href="pagos-aprobar.html">PAGOS POR APROBAR</a>
+    <a href="tarjetas.html">TARJETAS</a>
+    <a href="transferencias.html" style="color:var(--dorado)">TRANSFERENCIAS</a>
+    <a href="colaboracion.html">COLABORACIÓN</a>
+    <a href="usuarios.html">USUARIOS</a>
+    <a href="clientes.html">CLIENTES</a>
+    <hr style="border:0.5px solid #333; margin:20px;">
+    <a href="#" onclick="cerrarSesion()" style="color: var(--rojo)">CERRAR SESIÓN</a>
+</div>
+
+<div class="header-nav-universal">
+    <button class="openbtn" onclick="openNav()">&#9776;</button>
+    <div class="logo-txt-universal">RF <span style="color: var(--dorado);">TransGestión</span></div>
+</div>
+
+<div class="contenedor-principal">
+    <div class="header-seccion">
+        <h2>Registro de Pagos</h2>
+        <button class="btn-action" onclick="toggleForm()">+ Nuevo</button>
+    </div>
+
+    <div id="formAdd">
+        <label>Identificador del Chófer</label>
+        <input type="text" id="chofer-id" placeholder="Nombre exacto o Teléfono">
+        
+        <label>Nombre del Gestor</label>
+        <input type="text" id="usuario-nombre" placeholder="¿Quién registra?">
+        
+        <label>Método de Pago</label>
+        <select id="tipo-pago">
+            <option value="Transferencia">Transferencia Bancaria</option>
+            <option value="Efectivo">Efectivo</option>
+            <option value="Zelle / Otros">Zelle / Otros</option>
+        </select>
+        
+        <label>Monto del Depósito ($)</label>
+        <input type="number" id="monto-pago" placeholder="Ej: 50.00">
+        
+        <label>Fecha de Operación</label>
+        <input type="date" id="fecha-pago">
+        
+        <div style="display:flex; gap:10px;">
+            <button class="btn-action" onclick="guardarTransferencia()" style="flex:2; padding:15px;">ENVIAR A REVISIÓN</button>
+            <button class="btn-action" onclick="toggleForm()" style="flex:1; background:#444; color:white;">X</button>
+        </div>
+    </div>
+
+    <div class="tabla-contenedor">
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Chófer</th>
+                    <th>Monto</th>
+                    <th>Método</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody id="lista-transferencias">
+                <tr><td colspan="5" style="text-align:center; padding:20px;">Cargando historial...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="config.js"></script>
+<script>
+    const openNav = () => document.getElementById("mySidebar").style.width = "280px";
+    const closeNav = () => document.getElementById("mySidebar").style.width = "0";
+
+    window.onload = () => {
+        const datosSesion = JSON.parse(localStorage.getItem('usuario_activo'));
+        if(datosSesion && datosSesion.nombre) {
+            document.getElementById('usuario-nombre').value = datosSesion.nombre;
+        }
+        document.getElementById('fecha-pago').valueAsDate = new Date();
+        cargarTransferencias();
+    };
+
+    function toggleForm() {
+        const f = document.getElementById('formAdd');
+        f.style.display = (f.style.display === 'block') ? 'none' : 'block';
+    }
+
+    async function cargarTransferencias() {
+        const { data, error } = await supabaseClient
+            .from('transferencias')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+        const tbody = document.getElementById('lista-transferencias');
+        if (error) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Error al cargar datos</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = data.map(t => `
+            <tr>
+                <td style="font-size:10px;">${t.fecha}</td>
+                <td><b style="text-transform:uppercase;">${t.nombre_chofer}</b></td>
+                <td style="color:var(--dorado); font-weight:bold;">$${parseFloat(t.monto).toFixed(2)}</td>
+                <td style="font-size:10px; color:#888;">${t.tipo_pago}</td>
+                <td>
+                    <span class="status ${t.aprobado ? 'aprobado' : 'pendiente'}">
+                        ${t.aprobado ? '✓ Aprobado' : '⌛ En Espera'}
+                    </span>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    async function guardarTransferencia() {
+        const chofer = document.getElementById('chofer-id').value.trim();
+        const gestor = document.getElementById('usuario-nombre').value.trim();
+        const monto = parseFloat(document.getElementById('monto-pago').value);
+        const fecha = document.getElementById('fecha-pago').value;
+        const tipo = document.getElementById('tipo-pago').value;
+
+        if(!chofer || isNaN(monto) || !gestor) {
+            return alert("Por favor, rellena los campos obligatorios");
+        }
+
+        const datos = {
+            nombre_chofer: chofer,
+            nombre_usuario: gestor,
+            tipo_pago: tipo,
+            monto: monto,
+            fecha: fecha,
+            aprobado: false
+        };
+
+        const { error } = await supabaseClient.from('transferencias').insert([datos]);
+        
+        if(!error) {
+            alert("✅ Registro enviado a revisión.");
+            location.reload();
+        } else {
+            alert("Error: " + error.message);
+        }
+    }
+
+    function cerrarSesion() {
+        localStorage.removeItem('usuario_activo');
+        window.location.href = 'index.html';
+    }
+</script>
+</body>
+</html>
